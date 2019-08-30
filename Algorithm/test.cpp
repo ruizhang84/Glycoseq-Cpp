@@ -20,7 +20,7 @@ int main(){
 
     BucketSearch bucket(data, 0.6);
     shared_ptr<MassPoint> n = make_shared<MassPoint>(3.5);
-    vector<shared_ptr<Point>> res = bucket.search(n);
+    vector<shared_ptr<Point>> res = bucket.Search(n);
 
     for (int i = 0; i < res.size(); i++){
         cout << res[i]->get_value() << endl;
