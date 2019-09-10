@@ -10,12 +10,12 @@ ComplexNGlycan::ComplexNGlycan() : Glycan(){
     table.assign(24, 0);
 }
 
-ComplexNGlycan::ComplexNGlycan(const ComplexNGlycan& glycan ){
+ComplexNGlycan::ComplexNGlycan(const ComplexNGlycan& glycan){
     table = glycan.table;
 }
 
 ComplexNGlycan& ComplexNGlycan::operator= (const ComplexNGlycan& glycan){
-    table = glycan.table;
+    this->table = glycan.table;
     return *this;
 }
 
@@ -56,7 +56,7 @@ vector<shared_ptr<Glycan>> ComplexNGlycan::Grow(Suger suger){
             ComplexNGlycan g = CreateByAddGlcNAcCore();
             shared_ptr<ComplexNGlycan> ptr = make_shared<ComplexNGlycan> (g);
             glycans.push_back(ptr);
-        }else{
+        }else if (ValidAddGlcNAc()){
             if (ValidAddGlcNAcBisect()){
                 ComplexNGlycan g = CreateByAddGlcNAcBisect();
                 shared_ptr<ComplexNGlycan> ptr = make_shared<ComplexNGlycan> (g);
@@ -134,6 +134,12 @@ vector<shared_ptr<Glycan>> ComplexNGlycan::Grow(Suger suger){
 
 bool ComplexNGlycan::ValidAddGlcNAcCore(){
     if (table[0] < 2)
+        return true;
+    return false;
+}
+
+bool ComplexNGlycan::ValidAddGlcNAc(){
+    if (table[0] == 2 && table[1] == 3)
         return true;
     return false;
 }

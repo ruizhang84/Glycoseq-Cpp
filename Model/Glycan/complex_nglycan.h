@@ -7,6 +7,7 @@ class ComplexNGlycan : public Glycan
 {
 private:
     bool ValidAddGlcNAcCore();
+    bool ValidAddGlcNAc();
     ComplexNGlycan CreateByAddGlcNAcCore();
 
     bool ValidAddGlcNAcBisect();
