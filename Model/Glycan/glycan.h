@@ -20,8 +20,10 @@ public:
     
     std::string Name() { return name_; }
     double Mass() { return mass_; }
-    std::vector<Monosaccharide*>& get_child() { return child_; }
-    Monosaccharide* get_parent() { return parent_; }
+    void set_name(std::string name) { name_ = name; }
+    void set_mass(double mass) { mass_ = mass; }
+    std::vector<Monosaccharide*>& Child() { return child_; }
+    Monosaccharide* Parent() { return parent_; }
     void set_parent(Monosaccharide* parent){ 
         parent_ = parent_;
     }
@@ -38,7 +40,7 @@ protected:
 public:
     Glycan() = default;
     // get tree nodes
-    Monosaccharide* get_tree() { return root_; }
+    Monosaccharide* Root() { return root_; }
     void set_tree(Monosaccharide* root) { root_ = root;}
     // set composition
     void set_composite(std::vector<int>& composite){ 
@@ -52,7 +54,7 @@ public:
         return false;
     }
     
-    virtual std::vector<int>& get_composite() { return composite_; }
+    virtual std::vector<int>& Composite() { return composite_; }
     virtual std::string Name() { return name_; }
 };
 

@@ -8,8 +8,8 @@ void dfs(Monosaccharide* root) {
     std::cout << root-> Name() 
             << std::endl;
 
-    if (root->get_child().size() > 0){
-        for (auto child : root->get_child()){
+    if (root->Child().size() > 0){
+        for (auto child : root->Child()){
             dfs(child);
         }
     }
@@ -25,14 +25,14 @@ int main(int argc, char* argv[]){
 
     glycan.set_tree(root);
 
-    std:: cout << glycan.get_tree()->Name()
+    std:: cout << glycan.Root()->Name()
         << std::endl;
 
-    a.get_child().push_back(&b);
+    a.Child().push_back(&b);
     b.set_parent(&a);
-    b.get_child().push_back(&c);
+    b.Child().push_back(&c);
 
-    dfs(glycan.get_tree());
+    dfs(glycan.Root());
 
     return 0;
 }
