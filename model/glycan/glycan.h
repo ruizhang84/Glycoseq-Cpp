@@ -29,19 +29,16 @@ public:
 
     void set_name(std::string name) { name_ = name; }
     void set_mass(double mass) { mass_ = mass; }
-    void set_parent(Monosaccharide* parent)
-    { 
-        parent_ = parent_;
-    }
+    void set_parent(Monosaccharide* parent) { parent_ = parent; }
 
 };
 
 class Glycan
 {
 protected:
-    std::string name_;
-    std::string uid_;
-    double mass_;
+    std::string name_ = "";
+    std::string uid_ = "";
+    double mass_ = 0;
     std::vector<int> composite_;
     Monosaccharide* root_ = NULL;
     // types of glycan
@@ -76,7 +73,7 @@ public:
 
 struct GlcNAc : public Monosaccharide 
 {
-    GlcNAc() { name_ = "GlycNAc", mass_ = 203.0794; uid_ = "a"; }
+    GlcNAc() { name_ = "GlcNAc", mass_ = 203.0794; uid_ = "a"; }
 };
 
 struct Man : public Monosaccharide 

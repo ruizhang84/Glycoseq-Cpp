@@ -1,16 +1,15 @@
 #Created by Rui 5/17/20
 
 CC = g++
-CPPFLAGS =-g -Wall
-GLYCAN = glycan_test nglycan_complex.o
+CPPFLAGS =-g -Wall -std=c++11 
+INCLUDES = -I/usr/local/include -L/usr/local/lib -lboost_unit_test_framework -static
 
-glycan_test: nglycan_complex.o
-	$(CC) $(CPPFLAGS) -o glycan_test model/glycan/glycan_test.cpp nglycan_complex.o
-nglycan_complex.o:
-	$(CC) $(CPPFLAGS) -c model/glycan/nglycan_complex.cpp 
+TEST = glycan_test
 
-
+glycan_test:
+	$(CC) $(CPPFLAGS) $(INCLUDES) \
+	-o glycan_test model/glycan/glycan_test.cpp  model/glycan/nglycan_complex.cpp 
 
 # clean up
 clean:
-	rm -f core $(GLYCAN)
+	rm -f core $(TEST)
