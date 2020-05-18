@@ -1,4 +1,5 @@
 #include "glycan.h"
+#include "nglycan_complex.h"
 #include <iostream>
 
 using namespace std;
@@ -23,7 +24,7 @@ int main(int argc, char* argv[]){
 
     Monosaccharide* root = &a;
 
-    glycan.set_tree(root);
+    glycan.set_root(root);
 
     std:: cout << glycan.Root()->Name()
         << std::endl;
@@ -34,6 +35,7 @@ int main(int argc, char* argv[]){
 
     dfs(glycan.Root());
 
+    NGlycanComplex test;
     return 0;
 }
 
