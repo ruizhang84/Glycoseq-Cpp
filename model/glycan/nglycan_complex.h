@@ -5,23 +5,22 @@
 
 namespace model {
 namespace glycan {
-class NGlycanComplex : public Glycan 
-{
-public:
-    NGlycanComplex() 
-    { 
-        isNGlycanComplex_ = true;
-        for (int i = 0; i < kComposite; i++){
-            composite_.push_back(0);
-        } 
-    };
-    std::vector<Glycan*> Add(Monosaccharide* suger) override;
+// class NGlycanComplex : public Glycan 
+// {
+// public:
+//     NGlycanComplex() 
+//     { 
+//         isCore_ = true;
+//         isNGlycanComplex_ = true;
+//     };
+//     // std::vector<Glycan*> Add(Monosaccharide* suger) override;
+//     // bool feasilibty_check(Monosaccharide* suger);
 
-protected:
-    void UpdateMass(Monosaccharide* suger);
-    void UpdateComposition(Monosaccharide* suger);
-    const int kComposite = 4; // HexAc, Hex, Fuc, NeuAc
-}; 
+// protected:
+//     void UpdateMass(std::unique_ptr<Monosaccharide>& suger);
+//     void UpdateComposition(std::unique_ptr<Monosaccharide>& suger);
+//     bool isCore_;
+// }; 
 
 }  //  namespace glycan
 }  //  namespace model
