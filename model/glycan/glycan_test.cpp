@@ -8,41 +8,36 @@
 using namespace std;
 using namespace model::glycan;
 
-void dfs(Monosaccharide& root, std::vector<string>& result);
+class GlycanTemp : public Glycan
+{
+public:
+    std::unique_ptr<Glycan> Clone() override
+    {
+        return std::make_unique<GlycanTemp>(*this);
+    }
+
+    std::vector<std::unique_ptr<Glycan>> Add(Monosaccharide suger) override
+    { 
+        std::vector<std::unique_ptr<Glycan>> result; 
+        std::unique_ptr<Glycan> new_glycan = Clone();
+        new_glycan->Terminal().push_back(suger);
+        result.push_back(std::move(new_glycan));
+        return result; 
+    }
+};
 
 BOOST_AUTO_TEST_CASE( glycan_test ) {
-    // Glycan glycan;
-    MonosaccharideFactory factory;
-    std::shared_ptr<Monosaccharide> a = factory.GlcNAc(); 
-    std::shared_ptr<Monosaccharide> b = factory.Man();
-    std::shared_ptr<Monosaccharide> c = factory.Gal();
+    std::unique_ptr<GlycanTemp> glycan = std::make_unique<GlycanTemp>();
+    std::vector<std::unique_ptr<Glycan>> vect = glycan->Add(Monosaccharide::GlcNAc);
+    BOOST_CHECK( vect.front()->Terminal().front() == Monosaccharide::GlcNAc);   
 
-    // glycan.set_root(*a);
-    // BOOST_CHECK( glycan.Root()->Name() == "GlcNAc"); 
-
-    a->Child().push_back(b);
-    b->set_parent(*a);
-    b->Child().push_back(c);
-    c->set_parent(*b);
-
-    // std::vector<string> result;
-    // dfs(*glycan.Root(), result);
-    // Monosaccharide& curr = *glycan.Root();
-
-    // BOOST_REQUIRE( !curr.Child().empty() );
-    // curr = *curr.Child().front();
-    // BOOST_CHECK( curr.Name() == "Man"); 
-
-    // BOOST_REQUIRE( !curr.Child().empty() );
-    // curr = curr.Child().front();
-    // BOOST_CHECK( curr.Name() == "Gal"); 
-
-    // BOOST_REQUIRE( curr.Parent() != NULL );
-    // curr = curr.Parent();
-    // BOOST_CHECK( curr.Name() == "Man"); 
-    // NGlycanComplex test;
+    GlycanTemp* new_glycan = (GlycanTemp*) vect.front().get();
+    std::vector<std::unique_ptr<Glycan>> vect2 = new_glycan->Add(Monosaccharide::Fuc);
+    BOOST_CHECK( vect2.front()->Terminal().front() == Monosaccharide::GlcNAc);   
+    BOOST_CHECK( vect2.front()->Terminal().back() == Monosaccharide::Fuc);   
 
 }
+
 
 // BOOST_AUTO_TEST_CASE( glycan_add_test )
 // {
