@@ -1,5 +1,5 @@
-#ifndef UTIL_IO_READ_MGF_H_
-#define UTIL_IO_READ_MGF_H_
+#ifndef UTIL_IO_MGF_PARSER_H_
+#define UTIL_IO_MGF_PARSER_H_
 
 #include "spectrum_reader.h"
 

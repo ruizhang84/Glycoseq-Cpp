@@ -40,4 +40,4 @@ Thumbs.db
 # other files #
 ######################
 /data/*
-/.vscode/
+/.vscode/*
