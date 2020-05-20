@@ -8,36 +8,58 @@
 using namespace std;
 using namespace model::glycan;
 
-class GlycanTemp : public Glycan
+std::unique_ptr<Moiety> CreateRoot()
 {
-public:
-    std::unique_ptr<Glycan> Clone() override
-    {
-        return std::make_unique<GlycanTemp>(*this);
-    }
+    std::unique_ptr<Moiety> a = 
+        std::make_unique<Moiety>(Monosaccharide::GlcNAc);
+    std::unique_ptr<Moiety> b = 
+        std::make_unique<Moiety>(Monosaccharide::Gal);
+    std::unique_ptr<Moiety> c = 
+        std::make_unique<Moiety>(Monosaccharide::Man);
+    std::unique_ptr<Moiety> d = 
+        std::make_unique<Moiety>(Monosaccharide::Fuc);
 
-    std::vector<std::unique_ptr<Glycan>> Add(Monosaccharide suger) override
-    { 
-        std::vector<std::unique_ptr<Glycan>> result; 
-        std::unique_ptr<Glycan> new_glycan = Clone();
-        new_glycan->Terminal().push_back(suger);
-        result.push_back(std::move(new_glycan));
-        return result; 
-    }
-};
-
-BOOST_AUTO_TEST_CASE( glycan_test ) {
-    std::unique_ptr<GlycanTemp> glycan = std::make_unique<GlycanTemp>();
-    std::vector<std::unique_ptr<Glycan>> vect = glycan->Add(Monosaccharide::GlcNAc);
-    BOOST_CHECK( vect.front()->Terminal().front() == Monosaccharide::GlcNAc);   
-
-    GlycanTemp* new_glycan = (GlycanTemp*) vect.front().get();
-    std::vector<std::unique_ptr<Glycan>> vect2 = new_glycan->Add(Monosaccharide::Fuc);
-    BOOST_CHECK( vect2.front()->Terminal().front() == Monosaccharide::GlcNAc);   
-    BOOST_CHECK( vect2.front()->Terminal().back() == Monosaccharide::Fuc);   
-
+    c->Children().push_back(std::move(d));
+    b->Children().push_back(std::move(c));
+    a->Children().push_back(std::move(b));
+    
+    std::unique_ptr<Moiety> e = a->Clone();
+    return e;
 }
 
+BOOST_AUTO_TEST_CASE( Monosaccharide_test ) 
+{
+
+    std::unique_ptr<Moiety> e = CreateRoot();
+    BOOST_CHECK( e->Name() ==  Monosaccharide::GlcNAc); 
+    BOOST_CHECK( e->Children().front()->Name() ==  Monosaccharide::Gal); 
+    BOOST_CHECK( e->Children().front()->Children().front()
+                    ->Children().front()->Name() ==  Monosaccharide::Fuc); 
+    BOOST_CHECK( e->Children().front()->Children().front()
+                    ->Parent()->Name() ==  Monosaccharide::Gal); 
+}
+
+BOOST_AUTO_TEST_CASE( glycan_test ) 
+{
+    Glycan nglycan;
+    std::unique_ptr<Moiety> e = CreateRoot();
+
+    nglycan.set_root(e);
+    BOOST_CHECK( nglycan.Root()->Children().front()->Children().front()
+                ->Parent()->Name() ==  Monosaccharide::Gal); 
+
+    std::unique_ptr<Glycan> nglycan_ptr = nglycan.Clone();
+    std::unique_ptr<Moiety> f = CreateRoot();
+    nglycan_ptr->set_root(f);
+    BOOST_CHECK( nglycan_ptr->Root()->Children().front()->Children().front()
+                    ->Parent()->Name() ==  Monosaccharide::Gal); 
+}
+
+// BOOST_AUTO_TEST_CASE( nglycan_complex_test ) {
+//     std::unique_ptr<NGlycanComplex> nglycan = std::make_unique<NGlycanComplex>();
+
+
+// }
 
 // BOOST_AUTO_TEST_CASE( glycan_add_test )
 // {
@@ -62,15 +84,7 @@ BOOST_AUTO_TEST_CASE( glycan_test ) {
 
 // }
 
-// BOOST_AUTO_TEST_CASE( nglycan_complex_test ) {
-//     NGlycanComplex nglycan;
-//     GlcNAc a; Man b; Gal c; Fuc d; NeuAc e;
-//     nglycan.set_root(&a);
 
-//     BOOST_CHECK( nglycan.Root()->Name() == "GlcNAc"); 
-//     BOOST_CHECK( nglycan.Root()->Type() == SugerType::HexNAc); 
-
-// }
 
 // void dfs(Monosaccharide* root, std::vector<string>& result)
 // {

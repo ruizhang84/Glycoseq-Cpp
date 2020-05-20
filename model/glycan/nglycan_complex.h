@@ -10,16 +10,29 @@ namespace glycan {
 // public:
 //     NGlycanComplex() 
 //     { 
-//         isCore_ = true;
 //         isNGlycanComplex_ = true;
 //     };
-//     // std::vector<Glycan*> Add(Monosaccharide* suger) override;
-//     // bool feasilibty_check(Monosaccharide* suger);
+
+//     std::unique_ptr<Glycan> Clone() override; 
+//     bool feasibility_check 
+//         (Monosaccharide place, Monosaccharide suger) const override;
+//     std::vector<std::unique_ptr<Glycan>> Add(Monosaccharide suger) override;
 
 // protected:
-//     void UpdateMass(std::unique_ptr<Monosaccharide>& suger);
-//     void UpdateComposition(std::unique_ptr<Monosaccharide>& suger);
-//     bool isCore_;
+//     bool feasibility_check_core 
+//         (Monosaccharide place, Monosaccharide suger) const;
+//     bool feasibility_check_branch 
+//         (Monosaccharide place, Monosaccharide suger) const;
+//     bool IsCore() const
+//     { 
+//         auto it = composite_.find(Monosaccharide::GlcNAc);
+//         if (it != composite_.end() && it->second > 2)
+//             return false;
+//         it = composite_.find(Monosaccharide::Gal);
+//         if (it != composite_.end() && it->second >= 3)
+//             return false;
+//         return true;
+//     }
 // }; 
 
 }  //  namespace glycan
