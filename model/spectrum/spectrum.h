@@ -7,7 +7,7 @@
 namespace model {
 namespace spectrum {
 
-enum class SpectraType
+enum class SpectrumType
 { MS, EThcD };
 
 class Spectrum
@@ -29,8 +29,8 @@ public:
 
     int Scan() { return scan_num_; }
     void set_scan(int num) { scan_num_ = num; }
-    SpectraType Type() { return type_; }
-    void set_type(SpectraType type) { type_ = type; }
+    SpectrumType Type() { return type_; }
+    void set_type(SpectrumType type) { type_ = type; }
 
     std::vector<Peak> Peaks() { return peaks_; }
     void set_peaks(std::vector<Peak>& peaks) 
@@ -39,7 +39,7 @@ public:
 protected:
     std::vector<Peak> peaks_;
     int scan_num_;
-    SpectraType type_;
+    SpectrumType type_;
 
 };
 
