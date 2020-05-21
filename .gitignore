@@ -40,6 +40,7 @@ Thumbs.db
 # other files #
 ######################
 /data/*
+/test/*
 /.vscode/*
 *.raw
 *.mgf
