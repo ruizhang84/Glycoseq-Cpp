@@ -11,8 +11,8 @@ namespace clustering {
 
 std::vector<double> GenData()
 {
-    std::default_random_engine generator;
-    std::uniform_real_distribution<double> distribution(-10.0, 10.0);
+    std::random_device generator;
+    std::uniform_real_distribution<double> distribution(-1.0, 1.0);
     std::vector<double> v;
 
     int nrolls = 100;
@@ -25,9 +25,9 @@ std::vector<double> GenData()
 
 BOOST_AUTO_TEST_CASE( lsh_clustering_test ) 
 {
-    LSHClustering cluster_runner(100, 15, 100);
+    LSHClustering cluster_runner(100, 15, 1);
     std::unordered_map<int, std::vector<double>> data;
-    for(int i = 0; i < 10; i++)
+    for(int i = 0; i < 100; i++)
     {
         data.emplace(i, GenData());
     }

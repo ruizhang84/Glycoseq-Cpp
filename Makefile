@@ -4,12 +4,17 @@ CC = g++
 CPPFLAGS =-g -Wall -std=c++14 
 INCLUDES = -I/usr/local/include -L/usr/local/lib -lboost_unit_test_framework -static
 
-TEST_CASES := glycan_test mgf_parser_test lsh_test lsh_clustering_test
+TEST_CASES := algorithm_base_test glycan_test mgf_parser_test lsh_test lsh_clustering_test
+
 
 lsh_clustering_test:
 	$(CC) $(CPPFLAGS) $(INCLUDES) \
 	-o test/lsh_clustering_test algorithm/clustering/lsh_clustering_test.cpp \
 	 algorithm/clustering/lsh_clustering.cpp util/calc/lsh.cpp util/calc/calc.cpp
+
+algorithm_base_test:
+	$(CC) $(CPPFLAGS) $(INCLUDES) \
+	-o test/algorithm_base_test algorithm/base/base_test.cpp
 
 lsh_test:
 	$(CC) $(CPPFLAGS) $(INCLUDES) \
