@@ -1,5 +1,5 @@
-#ifndef ENGINE_SPECTRUM_BINPACKING_H
-#define ENGINE_SPECTRUM_BINPACKING_H
+#ifndef ALGORITHM_BASE_BINPACKING_H
+#define ALGORITHM_BASE_BINPACKING_H
 #include <vector>
 #include <cmath> 
 
@@ -32,9 +32,9 @@ public:
     void set_tolerance(double tol) { tolerance_ = tol; }
 
 protected:
-    virtual int Index(int pos) const
+    virtual int Index(double pos) const
         { return (int) floor((pos - lower_) / tolerance_); }
-    virtual int Position(const T& elem) const
+    virtual double Position(const T& elem) const
         { return (int) elem; }
     virtual int Bucket() const
         { return (int) ceil((upper_ - lower_ + 1) / tolerance_); }
