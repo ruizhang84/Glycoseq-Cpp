@@ -7,7 +7,7 @@
 namespace util {
 namespace io {
 
-BOOST_AUTO_TEST_CASE( Monosaccharide_test ) 
+BOOST_AUTO_TEST_CASE( mgf_read_test ) 
 {
     MGFParser parser("/home/yu/Documents/MultiGlycan-Cpp/data/test_EThcD.mgf", 
                     SpectrumType::EThcD);
