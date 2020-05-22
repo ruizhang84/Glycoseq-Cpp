@@ -15,6 +15,9 @@ public:
     double Intensity() const { return intensity_; }
     void set_intensity(double intensity) 
         { intensity_ = intensity; }
+    
+    bool operator<(const Peak& other) const
+        { return mz_ < other.mz_; }
 
 protected:
     double mz_;
