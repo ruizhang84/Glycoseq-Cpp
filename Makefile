@@ -2,10 +2,14 @@
 
 CC = g++
 CPPFLAGS =-g -Wall -std=c++14 
-INCLUDES = -I/usr/local/include -L/usr/local/lib -lboost_unit_test_framework -static
+INCLUDES = -I/usr/local/include -L/usr/local/lib -lboost_unit_test_framework -static 
+LIB = -I/usr/local/include -L/usr/local/lib 
 
 TEST_CASES := algorithm_base_test glycan_test mgf_parser_test lsh_test lsh_clustering_test
 
+clustering:
+	$(CC) $(CPPFLAGS) $(LIB) \
+	-o clustering apps/clustering/clustering.cpp
 
 lsh_clustering_test:
 	$(CC) $(CPPFLAGS) $(INCLUDES) \
@@ -33,4 +37,4 @@ test: ${TEST_CASES}
 
 # clean up
 clean:
-	rm -f core test/*
+	rm -f core test/* clustering
