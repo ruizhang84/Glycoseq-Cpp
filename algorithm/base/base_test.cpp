@@ -8,6 +8,16 @@
 namespace algorithm {
 namespace base {
 
+class IntBinPacking : public BinPacking<int>
+{
+public:
+    IntBinPacking(double tol, double lower, double upper) :
+        BinPacking(tol, lower, upper){};
+protected:
+    virtual double Position(const int& elem) const override
+        { return elem; }
+};
+
 BOOST_AUTO_TEST_CASE(  union_find_test ) 
 {
     UnionFind finder;
@@ -23,7 +33,7 @@ BOOST_AUTO_TEST_CASE(  union_find_test )
 
 BOOST_AUTO_TEST_CASE(  binpacking_test ) 
 {
-    BinPacking<int> packer(10, 0, 100);
+    IntBinPacking packer(10, 0, 100);
     std::vector<int> data;
     for(int i = 0; i <= 100; i++)
     {

@@ -11,6 +11,9 @@ class SpectrumBinPacking :
     public algorithm::base::BinPacking<model::spectrum::Peak>
 {
 public:
+    SpectrumBinPacking(double tol, double lower, double upper):
+        BinPacking(tol, lower, upper_){}
+        
     std::vector<double> Packing
         (model::spectrum::Spectrum& spec);
 

@@ -34,8 +34,7 @@ public:
 protected:
     virtual int Index(double pos) const
         { return (int) floor((pos - lower_) / tolerance_); }
-    virtual double Position(const T& elem) const
-        { return (int) elem; }
+    virtual double Position(const T& elem) const = 0;
     virtual int Bucket() const
         { return (int) ceil((upper_ - lower_ + 1) / tolerance_); }
 

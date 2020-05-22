@@ -32,7 +32,7 @@ public:
     SpectrumType Type() { return type_; }
     void set_type(SpectrumType type) { type_ = type; }
 
-    std::vector<Peak> Peaks() { return peaks_; }
+    std::vector<Peak>& Peaks() { return peaks_; }
     void set_peaks(std::vector<Peak>& peaks) 
         { peaks_ = std::move(peaks); }
 
