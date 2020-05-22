@@ -7,6 +7,11 @@ LIB = -I/usr/local/include -L/usr/local/lib
 
 TEST_CASES := algorithm_base_test glycan_test mgf_parser_test lsh_test lsh_clustering_test
 
+
+algorithm_base_test:
+	$(CC) $(CPPFLAGS) $(INCLUDES) \
+	-o test/algorithm_base_test algorithm/base/base_test.cpp
+
 clustering:
 	$(CC) $(CPPFLAGS) $(LIB) \
 	-o clustering apps/clustering/clustering.cpp
@@ -16,9 +21,7 @@ lsh_clustering_test:
 	-o test/lsh_clustering_test algorithm/clustering/lsh_clustering_test.cpp \
 	 algorithm/clustering/lsh_clustering.cpp util/calc/lsh.cpp util/calc/calc.cpp
 
-algorithm_base_test:
-	$(CC) $(CPPFLAGS) $(INCLUDES) \
-	-o test/algorithm_base_test algorithm/base/base_test.cpp
+
 
 lsh_test:
 	$(CC) $(CPPFLAGS) $(INCLUDES) \

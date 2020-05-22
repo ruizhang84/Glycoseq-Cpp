@@ -5,7 +5,7 @@
 
 namespace model {
 namespace spectrum {
-class SpectrumMSn : public Spectrum{
+class SpectrumMSn : public Spectrum {
 public:
     SpectrumMSn() = default;
     SpectrumMSn(const SpectrumMSn&);
