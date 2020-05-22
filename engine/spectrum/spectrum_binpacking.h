@@ -13,7 +13,7 @@ class SpectrumBinPacking :
 {
 public:
     SpectrumBinPacking(double tol, double lower, double upper):
-        BinPacking(tol, lower, upper_){}
+        BinPacking(tol, lower, upper){}
         
     std::vector<double> Packing
         (model::spectrum::Spectrum& spec);

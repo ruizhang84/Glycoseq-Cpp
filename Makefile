@@ -11,7 +11,8 @@ TEST_CASES := algorithm_base_test glycan_test mgf_parser_test lsh_test lsh_clust
 
 clustering:
 	$(CC) $(CPPFLAGS) $(LIB) \
-	-o clustering apps/clustering/clustering.cpp util/io/mgf_parser.cpp
+	-o clustering apps/clustering/clustering.cpp util/io/mgf_parser.cpp engine/spectrum/spectrum_binpacking.cpp \
+	algorithm/clustering/lsh_clustering.cpp util/calc/lsh.cpp util/calc/calc.cpp
 
 algorithm_base_test:
 	$(CC) $(CPPFLAGS) $(INCLUDES) \

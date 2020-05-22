@@ -11,7 +11,7 @@ std::vector<double> SpectrumBinPacking::Packing
     std::vector<double> result;
     std::vector<Peak> peaks = spec.Peaks();
     std::vector<std::vector<Peak>> peak_bins = BinPacking::Packing(peaks); 
-    for(int i = 0; i < peak_bins.size(); i++)
+    for(size_t i = 0; i < peak_bins.size(); i++)
     {
         result.push_back(Merge(peak_bins[i]));
     }
