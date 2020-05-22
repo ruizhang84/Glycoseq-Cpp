@@ -4,7 +4,7 @@ CC = g++
 CPPFLAGS =-g -Wall -std=c++14 
 INCLUDES = -I/usr/local/include -L/usr/local/lib -lboost_unit_test_framework -static
 
-TEST_CASES := glycan_test mgf_parser_test
+TEST_CASES := glycan_test mgf_parser_test lsh_test lsh_clustering_test
 
 lsh_clustering_test:
 	$(CC) $(CPPFLAGS) $(INCLUDES) \

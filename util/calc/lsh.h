@@ -5,7 +5,6 @@
 #include <vector>
 #include "calc.h"
 
-
 namespace util {
 namespace calc {
 
@@ -30,8 +29,8 @@ public:
 
 
 protected:
-    int RandomProjection(std::vector<double>& vect, 
-        std::vector<double> weight)
+    int RandomProjection(const std::vector<double>& vect, 
+        const std::vector<double>& weight) const
     {
         return calculator_.DotProduct(vect, weight) 
                 >= 0 ? 1 : 0;

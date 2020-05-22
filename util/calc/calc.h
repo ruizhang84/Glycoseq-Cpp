@@ -11,8 +11,8 @@ class Calc
 {
 public:
     Calc() = default;
-    double DotProduct(std::vector<double>&, 
-        std::vector<double>&) const;
+    double DotProduct(const std::vector<double>&, 
+        const std::vector<double>&) const;
 };
 
 

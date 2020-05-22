@@ -18,7 +18,7 @@ int LSH::Key(std::vector<double>& vect)
 std::vector<double> LSH::GenNormalDistribWeight()
 {
     std::vector<double> weight;
-    std::default_random_engine generator;
+    std::random_device generator;
     std::normal_distribution<double> distribution(kMean, kSTD);
 
     for (int i = 0; i < weight_size_; i++) 
