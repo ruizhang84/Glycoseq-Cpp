@@ -8,7 +8,7 @@ namespace model {
 namespace spectrum {
 
 enum class SpectrumType
-{ MS, EThcD };
+{ MS, EThcD, NONE };
 
 class Spectrum
 {

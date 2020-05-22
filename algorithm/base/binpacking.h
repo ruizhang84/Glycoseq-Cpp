@@ -27,6 +27,7 @@ public:
     }
 
     double Tolerance() { return tolerance_; }
+    int BinSize() { return Bucket(); }
     void set_lower(double lower) { lower_ = lower; }
     void set_upper(double upper) { upper_ = upper; }
     void set_tolerance(double tol) { tolerance_ = tol; }

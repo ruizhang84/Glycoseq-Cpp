@@ -88,6 +88,10 @@ public:
         }
         return "";
     }
+    bool Exist(int scan_num) override
+    {
+        return data_set_.find(scan_num) != data_set_.end();
+    }
     
 private:
     class MGFData
