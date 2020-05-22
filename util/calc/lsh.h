@@ -14,19 +14,20 @@ class LSH
 public:
     LSH(int size, int num): 
         weight_size_(size), hash_func_num_(num){ Init(); };
-
-    int Key(std::vector<double>& vect);
-    
-    int WeightSize() { return weight_size_; }
-    int HashFuncNum() { return hash_func_num_; }
-    void set_weight_size(int size) { weight_size_ = size; }
-    void set_hash_func_num(int num) { hash_func_num_ = num; } 
+        
     void Init() 
     { 
         if (!weights_.empty())
             weights_.clear(); 
         GenHashFunc(); 
     }
+    int Key(std::vector<double>& vect);
+    
+    int WeightSize() { return weight_size_; }
+    int HashFuncNum() { return hash_func_num_; }
+    void set_weight_size(int size) { weight_size_ = size; }
+    void set_hash_func_num(int num) { hash_func_num_ = num; } 
+
 
 protected:
     int RandomProjection(std::vector<double>& vect, 
@@ -42,8 +43,8 @@ protected:
     std::vector<std::vector<double>> weights_;
     int weight_size_; 
     int hash_func_num_;
-    int kMean = 0;
-    int kSTD = 1; 
+    const int kMean = 0;
+    const int kSTD = 1; 
 };
 
 
