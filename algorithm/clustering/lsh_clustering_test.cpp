@@ -1,13 +1,9 @@
-#define BOOST_TEST_MODULE LSHClusteringTest
-#include <boost/test/unit_test.hpp>
 #include <iostream>
 #include <vector>
 #include <random>
 #include "lsh_clustering.h"
-// #include "../../util/io/mgf_parser.h"
 
-namespace algorithm {
-namespace clustering {
+using namespace algorithm::clustering;
 
 std::vector<double> GenData()
 {
@@ -23,7 +19,7 @@ std::vector<double> GenData()
     return v;
 }
 
-BOOST_AUTO_TEST_CASE( lsh_clustering_test ) 
+int main(int argc, char *argv[])
 {
     LSHClustering cluster_runner(100, 15, 1);
     std::unordered_map<int, std::vector<double>> data;
@@ -34,6 +30,7 @@ BOOST_AUTO_TEST_CASE( lsh_clustering_test )
     cluster_runner.set_data(data);
     std::unordered_map<int, std::vector<int>> result = 
         cluster_runner.Clustering();
+
     for(auto i : result)
     {
         std::cout << "The number: " << i.first 
@@ -43,8 +40,5 @@ BOOST_AUTO_TEST_CASE( lsh_clustering_test )
             std::cout << j << std::endl;
         }
     }
-
 }
 
-} // namespace clustering
-} // namespace algorithm

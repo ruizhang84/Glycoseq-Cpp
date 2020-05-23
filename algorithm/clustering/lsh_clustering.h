@@ -46,7 +46,7 @@ protected:
     std::vector<util::calc::LSH> cluster_;
     algorithm::base::UnionFind union_finder_;
     std::unordered_map<int, std::vector<double>> data_; 
-    std::mutex mtx_;  
+    std::mutex mutex_;  
 };
 
 } // namespace clustering

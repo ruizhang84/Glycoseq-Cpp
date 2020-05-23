@@ -7,12 +7,19 @@ std::unordered_map<int, std::vector<int>> LSHClustering::Clustering()
 {
     std::unordered_map<int, std::vector<int>> result;
     std::vector<std::tuple<int, int>> union_set;
+    std::vector<std::thread> thread_pool;
     
     // cluster
-    for(auto cluster : cluster_)
+    for(auto& cluster : cluster_)
     {   
-        ParClustering(cluster, union_set);
+        std::thread t(&LSHClustering::ParClustering, this, std::ref(cluster), std::ref(union_set));
+        thread_pool.push_back(std::move(t));
     }
+    for(auto& t: thread_pool)
+    {
+        t.join();
+    }
+
     for(auto x : union_set)
     {
         union_finder_.Union(std::get<0>(x), std::get<1>(x));
@@ -62,7 +69,9 @@ void LSHClustering::ParClustering
             }
         }
     }
+    mutex_.lock();
     union_set.insert(union_set.end(), temp_set.begin(), temp_set.end());
+    mutex_.unlock();
 }
 
 } // namespace clustering
