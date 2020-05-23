@@ -17,15 +17,17 @@ using namespace engine::spectrum;
 using namespace algorithm::clustering;
 using namespace std::chrono; 
 
+
 int main(int argc, char *argv[]){
     extern char *optarg;
     int opt;
     std::string path, out_path;
-    double tol = 0.1;
+    double tol = 0.05;
     double lower = 200;
     double upper = 2000;
-    int hash_func_num = 15;
-    int cluster_num = 100;
+    int hash_func_num = 16;
+    int cluster_num = 10;
+    int thread = 20;
 
     while ((opt = getopt(argc, argv, ":t:l:u:k:i:f:o:h")) != EOF)
         switch(opt)
@@ -58,6 +60,10 @@ int main(int argc, char *argv[]){
                 cluster_num =  atoi(optarg);
                 std::cout <<"Clustering iterations " << cluster_num << std::endl; 
                 break;
+            case 'd': 
+                thread =  atoi(optarg);
+                std::cout <<"default thread number " << thread << std::endl; 
+                break;
             case 'h': 
                 std::cout <<"clustering mgf spectrum, " 
                     << "-f [file] -t [tolerance] -l [lower_bound] -u [upper_bound] "
@@ -82,16 +88,18 @@ int main(int argc, char *argv[]){
     spectrum_reader.Init();
 
     std::vector<Spectrum> spectra = spectrum_reader.GetSpectrum();
+    std::unordered_map<int, std::vector<double>> data_set;
 
     SpectrumBinPacking bin_packer(tol, lower, upper);
-    std::unordered_map<int, std::vector<double>> data_set;
+    int bucket_size = bin_packer.BinSize();
+
     for(auto spec : spectra)
     {
         std::vector<double> v = bin_packer.Packing(spec);
         data_set[spec.Scan()] = v;   
     }
-
-    LSHClustering lsh(bin_packer.BinSize(), hash_func_num, cluster_num);
+    
+    LSHClustering lsh(bucket_size, hash_func_num, cluster_num);
     lsh.set_data(data_set);
     std::unordered_map<int, std::vector<int>> clustred = lsh.Clustering();
 

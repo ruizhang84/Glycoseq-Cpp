@@ -9,9 +9,8 @@ int LSH::Key(std::vector<double>& vect)
     for (int i = 0; i < hash_func_num_; i++)
     {
         key <<= 1; 
-        key += RandomProjection(vect, weights_[i]);
+        key |= RandomProjection(vect, weights_[i]);
     }
-
     return key;
 }
 

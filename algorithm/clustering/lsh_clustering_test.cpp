@@ -21,7 +21,7 @@ std::vector<double> GenData()
 
 int main(int argc, char *argv[])
 {
-    LSHClustering cluster_runner(100, 15, 1);
+    LSHClustering cluster_runner(100, 15, 2);
     std::unordered_map<int, std::vector<double>> data;
     for(int i = 0; i < 100; i++)
     {
