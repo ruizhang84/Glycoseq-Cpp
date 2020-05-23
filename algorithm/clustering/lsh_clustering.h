@@ -3,7 +3,8 @@
 
 #include <vector>
 #include <unordered_map> 
-
+#include <mutex> 
+#include <thread>  
 #include "../base/union_find.h"
 #include "../../util/calc/lsh.h"
 
@@ -34,6 +35,9 @@ public:
     virtual std::unordered_map<int, std::vector<int>> Clustering();
 
 protected:
+    virtual void ParClustering
+        (util::calc::LSH cluster, std::vector<std::tuple<int, int>>& union_set);
+
     util::calc::LSH GenLSH() 
         { return util::calc::LSH(bin_size_, hash_func_num_); }
     int bin_size_;
@@ -42,6 +46,7 @@ protected:
     std::vector<util::calc::LSH> cluster_;
     algorithm::base::UnionFind union_finder_;
     std::unordered_map<int, std::vector<double>> data_; 
+    std::mutex mtx_;  
 };
 
 } // namespace clustering

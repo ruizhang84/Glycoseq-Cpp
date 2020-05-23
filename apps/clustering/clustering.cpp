@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <unordered_map> 
 #include <fstream>
+#include <chrono> 
 
 #include "../../algorithm/clustering/lsh_clustering.h"
 #include "../../util/io/spectrum_reader.h"
@@ -14,6 +15,7 @@
 using namespace util::io;
 using namespace engine::spectrum;
 using namespace algorithm::clustering;
+using namespace std::chrono; 
 
 int main(int argc, char *argv[]){
     extern char *optarg;
@@ -71,6 +73,7 @@ int main(int argc, char *argv[]){
                 std::cout <<"-h for help" << std::endl;
         }
 
+    auto start = high_resolution_clock::now(); 
     path = "/home/yu/Documents/MultiGlycan-Cpp/data/test_EThcD.mgf";
     out_path = "cluster.txt";
     std::unique_ptr<SpectrumParser> parser = 
@@ -78,23 +81,23 @@ int main(int argc, char *argv[]){
     SpectrumReader spectrum_reader(path, std::move(parser));
     spectrum_reader.Init();
 
-    std::cout << spectrum_reader.GetFirstScan() << std::endl;
-    std::cout << spectrum_reader.GetLastScan() << std::endl;
-
     std::vector<Spectrum> spectra = spectrum_reader.GetSpectrum();
 
     SpectrumBinPacking bin_packer(tol, lower, upper);
-    LSHClustering lsh(bin_packer.BinSize(), hash_func_num, cluster_num);
     std::unordered_map<int, std::vector<double>> data_set;
     for(auto spec : spectra)
     {
         std::vector<double> v = bin_packer.Packing(spec);
-        data_set[spec.Scan()] = v;
-        
+        data_set[spec.Scan()] = v;   
     }
+
+    LSHClustering lsh(bin_packer.BinSize(), hash_func_num, cluster_num);
     lsh.set_data(data_set);
     std::unordered_map<int, std::vector<int>> clustred = lsh.Clustering();
 
+    auto stop = high_resolution_clock::now(); 
+    auto duration = duration_cast<seconds>(stop - start); 
+    std::cout << duration.count() << std::endl; 
 
     std::ofstream outfile;
     outfile.open (out_path);

@@ -24,7 +24,9 @@ protected:
 
     double Position(const 
         model::spectrum::Peak& pk) const override 
-            { return pk.MZ(); }
+    { 
+        return pk.MZ(); 
+    }
 };
 
 } // namespace spectrum

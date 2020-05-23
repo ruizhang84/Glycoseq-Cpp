@@ -46,16 +46,5 @@ BOOST_AUTO_TEST_CASE( lsh_clustering_test )
 
 }
 
-// BOOST_AUTO_TEST_CASE( lsh_clustering_test ) 
-// {
-//     util::io::MGFParser 
-//         parser("/home/yu/Documents/MultiGlycan-Cpp/data/test_EThcD.mgf", 
-//             model::spectrum::SpectrumType::EThcD);
-//     parser.Init();
-
-//     std::vector<util::io::Peak> pk1 = parser.Peaks(64);
-//     std::vector<util::io::Peak> pk2 = parser.Peaks(64);
-// }
-
 } // namespace clustering
 } // namespace algorithm

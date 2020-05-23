@@ -21,7 +21,8 @@ public:
         for(auto& it : vect)
         {
             int index = Index(Position(it));
-            bins[index].push_back(it);
+            if (index >= 0)
+                bins[index].push_back(it);
         }
         return bins;
     }
@@ -34,7 +35,11 @@ public:
 
 protected:
     virtual int Index(double pos) const
-        { return (int) floor((pos - lower_) / tolerance_); }
+    { 
+        if (pos < lower_ || pos > upper_)
+            return -1;
+        return (int) floor((pos - lower_) / tolerance_); 
+    }
     virtual double Position(const T& elem) const = 0;
     virtual int Bucket() const
         { return (int) ceil((upper_ - lower_ + 1) / tolerance_); }
