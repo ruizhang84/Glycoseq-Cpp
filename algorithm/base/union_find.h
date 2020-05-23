@@ -30,7 +30,7 @@ public:
         return (map_[i] == i) ? i : (map_[i] = Find(map_[i])); 
     }
     bool IsSameSet(int i, int j) { return Find(i) == Find(j); }
-    void Union(int i, int j) 
+    virtual void Union(int i, int j) 
     { 
         if (!IsSameSet(i, j)) 
         {

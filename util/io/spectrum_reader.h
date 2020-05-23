@@ -4,7 +4,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "../../model/spectrum/peak.h"
 #include "../../model/spectrum/spectrum_MSn.h"
 
 namespace util {
@@ -16,6 +15,7 @@ class SpectrumParser
 {
 public:
     SpectrumParser(std::string path): path_(path){}
+    virtual ~SpectrumParser(){}
 
     virtual double ParentMZ(int scan_num) = 0;
     virtual int ParentCharge(int scan_num) = 0;

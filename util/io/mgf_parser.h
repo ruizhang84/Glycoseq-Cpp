@@ -13,6 +13,7 @@ class MGFParser : public SpectrumParser
 public:
     MGFParser(std::string path, SpectrumType type): 
         SpectrumParser(path), type_(type){}
+    ~MGFParser(){}
 
     void Init() override;
 

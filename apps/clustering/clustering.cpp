@@ -8,9 +8,9 @@
 #include <chrono> 
 
 #include "../../algorithm/clustering/lsh_clustering.h"
-#include "../../util/io/spectrum_reader.h"
 #include "../../util/io/mgf_parser.h"
 #include "../../engine/spectrum/spectrum_binpacking.h"
+#include "../../util/calc/spectrum_sim.h"
 
 using namespace util::io;
 using namespace engine::spectrum;
@@ -28,8 +28,9 @@ int main(int argc, char *argv[]){
     int hash_func_num = 16;
     int cluster_num = 10;
     int thread = 20;
+    double cosine = 0.7;
 
-    while ((opt = getopt(argc, argv, ":t:l:u:k:i:f:o:h")) != EOF)
+    while ((opt = getopt(argc, argv, ":t:l:u:k:i:f:o:h:d:c")) != EOF)
         switch(opt)
         {
             case 'f': 
@@ -60,6 +61,9 @@ int main(int argc, char *argv[]){
                 cluster_num =  atoi(optarg);
                 std::cout <<"Clustering iterations " << cluster_num << std::endl; 
                 break;
+            case 'c': 
+                cosine = atof(optarg);
+                std::cout <<"default cosine similarity threshold " << cosine << std::endl; 
             case 'd': 
                 thread =  atoi(optarg);
                 std::cout <<"default thread number " << thread << std::endl; 
@@ -99,7 +103,8 @@ int main(int argc, char *argv[]){
         data_set[spec.Scan()] = v;   
     }
     
-    LSHClustering lsh(bucket_size, hash_func_num, cluster_num);
+    LSHClustering lsh(bucket_size, hash_func_num, cluster_num, 
+        cosine, &spectrum_reader);
     lsh.set_data(data_set);
     std::unordered_map<int, std::vector<int>> clustred = lsh.Clustering();
 

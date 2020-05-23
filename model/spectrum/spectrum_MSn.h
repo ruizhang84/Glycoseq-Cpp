@@ -16,6 +16,7 @@ public:
 
     void set_parent_mz(double mz) { precursor_mz_ = mz;}
     void set_parent_charge(int charge) { precursor_charge_ = charge; }
+    
 private:
     double precursor_mz_;
     int precursor_charge_;

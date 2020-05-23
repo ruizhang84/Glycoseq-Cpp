@@ -22,20 +22,20 @@ std::unordered_map<int, std::vector<int>> LSHClustering::Clustering()
 
     for(auto x : union_set)
     {
-        union_finder_.Union(std::get<0>(x), std::get<1>(x));
+        union_finder_->Union(std::get<0>(x), std::get<1>(x));
     }
 
     // generate clustering result
     for(auto i : data_)
     {
-        int index = union_finder_.Find(i.first);
+        int index = union_finder_->Find(i.first);
         if (result.find(index) == result.end())
         {
             result.emplace(index, std::vector<int>());
         }
         result[index].push_back(i.first);
     }
-    union_finder_.Clear();
+    union_finder_->Clear();
 
     return result;
 }

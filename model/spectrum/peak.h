@@ -24,6 +24,8 @@ protected:
     double intensity_;
 };
 
+
+
 } // namespace spectrum
 } // namespace model
 
