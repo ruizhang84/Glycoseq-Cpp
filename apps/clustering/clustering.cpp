@@ -84,7 +84,7 @@ int main(int argc, char *argv[]){
         }
 
     auto start = high_resolution_clock::now(); 
-    path = "/home/yu/Documents/MultiGlycan-Cpp/data/test_EThcD_min.mgf";
+    path = "/home/yu/Documents/MultiGlycan-Cpp/data/test_EThcD.mgf";
     out_path = "cluster.txt";
     std::unique_ptr<SpectrumParser> parser = 
         std::make_unique<MGFParser>(path, SpectrumType::EThcD);

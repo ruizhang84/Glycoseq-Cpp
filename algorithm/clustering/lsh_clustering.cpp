@@ -62,10 +62,12 @@ void LSHClustering::ParClustering
         // union
         if (bucket.second.size() > 1)
         {
-            auto x = bucket.second.front();
-            for(auto y : bucket.second)
+            for (size_t i = 0; i < bucket.second.size()-1; i++)
             {
-                temp_set.push_back(std::make_tuple(x, y));
+                for (size_t j = i + 1; j < bucket.second.size(); j++){
+                    int x = bucket.second[i], y = bucket.second[j];
+                    temp_set.push_back(std::make_tuple(x, y));
+                }
             }
         }
     }
