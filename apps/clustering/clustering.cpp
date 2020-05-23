@@ -84,7 +84,7 @@ int main(int argc, char *argv[]){
         }
 
     auto start = high_resolution_clock::now(); 
-    path = "/home/yu/Documents/MultiGlycan-Cpp/data/test_EThcD.mgf";
+    path = "/home/yu/Documents/MultiGlycan-Cpp/data/test_EThcD_min.mgf";
     out_path = "cluster.txt";
     std::unique_ptr<SpectrumParser> parser = 
         std::make_unique<MGFParser>(path, SpectrumType::EThcD);
@@ -103,8 +103,8 @@ int main(int argc, char *argv[]){
         data_set[spec.Scan()] = v;   
     }
     
-    LSHClustering lsh(bucket_size, hash_func_num, cluster_num, 
-        cosine, &spectrum_reader);
+    LSHUnionFind finder (&spectrum_reader, cosine);
+    LSHClustering lsh(bucket_size, hash_func_num, cluster_num, &finder);
     lsh.set_data(data_set);
     std::unordered_map<int, std::vector<int>> clustred = lsh.Clustering();
 

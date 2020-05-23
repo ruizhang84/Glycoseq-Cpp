@@ -4,52 +4,26 @@
 #include <string>
 #include "lsh_clustering.h"
 #include "../../util/io/mgf_parser.h"
+#include "../../engine/spectrum/spectrum_binpacking.h"
 
-using namespace algorithm::clustering;
-
-using namespace util::io;
-
-std::vector<double> GenData()
-{
-    std::random_device generator;
-    std::uniform_real_distribution<double> distribution(-1.0, 1.0);
-    std::vector<double> v;
-
-    int nrolls = 100;
-    for (int i = 0; i < nrolls; ++i) 
-    {
-        v.push_back(distribution(generator));
-    }
-    return v;
-}
 
 int main(int argc, char *argv[])
 {
     std::string path = "/home/yu/Documents/MultiGlycan-Cpp/data/test_EThcD.mgf";
-    std::unique_ptr<SpectrumParser> parser = 
-        std::make_unique<MGFParser>(path, SpectrumType::EThcD);
-    std::unique_ptr<SpectrumReader> spectrum_reader = 
-        std::make_unique<SpectrumReader>(path, std::move(parser));
-    spectrum_reader->Init();
+    std::unique_ptr<util::io::MGFParser> parser = 
+        std::make_unique<util::io::MGFParser>(path, model::spectrum::SpectrumType::EThcD);
+    util::io::SpectrumReader spectrum_reader(path, std::move(parser));
+    spectrum_reader.Init();
 
-    LSHClustering cluster_runner(100, 15, 2, 0.6, spectrum_reader.get());
-    std::unordered_map<int, std::vector<double>> data;
-    for(int i = 0; i < 100; i++)
-    {
-        data.emplace(i, GenData());
-    }
-    cluster_runner.set_data(data);
-    std::unordered_map<int, std::vector<int>> result = 
-        cluster_runner.Clustering();
+    algorithm::clustering::LSHUnionFind finder(&spectrum_reader, 0.6); 
 
-    for(auto i : result)
-    {
-        std::cout << "The number: " << i.first 
-            << " contains " << std::endl;
-        for(auto j : i.second)
-        {
-            std::cout << j << std::endl;
-        }
-    }
+    double tol = 0.05, lower = 200, upper = 2000;
+    engine::spectrum::SpectrumBinPacking bin_packer(tol, lower, upper);
+    int bucket_size = bin_packer.BinSize();
+
+    algorithm::clustering::LSHClustering cluster_runner(bucket_size, 15, 2, &finder);
+    // finder.Union(3, 64);
+    cluster_runner.union_finder_->Union(3, 64);
+cluster_runner.union_finder_->Union(3, 64);
 }
 

@@ -14,30 +14,28 @@ class SpectrumSim
 {
 public:
     SpectrumSim(): tolerance_(0.01){}
-
-    double ComputeCosine(model::spectrum::Spectrum& spec, model::spectrum::Spectrum& other)
+        double ComputeCosine(std::vector<model::spectrum::Peak> spec, std::vector<model::spectrum::Peak> other)
     {
-        model::spectrum::Peak lower1 = *std::min_element(spec.Peaks().begin(), spec.Peaks().end());
-        model::spectrum::Peak lower2 = *std::min_element(other.Peaks().begin(), other.Peaks().end());
-        model::spectrum::Peak upper1 = *std::max_element(spec.Peaks().begin(), spec.Peaks().end());
-        model::spectrum::Peak upper2 = *std::min_element(other.Peaks().begin(), other.Peaks().end());
+        model::spectrum::Peak lower1 = *std::min_element(spec.begin(), spec.end());
+        model::spectrum::Peak lower2 = *std::min_element(other.begin(), other.end());
+        model::spectrum::Peak upper1 = *std::max_element(spec.begin(), spec.end());
+        model::spectrum::Peak upper2 = *std::max_element(other.begin(), other.end());
 
         double lower = std::min(lower1.MZ(), lower2.MZ());
         double upper = std::max(upper1.MZ(), upper2.MZ());
 
         int bucket_size = (int) ceil((upper - lower + 1) / tolerance_);
 
-        std::vector<std::vector<model::spectrum::Peak>> q1;
-        std::vector<std::vector<model::spectrum::Peak>> q2;
+        std::vector<std::vector<model::spectrum::Peak>> q1, q2;
         q1.assign(bucket_size, std::vector<model::spectrum::Peak>());
         q2.assign(bucket_size, std::vector<model::spectrum::Peak>());
 
-        for(auto& pk : spec.Peaks())
+        for(auto& pk : spec)
         {
             int index = Index(pk, lower);
             q1[index].push_back(pk);
         }
-        for(auto& pk : other.Peaks())
+        for(auto& pk : other)
         {
             int index = Index(pk, lower);
             q2[index].push_back(pk);
@@ -50,12 +48,12 @@ public:
         }
 
         double denominator1 = 0;
-        for (auto& pk : spec.Peaks())
+        for (auto& pk : spec)
         {
             denominator1 += pk.Intensity() * pk.Intensity();
         }
         double denominator2 = 0;
-        for (auto& pk : other.Peaks())
+        for (auto& pk : other)
         {
             denominator2 += pk.Intensity() * pk.Intensity();
         }
@@ -63,15 +61,24 @@ public:
         return numerator / denominator;
     }
 
+    double ComputeCosine(model::spectrum::Spectrum spec, model::spectrum::Spectrum other)
+    {
+        return ComputeCosine(spec.Peaks(), other.Peaks());
+    }
+
     double Tolerance() { return tolerance_; }
     void set_tolerance(double tol) { tolerance_ = tol; }
 
 protected:
-    double DotProduct(std::vector<model::spectrum::Peak>& p1, std::vector<model::spectrum::Peak>& p2)
+    double DotProduct(std::vector<model::spectrum::Peak>& q1, std::vector<model::spectrum::Peak>& q2)
     {
-        if (p1.empty() || p2.empty())
+        if (q1.empty() || q2.empty())
             return 0;
         
+        std::vector<model::spectrum::Peak> p1, p2;
+        p1.assign(q1.begin(), q1.end());
+        p2.assign(q2.begin(), q2.end());
+
         // sort by intesntity, take min size, sort by mz
         if (p1.size() != p2.size())
         {

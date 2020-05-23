@@ -14,19 +14,19 @@ using namespace model::spectrum;
 class SpectrumParser
 {
 public:
-    SpectrumParser(std::string path): path_(path){}
+    SpectrumParser() = default;
     virtual ~SpectrumParser(){}
 
-    virtual double ParentMZ(int scan_num) = 0;
-    virtual int ParentCharge(int scan_num) = 0;
-    virtual int GetFirstScan() = 0;
-    virtual int GetLastScan() = 0;
-    virtual SpectrumType GetSpectrumType(int scan_num) = 0;
-    virtual std::vector<Peak> Peaks(int scan_num) = 0;
-    virtual std::string GetScanInfo(int scan_num) = 0;
-    virtual double RTFromScanNum(int scan_num) = 0;
-    virtual bool Exist(int scan_num) = 0;
-    virtual void Init() = 0;
+    virtual double ParentMZ(int scan_num){ return 0; }
+    virtual int ParentCharge(int scan_num){ return 0; }
+    virtual int GetFirstScan(){ return 0; }
+    virtual int GetLastScan(){ return 0; }
+    virtual SpectrumType GetSpectrumType(int scan_num){ return SpectrumType::NONE; }
+    virtual std::vector<Peak> Peaks(int scan_num){ return std::vector<Peak>(); }
+    virtual std::string GetScanInfo(int scan_num){ return ""; }
+    virtual double RTFromScanNum(int scan_num){ return 0; }
+    virtual bool Exist(int scan_num){ return false; }
+    virtual void Init(){ }
     
     std::string Path() { return path_; }
     void set_path(std::string path) { path_ = path; Init(); }
