@@ -15,8 +15,7 @@ class MGFParser : public SpectrumParser
 public:
     MGFParser(std::string path, SpectrumType type): 
         type_(type){ path_ = path; }
-    virtual ~MGFParser(){}
-
+        
     void Init() override
     {
         MGFData data;

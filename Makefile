@@ -5,12 +5,12 @@ CPPFLAGS =-g -Wall -std=c++14 -O3
 INCLUDES = -I/usr/local/include -L/usr/local/lib -lboost_unit_test_framework -static -lpthread
 LIB = -I/usr/local/include -L/usr/local/lib -lpthread
 
-TEST_CASES := algorithm_base_test glycan_test mgf_parser_test lsh_test lsh_clustering_test
-OBJS = lsh_clustering.o
+TEST_CASES := algorithm_base_test glycan_test io_test lsh_test sim_test lsh_clustering_test 
 
-glycan_test:
-	$(CC) $(CPPFLAGS) -o test/glycan_test \
-	 model/glycan/glycan_test.cpp model/glycan/nglycan_complex.cpp $(INCLUDES)
+
+io_test:
+	$(CC) $(CPPFLAGS) -o test/io_test \
+	util/io/io_test.cpp  $(INCLUDES)
 
 # app
 clustering:
@@ -20,6 +20,10 @@ clustering:
 
 
 #  test
+glycan_test:
+	$(CC) $(CPPFLAGS) -o test/glycan_test \
+	 model/glycan/glycan_test.cpp model/glycan/nglycan_complex.cpp $(INCLUDES)
+
 lsh_clustering_test:
 	$(CC) $(CPPFLAGS) -o test/lsh_clustering_test \
 	 algorithm/clustering/lsh_clustering_test.cpp algorithm/clustering/lsh_clustering.cpp \
@@ -37,9 +41,6 @@ lsh_test:
 	$(CC) $(CPPFLAGS) -o test/lsh_test \
 	util/calc/lsh_test.cpp util/calc/lsh.cpp util/calc/calc.cpp $(INCLUDES)
 
-mgf_parser_test:
-	$(CC) $(CPPFLAGS) -o test/mgf_parser_test \
-	util/io/mgf_parser_test.cpp $(INCLUDES)
 
 
 
