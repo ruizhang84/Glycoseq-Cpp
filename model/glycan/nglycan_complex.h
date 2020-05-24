@@ -33,8 +33,29 @@ public:
             name += "bisect ";
         for (auto& it : composite_)
         {
-            name += typeid(it.first).name();
-            name +=  "-" + std::to_string(it.second) + " ";
+            switch (it.first)
+            {
+            case Monosaccharide::GlcNAc:
+                name += " GlcNAc-" + std::to_string(it.second);
+                break;
+            case Monosaccharide::Man:
+                name += " Man-" + std::to_string(it.second);
+                break;
+            case Monosaccharide::Gal:
+                name += " Gal-" + std::to_string(it.second);
+                break;
+            case Monosaccharide::Fuc:
+                name += " Fuc-" + std::to_string(it.second);
+                break;    
+            case Monosaccharide::NeuAc:
+                name += " NeuAc-" + std::to_string(it.second);
+                break;
+            case Monosaccharide::NeuGc:
+                name += " NeuGc-" + std::to_string(it.second);
+                break;        
+            default:
+                break;
+            }
         }
         return name;
     }
@@ -50,6 +71,19 @@ public:
     std::vector<std::unique_ptr<Glycan>> Grow(Monosaccharide suger) override;
 
 protected:
+    void AddMonosaccharide(Monosaccharide suger)
+    {
+        auto it = composite_.find(suger);
+        if (it != composite_.end())
+        {
+            it->second++;
+        }
+        else
+        {
+            composite_[suger] = 1;
+        }
+    }
+
     bool ValidAddGlcNAcCore();
     std::unique_ptr<NGlycanComplex> CreateByAddGlcNAcCore();
     bool ValidAddGlcNAc();

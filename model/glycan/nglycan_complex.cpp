@@ -7,7 +7,8 @@ namespace glycan {
 std::vector<std::unique_ptr<Glycan>> NGlycanComplex::Grow(Monosaccharide suger){
    std::vector<std::unique_ptr<Glycan>>  glycans;
     switch (suger)
-    {    case Monosaccharide::GlcNAc:
+    {   
+    case Monosaccharide::GlcNAc:
         if (ValidAddGlcNAcCore()){
             std::unique_ptr<NGlycanComplex> ptr = CreateByAddGlcNAcCore();
             glycans.push_back(std::move(ptr));
@@ -94,7 +95,8 @@ std::unique_ptr<NGlycanComplex> NGlycanComplex::CreateByAddGlcNAcCore()
     auto g = std::make_unique<NGlycanComplex>();
     g->set_table(table_);
     g->set_table(0, table_[0]+1);
-    return std::move(g);
+    g->AddMonosaccharide(Monosaccharide::GlcNAc);
+    return g;
 }
 
 bool NGlycanComplex::ValidAddGlcNAcBisect()
@@ -107,7 +109,8 @@ std::unique_ptr<NGlycanComplex> NGlycanComplex::CreateByAddGlcNAcBisect(){
     auto g = std::make_unique<NGlycanComplex>();
     g->set_table(table_);
     g->set_table(3, 1);
-    return std::move(g);
+    g->AddMonosaccharide(Monosaccharide::GlcNAc);
+    return g;
 }
 
 bool NGlycanComplex::ValidAddGlcNAcBranch(){
@@ -137,6 +140,7 @@ std::vector<std::unique_ptr<NGlycanComplex>> NGlycanComplex::CreateByAddGlcNAcBr
                 auto g = std::make_unique<NGlycanComplex>();
                 g->set_table(table_);
                 g->set_table(i + 4, table_[i + 4] + 1);
+                g->AddMonosaccharide(Monosaccharide::GlcNAc);
                 glycans.push_back(std::move(g));
             }
         }
@@ -154,6 +158,7 @@ std::unique_ptr<NGlycanComplex> NGlycanComplex::CreateByAddMan()
     auto g = std::make_unique<NGlycanComplex>();
     g->set_table(table_);
     g->set_table(1, table_[1] + 1);
+    g->AddMonosaccharide(Monosaccharide::Man);
     return g;
 }
 
@@ -183,6 +188,7 @@ std::vector<std::unique_ptr<NGlycanComplex>> NGlycanComplex::CreateByAddGal(){
                 auto g = std::make_unique<NGlycanComplex>();
                 g->set_table(table_);
                 g->set_table(i + 8, table_[i + 8] + 1);
+                g->AddMonosaccharide(Monosaccharide::Gal);
                 glycans.push_back(std::move(g));
             }
         }
@@ -200,6 +206,7 @@ std::unique_ptr<NGlycanComplex> NGlycanComplex::CreateByAddFucCore()
     auto g = std::make_unique<NGlycanComplex>();
     g->set_table(table_);
     g->set_table(2, 1);
+    g->AddMonosaccharide(Monosaccharide::Fuc);
     return g;
 }
 
@@ -230,6 +237,7 @@ std::vector<std::unique_ptr<NGlycanComplex>> NGlycanComplex::CreateByAddFucTermi
                 auto g = std::make_unique<NGlycanComplex>();
                 g->set_table(table_);
                 g->set_table(i + 12, 1);
+                g->AddMonosaccharide(Monosaccharide::Fuc);
                 glycans.push_back(std::move(g));
             }
         }
@@ -264,6 +272,7 @@ std::vector<std::unique_ptr<NGlycanComplex>> NGlycanComplex::CreateByAddNeuAc()
                 auto g = std::make_unique<NGlycanComplex>();
                 g->set_table(table_);
                 g->set_table(i + 16, 1);
+                g->AddMonosaccharide(Monosaccharide::NeuAc);
                 glycans.push_back(std::move(g));
             }
         }
@@ -298,6 +307,7 @@ std::vector<std::unique_ptr<NGlycanComplex>> NGlycanComplex::CreateByAddNeuGc()
                 auto g = std::make_unique<NGlycanComplex>();
                 g->set_table(table_);
                 g->set_table(i + 20, 1);
+                g->AddMonosaccharide(Monosaccharide::NeuGc);
                 glycans.push_back(std::move(g));
             }
         }

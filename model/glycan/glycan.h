@@ -30,7 +30,7 @@ public:
         { table_ = table; }
     void set_table(int index, int num)
     {
-        if (index >= 0 && index < table_.size())
+        if (index >= 0 && index < (int) table_.size())
             table_[index] = num;
     }
 

@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "moiety.h"
+#include "nglycan_complex.h"
 
 using namespace std;
 using namespace model::glycan;
@@ -35,6 +36,27 @@ BOOST_AUTO_TEST_CASE( Monosaccharide_test )
                     ->Children().front()->Name() ==  Monosaccharide::Fuc); 
     BOOST_CHECK( e->Children().front()->Children().front()
                     ->Parent()->Name() ==  Monosaccharide::Gal); 
+}
+
+BOOST_AUTO_TEST_CASE( Glycan_test ) 
+{
+    NGlycanComplex nglycan;
+    nglycan.set_table(0, 2); // core 
+    nglycan.set_table(1, 3); // 
+    nglycan.set_table(2, 1); // fuc
+    nglycan.set_table(3, 1); // bisect
+    nglycan.set_table(4, 1); // branch 
+    nglycan.set_table(5, 1);
+    nglycan.set_table(8, 1);
+    nglycan.set_table(9, 1);  
+
+    std::vector<std::unique_ptr<Glycan>> glycans = nglycan.Grow(Monosaccharide::GlcNAc);
+    BOOST_CHECK(glycans.size() == 2);
+    for (int i = 0; i < (int) glycans.size(); i++){
+        std::cout << glycans[i]->Name() << std::endl;
+        std::cout << glycans[i]->ID() <<std::endl;
+    }
+
 }
 
 
