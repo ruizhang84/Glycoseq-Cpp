@@ -2,12 +2,10 @@
 #include <boost/test/unit_test.hpp>
 #include <iostream>
 
-#include "glycan.h"
-#include "nglycan_complex.h"
+#include "moiety.h"
 
 using namespace std;
 using namespace model::glycan;
-
 std::unique_ptr<Moiety> CreateRoot()
 {
     std::unique_ptr<Moiety> a = 
@@ -39,62 +37,6 @@ BOOST_AUTO_TEST_CASE( Monosaccharide_test )
                     ->Parent()->Name() ==  Monosaccharide::Gal); 
 }
 
-BOOST_AUTO_TEST_CASE( glycan_test ) 
-{
-    Glycan nglycan;
-    std::unique_ptr<Moiety> e = CreateRoot();
-
-    nglycan.set_root(e);
-    BOOST_CHECK( nglycan.Root()->Children().front()->Children().front()
-                ->Parent()->Name() ==  Monosaccharide::Gal); 
-
-    std::unique_ptr<Glycan> nglycan_ptr = nglycan.Clone();
-    std::unique_ptr<Moiety> f = CreateRoot();
-    nglycan_ptr->set_root(f);
-    BOOST_CHECK( nglycan_ptr->Root()->Children().front()->Children().front()
-                    ->Parent()->Name() ==  Monosaccharide::Gal); 
-}
-
-// BOOST_AUTO_TEST_CASE( nglycan_complex_test ) {
-//     std::unique_ptr<NGlycanComplex> nglycan = std::make_unique<NGlycanComplex>();
-
-
-// }
-
-// BOOST_AUTO_TEST_CASE( glycan_add_test )
-// {
-//     Glycan glycan;
-//     GlcNAc a; Man b; Gal c; Fuc d; NeuAc e;
-
-//     glycan.set_root(&a);
-//     glycan.Terminal().push_back(glycan.Root());
-
-//     Monosaccharide* curr = glycan.Terminal().front();
-//     BOOST_CHECK( curr->Name() == "GlcNAc"); 
-
-//     // Glycan* new_glycan = glycan.Add(&b).front();
-//     // curr = new_glycan->Terminal().front();
-//     // BOOST_CHECK( curr->Name() == "Man"); 
-//     Glycan new_glycan = glycan;
-//     curr = new_glycan.Terminal().front();
-//     BOOST_CHECK( curr->Name() == "GlcNAc"); 
-
-//     // BOOST_CHECK_MESSAGE( curr->Name() == "Man", 
-//     // "The terminal is " << new_glycan->Terminal().front()->Name()); 
-
-// }
-
-
-
-// void dfs(Monosaccharide* root, std::vector<string>& result)
-// {
-//     result.push_back(root->Name());
-//     if (root->Child().size() > 0){
-//         for (auto child : root.Child()){
-//             dfs(child, result);
-//         }
-//     }
-// }
 
 // int add( int i, int j ) { return i+j; }
 

@@ -8,6 +8,10 @@ LIB = -I/usr/local/include -L/usr/local/lib -lpthread
 TEST_CASES := algorithm_base_test glycan_test mgf_parser_test lsh_test lsh_clustering_test
 OBJS = lsh_clustering.o
 
+glycan_test:
+	$(CC) $(CPPFLAGS) -o test/glycan_test \
+	 model/glycan/glycan_test.cpp model/glycan/nglycan_complex.cpp $(INCLUDES)
+
 # app
 clustering:
 	$(CC) $(CPPFLAGS)  -o clustering \
@@ -37,9 +41,7 @@ mgf_parser_test:
 	$(CC) $(CPPFLAGS) -o test/mgf_parser_test \
 	util/io/mgf_parser_test.cpp $(INCLUDES)
 
-glycan_test:
-	$(CC) $(CPPFLAGS) -o test/glycan_test \
-	 model/glycan/glycan_test.cpp model/glycan/nglycan_complex.cpp $(INCLUDES)
+
 
 # test
 test: ${TEST_CASES}

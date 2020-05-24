@@ -3,9 +3,8 @@
 
 #include <string>
 #include <vector>
-#include <memory>
-#include <utility>
 #include <unordered_map> 
+#include <memory>
 
 namespace model {
 namespace glycan {
@@ -13,84 +12,43 @@ namespace glycan {
 enum class Monosaccharide
 { GlcNAc, Man, Gal, Fuc, NeuAc, NeuGc};
 
-class Moiety
-{
-public:
-    Moiety(Monosaccharide name): name_(name){}
-    Moiety(const Moiety& other)
-    {
-        name_ = other.name_;
-        parent_ = other.parent_;
-        for(auto& child: other.children_)
-        {
-            std::unique_ptr<Moiety> new_child = child->Clone();
-            new_child->set_parent(this);
-            children_.push_back(std::move(new_child));
-        }
-    }
-
-    Monosaccharide Name() { return name_; }
-    Moiety* Parent() { return parent_; }
-    void set_parent(Moiety* parent) { parent_ = parent; }
-    std::vector<std::unique_ptr<Moiety>>& Children() { return children_; } 
-
-    std::unique_ptr<Moiety> Clone()
-    {
-        std::unique_ptr<Moiety> root_ = 
-            std::make_unique<Moiety>(name_);
-
-        for(auto& child: children_)
-        {
-            std::unique_ptr<Moiety> new_child = child->Clone();
-            new_child->set_parent(root_.get());
-            root_->Children().push_back(std::move(new_child));
-            
-        }
-        return root_;
-    }
-
-protected:
-    Monosaccharide name_;
-    Moiety* parent_;
-    std::vector<std::unique_ptr<Moiety>> children_;
-};
-
 class Glycan
 {
 public:
     Glycan() = default;
-    Glycan(const Glycan& other)
-    {
-        composite_ = other.composite_;
-        isNGlycanComplex_ = other.isNGlycanComplex_;
-        root_ = std::move(other.root_->Clone());
-    }
+    virtual ~Glycan(){}
     
-    Moiety* Root() { return root_.get(); }
-    void set_root(std::unique_ptr<Moiety>& root)
+    virtual std::string Name() const { return name_;}
+    void set_name(const std::string& name) 
+        { name_ = name; }
+    virtual std::string ID() const { return id_; }
+    void set_id(const std::string& id) 
+        { id_ = id; }
+
+    std::vector<int>& Table() { return table_; }
+    void set_table(const std::vector<int>& table) 
+        { table_ = table; }
+    void set_table(int index, int num)
     {
-        root_ = std::move(root);
-    }
-    std::unordered_map<Monosaccharide, int>& Composite() { return composite_; } 
-    std::unique_ptr<Glycan> Clone()
-    {
-        return std::make_unique<Glycan>(*this);
+        if (index >= 0 && index < table_.size())
+            table_[index] = num;
     }
 
-    // types of glycan
-    bool IsNGlycanComplex() { return isNGlycanComplex_; }
+    std::unordered_map<Monosaccharide, int>&  Composition()
+        { return composite_; }
 
-    // add monosaccharide moiety
-    virtual std::vector<std::unique_ptr<Glycan>> Add(Monosaccharide suger) 
-    { 
-        std::vector<std::unique_ptr<Glycan>> result; 
-        return result; 
+    virtual std::vector<std::unique_ptr<Glycan>> Grow(Monosaccharide suger)
+    {
+        std::vector<std::unique_ptr<Glycan>> result;
+        return result;
     }
 
 protected:
-    std::unique_ptr<Moiety> root_;
+    std::string name_;
+    std::string id_;
+    std::vector<int> table_;
     std::unordered_map<Monosaccharide, int> composite_; 
-    bool isNGlycanComplex_;
+
 };
 
 
