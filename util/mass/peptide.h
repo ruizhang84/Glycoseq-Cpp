@@ -10,7 +10,7 @@ namespace mass {
 class PeptideMass
 {
 public:
-    static double Compute(std::string seq)
+    static double Compute(const std::string& seq)
     {
         double mass = 18.0105;  //water
         for (char s : seq)
@@ -26,7 +26,7 @@ public:
 
 
 protected:
-    static double GetAminoAcidMW(char amino)
+    static double GetAminoAcidMW(const char amino)
     {
         switch (std::toupper(amino))
         {

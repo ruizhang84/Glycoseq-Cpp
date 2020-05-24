@@ -9,7 +9,7 @@ namespace mass {
 class GlycanMass
 {
 public:
-    static double Compute(model::glycan::Glycan& glycan) 
+    static double Compute(const model::glycan::Glycan& glycan) 
     {
         double mass = 0;
         for(auto& it : glycan.Composite())

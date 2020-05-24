@@ -12,7 +12,7 @@ enum class IonType { a, b, c, x, y, z};
 class IonMass
 {
 public:
-    static double Compute(std::string seq, IonType ion)
+    static double Compute(const std::string& seq, const IonType ion)
     {
         double mass = PeptideMass::Compute(seq); //with an addtional h2o
         switch (ion)
