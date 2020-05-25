@@ -5,12 +5,11 @@ CPPFLAGS =-g -Wall -std=c++14 -O3
 INCLUDES = -I/usr/local/include -L/usr/local/lib -lboost_unit_test_framework -static -lpthread
 LIB = -I/usr/local/include -L/usr/local/lib -lpthread
 
-TEST_CASES := algorithm_base_test glycan_test io_test lsh_test sim_test lsh_clustering_test 
+TEST_CASES := algorithm_base_test glycan_test io_test lsh_test sim_test lsh_clustering_test  
+TEST_CASES_2 := protein_test
 
 
-io_test:
-	$(CC) $(CPPFLAGS) -o test/io_test \
-	util/io/io_test.cpp  $(INCLUDES)
+
 
 # app
 clustering:
@@ -41,11 +40,17 @@ lsh_test:
 	$(CC) $(CPPFLAGS) -o test/lsh_test \
 	util/calc/lsh_test.cpp util/calc/lsh.cpp util/calc/calc.cpp $(INCLUDES)
 
+io_test:
+	$(CC) $(CPPFLAGS) -o test/io_test \
+	util/io/io_test.cpp  $(INCLUDES)
 
+protein_test:
+	$(CC) $(CPPFLAGS) -o test/protein_test \
+	engine/protein/protein_test.cpp  $(INCLUDES)
 
 
 # test
-test: ${TEST_CASES}
+test: ${TEST_CASES} ${TEST_CASES_2}
 
 # clean up
 clean:
