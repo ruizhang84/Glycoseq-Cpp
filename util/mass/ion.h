@@ -40,10 +40,10 @@ public:
     }
 
 protected:
-    static const double kCarbon = 12.0;
-    static const double kNitrogen = 14.003074;
-    static const double kOxygen = 15.99491463;
-    static const double kHydrogen = 1.007825;
+    static constexpr double kCarbon = 12.0;
+    static constexpr double kNitrogen = 14.003074;
+    static constexpr double kOxygen = 15.99491463;
+    static constexpr double kHydrogen = 1.007825;
 };
 
 } // namespace mass

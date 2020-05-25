@@ -25,7 +25,7 @@ public:
         return std::abs(expected - observed) / expected * 1000000.0;
     }
 protected:
-    static const double kIon = 1.0078;
+    static constexpr double kIon = 1.0078;
 };
 
 } // namespace mass

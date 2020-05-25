@@ -63,6 +63,9 @@ public:
     std::unordered_map<Monosaccharide, int>&  Composition()
         { return composite_; }
 
+    std::unordered_map<Monosaccharide, int>  CompositionConst() const
+        { return std::unordered_map<Monosaccharide, int>(composite_); }
+
     virtual std::vector<std::unique_ptr<Glycan>> Grow(Monosaccharide suger)
     {
         std::vector<std::unique_ptr<Glycan>> result;

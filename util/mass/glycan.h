@@ -12,7 +12,7 @@ public:
     static double Compute(const model::glycan::Glycan& glycan) 
     {
         double mass = 0;
-        for(auto& it : glycan.Composite())
+        for(const auto &it : glycan.CompositionConst())
         {
             switch (it.first)
             {
@@ -42,11 +42,11 @@ public:
     }
 
 protected:
-    static const double kHexNAc = 203.0794;
-    static const double kHex = 162.0528;
-    static const double kFuc = 146.0579;
-    static const double kNeuAc = 291.0954;
-    static const double kNeuGc = 307.0903;
+    static constexpr double kHexNAc = 203.0794;
+    static constexpr double kHex = 162.0528;
+    static constexpr double kFuc = 146.0579;
+    static constexpr double kNeuAc = 291.0954;
+    static constexpr double kNeuGc = 307.0903;
 };
 
 

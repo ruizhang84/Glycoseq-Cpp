@@ -28,13 +28,15 @@ BucketSearch::BucketSearch(vector<shared_ptr<Point>>& data, double tol) :toleran
     }
 }
 
-bool BucketSearch::Match(std::shared_ptr<Point>& p1, std::shared_ptr<Point>& p2){
+bool BucketSearch::Match(std::shared_ptr<Point>& p1, std::shared_ptr<Point>& p2)
+{
     double val = p1->get_value() - p2->get_value();
     val = val >= 0 ? val : - val;
     return val < tolerance;
 }
 
-vector<shared_ptr<Point>> BucketSearch::Search(shared_ptr<Point> pt){
+vector<shared_ptr<Point>> BucketSearch::Search(shared_ptr<Point> pt)
+{
     vector<shared_ptr<Point>> result;
     int position = (pt->get_value() - this->min_value) / this->tolerance;
     for (int i = position - 1; i <= position + 1; i++){
