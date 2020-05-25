@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "../../model/spectrum/spectrum_MSn.h"
+#include "../../model/spectrum/spectrum.h"
 
 namespace util {
 namespace io {
@@ -53,7 +53,6 @@ public:
     virtual int GetFirstScan() { return parser_->GetFirstScan(); }
     virtual int GetLastScan() { return parser_->GetLastScan(); }
 
-
     virtual std::string GetScanInfo(int scan_num) 
     {   
         if (! parser_->Exist(scan_num))
@@ -69,7 +68,7 @@ public:
     }
     virtual Spectrum GetSpectrum(int scan_num)
     {
-        SpectrumMSn spectrum;
+        Spectrum spectrum;
         if (parser_->Exist(scan_num))
         {
             std::vector<Peak> peaks = parser_->Peaks(scan_num);
