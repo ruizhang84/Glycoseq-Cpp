@@ -1,5 +1,5 @@
-#ifndef ALGORITHM_BUCKET_SEARCH_H
-#define ALGORITHM_BUCKET_SEARCH_H
+#ifndef ALGORITHM_SEARCH_H
+#define ALGORITHM_SEARCH_H
 
 #include <vector>
 #include <memory>
@@ -36,12 +36,7 @@ public:
         {
             if (Match(it.get(), target))
             {
-                std::vector<T> content = it->Content();
-                // reserve() is optional 
-                result.reserve(result.size() 
-                    + std::distance(content.begin(), content.end()));
-                result.insert(result.begin(), 
-                    content.begin(), content.end());
+                result.push_back(it->Content());
             }
 
         }

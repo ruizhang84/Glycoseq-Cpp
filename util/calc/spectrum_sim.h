@@ -24,7 +24,7 @@ public:
         double lower = std::min(lower1.MZ(), lower2.MZ());
         double upper = std::max(upper1.MZ(), upper2.MZ());
 
-        int bucket_size = (int) ceil((upper - lower + 1) / tolerance_);
+        int bucket_size = (int) ((upper - lower) / tolerance_ + 1);
 
         std::vector<std::vector<model::spectrum::Peak>> q1, q2;
         q1.assign(bucket_size, std::vector<model::spectrum::Peak>());
@@ -104,7 +104,7 @@ protected:
     static bool IntensityGreater (model::spectrum::Peak& i, model::spectrum::Peak& j) 
         { return (i.Intensity() > j.Intensity()); }
     int Index(model::spectrum::Peak& pk, double lower) 
-        { return ceil(pk.MZ() - lower) / tolerance_; } 
+        { return (pk.MZ() - lower) / tolerance_; } 
     double tolerance_;
 
 };

@@ -11,13 +11,13 @@ class Point
 {
 public:
     Point() = default;
-    Point(double value, std::vector<T> content):
+    Point(double value,T content):
         value_(value), content_(content){}
     
     double Value() const { return value_; }
     void set_value(double value) { value_ = value; }
-    std::vector<T> Content() { return content_; }
-    void set_content(std::vector<T> content) { content_ = content; }
+    T Content() { return content_; }
+    void set_content(T content) { content_ = content; }
     bool operator<(const Point& other)
     {
         return value_ < other.value_;
@@ -25,7 +25,7 @@ public:
 
 protected:
     double value_;
-    std::vector<T> content_;
+    T content_;
 };
 
 } // namespace algorithm
