@@ -62,6 +62,25 @@ BOOST_AUTO_TEST_CASE( Glycan_test )
     nglycan_dup.Deserialize(table_str);
     std::cout << table_str <<std::endl;
     BOOST_CHECK(table_str == nglycan_dup.Serialize());
+
+    NGlycanComplex nglycan_1;
+    std::map<Monosaccharide, int> composite;
+    composite[Monosaccharide::GlcNAc] = 12;
+    composite[Monosaccharide::Gal] = 12;
+    composite[Monosaccharide::Fuc] = 1;
+    composite[Monosaccharide::Man] = 3;
+    composite[Monosaccharide::NeuAc] = 6;
+
+    nglycan_1.set_composition(composite);
+    std::string compos = nglycan_1.Name();
+    NGlycanComplex nglycan_2;
+    nglycan_2.set_compositeion(compos);
+
+    std::cout << compos << std::endl;
+    std::cout << nglycan_2.Name() << std::endl;
+    BOOST_CHECK(compos == nglycan_2.Name());
+    
+
 }
 
 

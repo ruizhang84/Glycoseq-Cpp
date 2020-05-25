@@ -3,11 +3,13 @@
 
 #include <string>
 #include <vector>
-#include <unordered_map> 
+#include <map> 
 #include <memory>
 #include <sstream>
 #include <algorithm>
 #include <iterator>
+#include <regex>
+#include <iostream>
 
 namespace model {
 namespace glycan {
@@ -29,22 +31,22 @@ public:
             switch (it.first)
             {
             case Monosaccharide::GlcNAc:
-                name += " GlcNAc-" + std::to_string(it.second);
+                name += "GlcNAc-" + std::to_string(it.second) + "-";
                 break;
             case Monosaccharide::Man:
-                name += " Man-" + std::to_string(it.second);
+                name += "Man-" + std::to_string(it.second) + "-";
                 break;
             case Monosaccharide::Gal:
-                name += " Gal-" + std::to_string(it.second);
+                name += "Gal-" + std::to_string(it.second) + "-";
                 break;
             case Monosaccharide::Fuc:
-                name += " Fuc-" + std::to_string(it.second);
+                name += "Fuc-" + std::to_string(it.second) + "-";
                 break;    
             case Monosaccharide::NeuAc:
-                name += " NeuAc-" + std::to_string(it.second);
+                name += "NeuAc-" + std::to_string(it.second) + "-";
                 break;
             case Monosaccharide::NeuGc:
-                name += " NeuGc-" + std::to_string(it.second);
+                name += "NeuGc-" + std::to_string(it.second) + "-";
                 break;        
             default:
                 break;
@@ -67,6 +69,7 @@ public:
         if (index >= 0 && index < (int) table_.size())
             table_[index] = num;
     }
+
     virtual std::string Serialize() const
     {
         std::stringstream result;
@@ -91,11 +94,55 @@ public:
         }
     }
 
-    std::unordered_map<Monosaccharide, int>&  Composition()
+    std::map<Monosaccharide, int>&  Composition()
         { return composite_; }
+    void set_composition(const std::map<Monosaccharide, int>& composite)
+        { composite_ = composite; }
+    virtual void set_compositeion(const std::string& name)
+    {
+        std::smatch result;
+        std::regex rGlcNAc("GlcNAc-(\\d+)");
+        std::regex rGal("Gal-(\\d+)-");
+        std::regex rMan("Man-(\\d+)-");
+        std::regex rFuc("Fuc-(\\d+)-");
+        std::regex rNeuAc("NeuAc-(\\d+)-");
+        std::regex rNeuGc("NeuGc-(\\d+)-");
+        composite_.clear();
 
-    std::unordered_map<Monosaccharide, int>  CompositionConst() const
-        { return std::unordered_map<Monosaccharide, int>(composite_); }
+        if (std::regex_search(name.begin(), name.end(), result, rGlcNAc))
+        {
+            composite_[Monosaccharide::GlcNAc] = std::stoi(result[1]);
+        }
+
+        if (std::regex_search(name.begin(), name.end(), result, rGal))
+        {
+            composite_[Monosaccharide::Gal] = std::stoi(result[1]);
+        }
+
+        if (std::regex_search(name.begin(), name.end(), result, rMan))
+        {
+            composite_[Monosaccharide::Man] = std::stoi(result[1]);
+        }
+
+        if (std::regex_search(name.begin(), name.end(), result, rFuc))
+        {
+            composite_[Monosaccharide::Fuc] = std::stoi(result[1]);
+        }
+
+        if (std::regex_search(name.begin(), name.end(), result, rNeuAc))
+        {
+            composite_[Monosaccharide::NeuAc] = std::stoi(result[1]);
+        }
+
+        if (std::regex_search(name.begin(), name.end(), result, rNeuGc))
+        {
+            composite_[Monosaccharide::NeuGc] = std::stoi(result[1]);
+        }
+
+    }
+
+    std::map<Monosaccharide, int>  CompositionConst() const
+        { return std::map<Monosaccharide, int>(composite_); }
 
     virtual std::vector<std::unique_ptr<Glycan>> Grow(Monosaccharide suger)
     {
@@ -107,7 +154,7 @@ protected:
     std::string name_;
     std::string id_;
     std::vector<int> table_;
-    std::unordered_map<Monosaccharide, int> composite_; 
+    std::map<Monosaccharide, int> composite_; 
 
 };
 

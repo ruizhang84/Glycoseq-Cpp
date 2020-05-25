@@ -36,36 +36,36 @@ public:
 
         if (file.is_open()){
             while(std::getline(file, line)){
-                if (regex_search(line, result, start))
+                if (std::regex_search(line, result, start))
                 {
                     data = MGFData();
                     scan_num++;
-                }else if (regex_search(line, result, mz_intensity))
+                }else if (std::regex_search(line, result, mz_intensity))
                 {
-                    data.mz.push_back(stod(result[1]));
-                    data.intensity.push_back( stod(result[2]));
+                    data.mz.push_back(std::stod(result[1]));
+                    data.intensity.push_back(std::stod(result[2]));
                 }
-                else if (regex_search(line, result, pepmass))
+                else if (std::regex_search(line, result, pepmass))
                 {
-                    data.pep_mass = stod(result[1]);
+                    data.pep_mass = std::stod(result[1]);
                 }
-                else if (regex_search(line, result, charge)){
-                    data.charge = stoi(result[1]);
+                else if (std::regex_search(line, result, charge)){
+                    data.charge = std::stoi(result[1]);
                 }
-                else if (regex_search(line, result, scan))
+                else if (std::regex_search(line, result, scan))
                 {
-                    scan_num = stoi(result[1]);
+                    scan_num = std::stoi(result[1]);
                     data.scans = scan_num;
                 }
-                else if (regex_search(line, result, title))
+                else if (std::regex_search(line, result, title))
                 {
                     data.title = std::string(result[1]);
                 }
-                else if (regex_search(line, result, rt_second))
+                else if (std::regex_search(line, result, rt_second))
                 {
-                    data.rt_seconds = stod(result[1]);
+                    data.rt_seconds = std::stod(result[1]);
                 }
-                else if (regex_search(line, result, end))
+                else if (std::regex_search(line, result, end))
                 {
                     data_set_.emplace(scan_num, data);
                 } 
