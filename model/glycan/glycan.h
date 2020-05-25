@@ -98,10 +98,10 @@ public:
         { return composite_; }
     void set_composition(const std::map<Monosaccharide, int>& composite)
         { composite_ = composite; }
-    virtual void set_compositeion(const std::string& name)
+    virtual void set_composition(const std::string& name)
     {
         std::smatch result;
-        std::regex rGlcNAc("GlcNAc-(\\d+)");
+        std::regex rGlcNAc("GlcNAc-(\\d+)-");
         std::regex rGal("Gal-(\\d+)-");
         std::regex rMan("Man-(\\d+)-");
         std::regex rFuc("Fuc-(\\d+)-");

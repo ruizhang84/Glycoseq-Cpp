@@ -6,21 +6,55 @@
 #include <unordered_map>
 #include <deque>
 #include <memory>
+#include <unordered_set>
 #include "../../model/glycan/nglycan_complex.h"
 
 namespace engine{
 namespace glycan {
 
-struct GlycanStore
-{
-    std::string composite_str;
-    std::vector<std::string> tables_str;
-};
+typedef std::unordered_map<std::string, 
+        std::unordered_set<std::string>> StringsMapping;
 
-struct GlycanMassStore
+class GlycanStore
 {
-    std::string table_str;
-    std::vector<double> subset_mass;
+public:
+    StringsMapping Map() { return map_; }
+    std::unordered_set<std::string> Query(const std::string name)
+    {
+        if (map_.find(name) != map_.end())
+        {
+            return map_[name];
+        }
+        return std::unordered_set<std::string>();
+    }
+    bool Find(const std::string name)
+    {
+        return map_.find(name) != map_.end();
+    }
+    void Add(const std::string& name, const std::string& table_id)
+    {
+        if (map_.find(name) == map_.end())
+        {
+            map_[name] = std::unordered_set<std::string>();
+        }
+        map_[name].insert(table_id);
+    }
+    void AddSubset(const std::string& table_id, const std::string& subset_id)
+    {
+        Add(table_id, subset_id);
+        if (map_.find(subset_id) != map_.end())
+        {
+            std::unordered_set<std::string> subset =  map_[subset_id];
+            map_[table_id].insert(subset.begin(), subset.end());
+        }
+    }
+
+    void Clear(){ map_.clear(); }
+
+protected:
+    // glycan composition_str(name) -> table_str(id), by isomer
+    // glycan_id -> id of its subset, by biosynthesis
+    StringsMapping map_;
 };
 
 using namespace model::glycan;
@@ -37,12 +71,11 @@ public:
     
     void Build()
     {
+
         std::unique_ptr<NGlycanComplex> root = 
             std::make_unique<NGlycanComplex>();
     
         std::deque<std::unique_ptr<Glycan>> queue;
-        std::unordered_map<std::string, NGlycanComplex*> visited;
-
         queue.push_back(std::move(root));
         while (!queue.empty())
         {
@@ -53,11 +86,27 @@ public:
                 std::vector<std::unique_ptr<Glycan>> res = node->Grow(it);
                 for(auto& g : res)
                 {
-                    queue.push_back(std::move(g));
+                    if (SatisfyCriteria(g.get()))
+                    {
+                        if (!isomer_store_.Find(g->ID()))
+                        {
+                            queue.push_back(std::move(g));
+                        }
+                        subset_store_.AddSubset(g->ID(), node->ID());
+                        isomer_store_.Add(g->Name(), g->ID());
+                    }
                 }
             }
         }
 
+    }
+
+    GlycanStore Isomer() { return isomer_store_; }
+    GlycanStore Subset() { return subset_store_; }
+    void Clear() 
+    {
+        isomer_store_.Clear();
+        subset_store_.Clear();
     }
 
     std::vector<Monosaccharide> Candidates() { return candidates_; }
@@ -74,12 +123,47 @@ public:
     void set_NeuGc(int num) { neuGc_ = num; }
 
 protected:
+    bool SatisfyCriteria(const Glycan* glycan) const
+    {
+        int hexNAc = 0, hex = 0, fuc = 0, neuAc = 0, neuGc = 0;
+        for(auto& it : glycan->CompositionConst())
+        {
+            switch (it.first)
+            {
+            case Monosaccharide::GlcNAc:
+                hexNAc += it.second;
+                break;
+            case Monosaccharide::Gal:
+                hex += it.second;
+                break;
+            case Monosaccharide::Man:
+                hex += it.second;
+                break;    
+            case Monosaccharide::Fuc:
+                fuc += it.second;
+                break;   
+            case Monosaccharide::NeuAc:
+                neuAc += it.second;
+                break;   
+            case Monosaccharide::NeuGc:
+                neuGc += it.second;
+                break;           
+            default:
+                break;
+            }
+        }
+        return (hexNAc <= hexNAc_ && hex <= hex_ && fuc <= fuc_
+                && neuAc <= neuAc_ && neuGc <= neuGc_);
+    }
+
     int hexNAc_;
     int hex_;
     int fuc_;
     int neuAc_;
     int neuGc_;
     std::vector<Monosaccharide> candidates_;
+    GlycanStore isomer_store_, subset_store_;
+
 
 };
 

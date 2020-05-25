@@ -11,7 +11,6 @@ BOOST_AUTO_TEST_CASE( glycan_builder_test )
 {
     GlycanBuilder builder(2, 3, 1, 0, 0);
     builder.Build();
-
 }
 
 }

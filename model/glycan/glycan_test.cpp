@@ -74,15 +74,26 @@ BOOST_AUTO_TEST_CASE( Glycan_test )
     nglycan_1.set_composition(composite);
     std::string compos = nglycan_1.Name();
     NGlycanComplex nglycan_2;
-    nglycan_2.set_compositeion(compos);
+    nglycan_2.set_composition(compos);
 
     std::cout << compos << std::endl;
     std::cout << nglycan_2.Name() << std::endl;
     BOOST_CHECK(compos == nglycan_2.Name());
-    
 
 }
 
+BOOST_AUTO_TEST_CASE( glycan_row_test ) 
+{
+    NGlycanComplex nglycan;
+    std::vector<std::unique_ptr<Glycan>> glycans = nglycan.Grow(Monosaccharide::GlcNAc);
+    std::cout << glycans.front()->ID() << std::endl;
+    std::vector<std::unique_ptr<Glycan>> glycans_2 = glycans.front()->Grow(Monosaccharide::GlcNAc);
+    std::cout << glycans_2.front()->ID() << std::endl;
+    std::vector<std::unique_ptr<Glycan>> glycans_3 = glycans_2.front()->Grow(Monosaccharide::Man);
+    std::string name = glycans_3.front()->Name();
+    std::cout << name << std::endl;
+    BOOST_CHECK(glycans_3.front()->CompositionConst()[Monosaccharide::GlcNAc] == 2);
+}
 
 // int add( int i, int j ) { return i+j; }
 

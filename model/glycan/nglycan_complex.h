@@ -33,7 +33,7 @@ protected:
         auto it = composite_.find(suger);
         if (it != composite_.end())
         {
-            it->second++;
+            composite_[suger] += 1;
         }
         else
         {
