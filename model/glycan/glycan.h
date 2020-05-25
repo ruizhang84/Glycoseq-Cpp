@@ -21,10 +21,41 @@ public:
     Glycan() = default;
     virtual ~Glycan(){}
     
-    virtual std::string Name() const { return name_;} // for print
+    virtual std::string Name() const 
+    { 
+        std::string name = "";
+        for (const auto& it : composite_)
+        {
+            switch (it.first)
+            {
+            case Monosaccharide::GlcNAc:
+                name += " GlcNAc-" + std::to_string(it.second);
+                break;
+            case Monosaccharide::Man:
+                name += " Man-" + std::to_string(it.second);
+                break;
+            case Monosaccharide::Gal:
+                name += " Gal-" + std::to_string(it.second);
+                break;
+            case Monosaccharide::Fuc:
+                name += " Fuc-" + std::to_string(it.second);
+                break;    
+            case Monosaccharide::NeuAc:
+                name += " NeuAc-" + std::to_string(it.second);
+                break;
+            case Monosaccharide::NeuGc:
+                name += " NeuGc-" + std::to_string(it.second);
+                break;        
+            default:
+                break;
+            }
+        }
+        return name;
+    } // for print
+    virtual std::string ID() const { return Serialize(); }  // use as key
+
     void set_name(const std::string& name) 
         { name_ = name; }
-    virtual std::string ID() const { return id_; }  // use as key
     void set_id(const std::string& id) 
         { id_ = id; }
 

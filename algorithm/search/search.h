@@ -29,7 +29,7 @@ public:
     void set_data(std::vector<std::shared_ptr<Point<T>>> data)
         { data_ = data; }
 
-    virtual std::vector<T> Search(const double target)
+    virtual std::vector<T> Query(const double target)
     {
         std::vector<T> result;
         for(const auto& it: data_)
@@ -41,6 +41,20 @@ public:
 
         }
         return result;
+    }
+
+    virtual bool Search(const double target)
+    {
+        std::vector<T> result;
+        for(const auto& it: data_)
+        {
+            if (Match(it.get(), target))
+            {
+                return true;
+            }
+
+        }
+        return false;
     }
 
 protected:

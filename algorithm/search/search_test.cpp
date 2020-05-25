@@ -26,14 +26,16 @@ BOOST_AUTO_TEST_CASE( Monosaccharide_test )
     }
 
     searcher.set_data(box);
-    std::vector<double> res = searcher.Search(40);
+    std::vector<double> res = searcher.Query(40);
     BOOST_CHECK(res.size() == 39);
 
     BucketSearch<double> bucket_searcher(20.0, ToleranceBy::Dalton);
     bucket_searcher.set_data(box);
     bucket_searcher.Init();
-    res = bucket_searcher.Search(40);
+    res = bucket_searcher.Query(40);
+    BOOST_CHECK(bucket_searcher.Search(50));
     BOOST_CHECK(res.size() == 39);
+
 
 }
 

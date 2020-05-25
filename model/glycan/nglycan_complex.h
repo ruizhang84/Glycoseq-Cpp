@@ -23,48 +23,7 @@ public:
     { 
         table_.assign(24, 0);
     }
-
-    std::string Name() const override
-    {
-        std::string name = "NGlycanComplex: ";
-        if (table_[2] > 0)
-            name += "fucose ";
-        if (table_[3] > 0)
-            name += "bisect ";
-        for (auto& it : composite_)
-        {
-            switch (it.first)
-            {
-            case Monosaccharide::GlcNAc:
-                name += " GlcNAc-" + std::to_string(it.second);
-                break;
-            case Monosaccharide::Man:
-                name += " Man-" + std::to_string(it.second);
-                break;
-            case Monosaccharide::Gal:
-                name += " Gal-" + std::to_string(it.second);
-                break;
-            case Monosaccharide::Fuc:
-                name += " Fuc-" + std::to_string(it.second);
-                break;    
-            case Monosaccharide::NeuAc:
-                name += " NeuAc-" + std::to_string(it.second);
-                break;
-            case Monosaccharide::NeuGc:
-                name += " NeuGc-" + std::to_string(it.second);
-                break;        
-            default:
-                break;
-            }
-        }
-        return name;
-    }
-
-    std::string ID() const override
-    {
-        return Serialize();
-    }
-
+    
     std::vector<std::unique_ptr<Glycan>> Grow(Monosaccharide suger) override;
 
 protected:

@@ -47,7 +47,7 @@ public:
         }
     }
 
-    std::vector<T> Search(double target) override
+    std::vector<T> Query(const double target) override
     {
         std::vector<T> result;
         int index = Index(target);
@@ -62,6 +62,23 @@ public:
         }
         return result;
     }
+
+    bool Search(const double target) override
+    {
+        std::vector<T> result;
+        int index = Index(target);
+        for (int i = index - 1; i <= index + 1; i++){
+            for(const auto& it : bins_[i])
+            {
+                if (this->Match(it.get(), target))
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 
 protected:
     int Index(double target) 
