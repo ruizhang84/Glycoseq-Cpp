@@ -57,6 +57,11 @@ BOOST_AUTO_TEST_CASE( Glycan_test )
         std::cout << glycans[i]->ID() <<std::endl;
     }
 
+    std::string table_str = nglycan.Serialize();
+    NGlycanComplex nglycan_dup;
+    nglycan_dup.Deserialize(table_str);
+    std::cout << table_str <<std::endl;
+    BOOST_CHECK(table_str == nglycan_dup.Serialize());
 }
 
 

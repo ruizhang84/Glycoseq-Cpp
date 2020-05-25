@@ -62,10 +62,7 @@ public:
 
     std::string ID() const override
     {
-        std::stringstream result;
-        std::copy(table_.begin(), table_.end(), 
-            std::ostream_iterator<int>(result, " "));
-        return result.str();
+        return Serialize();
     }
 
     std::vector<std::unique_ptr<Glycan>> Grow(Monosaccharide suger) override;
