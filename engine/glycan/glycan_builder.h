@@ -19,17 +19,26 @@ class GlycanStore
 {
 public:
     StringsMapping Map() { return map_; }
-    std::unordered_set<std::string> Query(const std::string name)
+    std::unordered_set<std::string> Query(const std::string item)
     {
-        if (map_.find(name) != map_.end())
+        if (map_.find(item) != map_.end())
         {
-            return map_[name];
+            return map_[item];
         }
         return std::unordered_set<std::string>();
     }
-    bool Find(const std::string name)
+    std::vector<std::string> Collection()
     {
-        return map_.find(name) != map_.end();
+        std::vector<std::string> collection;
+        for(const auto& it : map_)
+        {
+            collection.push_back(it.first);
+        }
+        return collection;
+    }
+    bool Contains(const std::string item)
+    {
+        return map_.find(item) != map_.end();
     }
     void Add(const std::string& name, const std::string& table_id)
     {
@@ -48,7 +57,6 @@ public:
             map_[table_id].insert(subset.begin(), subset.end());
         }
     }
-
     void Clear(){ map_.clear(); }
 
 protected:
@@ -92,7 +100,7 @@ public:
                     if (SatisfyCriteria(g.get()))
                     {
                         std::string id = g->ID();
-                        if (!subset_store_.Find(id))
+                        if (!subset_store_.Contains(id))
                         {
                             queue.push_back(std::move(g));
                         }
