@@ -74,7 +74,6 @@ public:
         return mass;
     }
 
-protected:
     static constexpr double kHexNAc = 203.0794;
     static constexpr double kHex = 162.0528;
     static constexpr double kFuc = 146.0579;

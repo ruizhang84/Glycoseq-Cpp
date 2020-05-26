@@ -12,10 +12,35 @@
 namespace engine{
 namespace search{
 
-struct SearchResult
+class MatchResultStore
 {
-    std::string peptide;
-    std::string glycan;
+public:
+    void Add(const std::string& peptide, const std::string& glycan)
+    {
+        if (map_.find(peptide) == map_.end())
+        {
+            peptides_.push_back(peptide);
+            map_[peptide] = std::vector<std::string>();
+        }
+        map_[peptide].push_back(glycan);
+    }
+    std::unordered_map<std::string, 
+        std::vector<std::string>> Map() { return map_; }
+    bool Empty() { return peptides_.size() == 0; }
+    std::vector<std::string> Peptides() { return peptides_; }
+    std::vector<std::string> Glycans(const std::string& peptide)
+    {
+        if (map_.find(peptide) != map_.end())
+        {
+            return map_[peptide];
+        }
+        return std::vector<std::string>();
+    }
+
+protected:
+    std::vector<std::string> peptides_;
+    std::unordered_map<std::string, 
+        std::vector<std::string>> map_;
 };
 
 class PrecursorMatcher
@@ -57,9 +82,9 @@ public:
     void set_tolerance_by(algorithm::search::ToleranceBy by) 
         { by_ = by; searcher_.set_tolerance_by(by); searcher_.Init(); }
 
-    virtual std::vector<SearchResult> Match(const double target)
+    virtual MatchResultStore Match(const double target)
     {
-        std::vector<SearchResult> res;
+        MatchResultStore res;
         for(const auto& it : glycans_)
         {
             double delta = target -
@@ -69,10 +94,7 @@ public:
             std::vector<std::string> peptides = searcher_.Query(delta);
             for(auto& p : peptides)
             {
-                SearchResult r;
-                r.glycan = it;
-                r.peptide = p;
-                res.push_back(r);
+                res.Add(p, it);
             }
         }
         return res;

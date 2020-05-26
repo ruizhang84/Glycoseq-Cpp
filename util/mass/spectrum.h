@@ -1,5 +1,5 @@
-#ifndef UTIL_MASS_ION_H
-#define UTIL_MASS_ION_H
+#ifndef UTIL_MASS_SPECTRUM_H
+#define UTIL_MASS_SPECTRUM_H
 
 #include <string>
 #include <cmath>
@@ -24,7 +24,7 @@ public:
     {
         return std::abs(expected - observed) / expected * 1000000.0;
     }
-protected:
+
     static constexpr double kIon = 1.0078;
 };
 

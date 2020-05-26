@@ -67,7 +67,6 @@ public:
 
     bool Search(const double target) override
     {
-        std::vector<T> result;
         int index = Index(target);
         for (int i = index - 1; i <= index + 1; i++){
             for(const auto& it : bins_[i])

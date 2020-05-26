@@ -8,8 +8,6 @@
 namespace util {
 namespace calc {
 
-
-
 class SpectrumSim
 {
 public:

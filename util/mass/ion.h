@@ -39,7 +39,6 @@ public:
         return mass;
     }
 
-protected:
     static constexpr double kCarbon = 12.0;
     static constexpr double kNitrogen = 14.003074;
     static constexpr double kOxygen = 15.99491463;

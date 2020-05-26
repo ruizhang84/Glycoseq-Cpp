@@ -2,6 +2,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <iostream>
+#include "spectrum_search.h"
 #include "precursor_match.h"
 #include "../../util/io/mgf_parser.h"
 #include "../../util/io/fasta_reader.h"
@@ -29,13 +30,13 @@ BOOST_AUTO_TEST_CASE( precusor_match_test )
     engine::protein::Digestion digest;
     digest.SetProtease(engine::protein::Proteases::Trypsin);
     std::vector<std::string> seqs = digest.Sequences(proteins.front().Sequence(),
-         engine::protein::FindPTM::ContainsNGlycanSite);
+         engine::protein::ProteinPTM::ContainsNGlycanSite);
     digest.SetProtease(engine::protein::Proteases::GluC);
     std::vector<std::string> peptides;
     for(auto& it : seqs)
     {
         std::vector<std::string> seq = digest.Sequences(it,
-         engine::protein::FindPTM::ContainsNGlycanSite);
+         engine::protein::ProteinPTM::ContainsNGlycanSite);
         peptides.insert(peptides.end(), seq.begin(), seq.end());
     }
 
@@ -50,17 +51,29 @@ BOOST_AUTO_TEST_CASE( precusor_match_test )
     // spectrum matching
     PrecursorMatcher precursor_runner(0.01, algorithm::search::ToleranceBy::Dalton);
     precursor_runner.Init(peptides, glycans_str);
+    SpectrumSearcher spectrum_runner(10, algorithm::search::ToleranceBy::PPM, builder.Subset());
+
+    for(auto & it : builder.Subset().Map())
+    {
+        std::cout << it.first << std::endl;
+        for (auto j : it.second)
+        {
+            std::cout << j << std::endl;
+        }
+    }
+
     for(auto& spec : spectrum_reader.GetSpectrum())
     {
         double target = util::mass::SpectrumMass::Compute(spec.PrecursorMZ(), spec.PrecursorCharge());
-        std::vector<SearchResult> r = precursor_runner.Match(target);
-        if (! r.empty())
-        std::cout << spec.Scan() << " : " << std::endl;
-        for(auto it : r)
-        {
-            std::cout << it.glycan << std::endl;
-            std::cout << it.peptide << std::endl;
-        }
+        MatchResultStore r = precursor_runner.Match(target);
+        if (r.Empty()) continue;
+        // if (! r.empty())
+        // std::cout << spec.Scan() << " : " << std::endl;
+        // for(auto it : r)
+        // {
+        //     std::cout << it.glycan << std::endl;
+        //     std::cout << it.peptide << std::endl;
+        // }
     }
     auto stop = std::chrono::high_resolution_clock::now(); 
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start); 

@@ -9,10 +9,9 @@
 namespace engine {
 namespace protein {
 
-class FindPTM
+class ProteinPTM
 {
 public:
-
     static bool ContainsNGlycanSite(const std::string& sequence)
     {
         for (size_t i = 0; i < sequence.length() - 2; i++)
@@ -60,6 +59,7 @@ public:
 
         return pos;
     }
+    
 };
 
 } // namespace protein

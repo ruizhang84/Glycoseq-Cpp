@@ -27,6 +27,32 @@ public:
     
     std::vector<std::unique_ptr<Glycan>> Grow(Monosaccharide suger) override;
 
+    static std::map<Monosaccharide, int> InterpretID(const std::string& table_str)
+    {
+        std::map<Monosaccharide, int> composite;
+        std::vector<int> table;
+        std::istringstream iss(table_str);
+        std::string item;
+        std::vector<std::string> tokens 
+        {
+            std::istream_iterator<std::string>{iss}, 
+            std::istream_iterator<std::string>{}
+        };
+        for (auto& s : tokens)
+        {
+            table.push_back(std::stoi(s));
+        }
+        composite[Monosaccharide::GlcNAc] = 
+            table[0] + table[3] + table[4] + table[5] + table[6] + table[7];;
+        composite[Monosaccharide::Man] = table[1];
+        composite[Monosaccharide::Gal] = table[8] + table[9] + table[10] + table[11];
+        composite[Monosaccharide::Fuc] =  table[2] + table[12] + table[13] + table[14] + table[15];
+        composite[Monosaccharide::NeuAc] = table[16] + table[17] + table[18] + table[19];
+        composite[Monosaccharide::NeuGc] = table[20] + table[21] + table[22] + table[23];
+        return composite;
+    }
+
+
 protected:
     void AddMonosaccharide(Monosaccharide suger)
     {
