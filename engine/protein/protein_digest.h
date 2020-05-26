@@ -24,19 +24,18 @@ public:
     void SetProtease(Proteases enzyme) { enzyme_ = enzyme_; }
 
     virtual std::vector<std::string> Sequences
-        (std::string seq, std::function<bool(const std::string&)> filter)
+        (const std::string seq, std::function<bool(const std::string&)> filter)
     {
         std::vector<std::string> seq_list;
         std::vector<int> cutoffs = FindCutOffPosition(seq);
 
         //generate substring from sequences
-        int start, end;
         for (int i = 0; i <= miss_cleavage_; i++)
         {
-            for (size_t j = 0; j <  cutoffs.size() - i - 1; j++)
+            for (int j = 0; j <  (int) cutoffs.size() - i - 1; j++)
             {
-                start = cutoffs[j] + 1;
-                end = cutoffs[j + 1 + i];
+                int start = cutoffs[j] + 1;
+                int end = cutoffs[j + 1 + i];
                 if (end - start + 1 >= min_length_)  // put minimum length in place
                 {
                     std::string sub = seq.substr(start, end - start + 1);
@@ -49,13 +48,14 @@ public:
     }
 
 protected:
-    std::vector<int> FindCutOffPosition(std::string sequence)
+    std::vector<int> FindCutOffPosition(const std::string& sequence)
     {
         //get cleavable position, make all possible peptide cutoff  positoins
         std::vector<int> cutoffs;
 
         cutoffs.push_back(-1); //trivial to include starting place
 
+       
         for (int i = 0; i < (int) sequence.length(); i++)
         {
             if (IsCleavablePosition(sequence, i))    //enzyme
