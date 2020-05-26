@@ -3,7 +3,6 @@
 
 #include <algorithm> 
 #include "search.h"
-#include <iostream>
 
 namespace algorithm {
 namespace search {
@@ -25,7 +24,7 @@ public:
     BucketSearch(double tol, ToleranceBy by):
         SearchBase<T>(tol, by) { };
 
-    void Init()
+    void Init() override
     {
         if (! this->data_.empty())
         {
@@ -51,7 +50,10 @@ public:
     {
         std::vector<T> result;
         int index = Index(target);
-        for (int i = index - 1; i <= index + 1; i++){
+        if (index < 0 || index >= (int) bins_.size())
+            return result;
+
+        for (int i = (index > 0 ? index - 1 : 0); i <= index + 1; i++){
             for(const auto& it : bins_[i])
             {
                 if (this->Match(it.get(), target))

@@ -6,7 +6,7 @@
 #include <cstdlib> 
 #include "point.h"
 #include "../../util/mass/spectrum.h"
-#include <iostream>
+
 namespace algorithm {
 namespace search {
 
