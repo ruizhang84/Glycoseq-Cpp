@@ -41,6 +41,39 @@ public:
         return mass;
     }
 
+    static double Compute
+        (const std::map<model::glycan::Monosaccharide, int>& composite) 
+    {
+        double mass = 0;
+        for(const auto &it : composite)
+        {
+            switch (it.first)
+            {
+            case model::glycan::Monosaccharide::GlcNAc:
+                mass += kHexNAc * it.second;
+                break;
+            case model::glycan::Monosaccharide::Gal:
+                mass += kHex * it.second;
+                break;     
+            case model::glycan::Monosaccharide::Man:
+                mass += kHex * it.second;
+                break;     
+            case model::glycan::Monosaccharide::Fuc:
+                mass += kFuc * it.second;
+                break;     
+            case model::glycan::Monosaccharide::NeuAc:
+                mass += kNeuAc * it.second;
+                break;           
+            case model::glycan::Monosaccharide::NeuGc:
+                mass += kNeuGc * it.second;
+                break;    
+            default:
+                break;
+            }
+        }
+        return mass;
+    }
+
 protected:
     static constexpr double kHexNAc = 203.0794;
     static constexpr double kHex = 162.0528;

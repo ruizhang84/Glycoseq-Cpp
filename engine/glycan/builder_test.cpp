@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE BUilderTest
+#define BOOST_TEST_MODULE BuilderTest
 #include <boost/test/unit_test.hpp>
 
 #include <iostream>

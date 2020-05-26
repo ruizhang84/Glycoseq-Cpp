@@ -98,8 +98,10 @@ public:
         { return composite_; }
     void set_composition(const std::map<Monosaccharide, int>& composite)
         { composite_ = composite; }
-    virtual void set_composition(const std::string& name)
+    
+    static std::map<Monosaccharide, int> Interpret(const std::string& name)
     {
+        std::map<Monosaccharide, int> composite;
         std::smatch result;
         std::regex rGlcNAc("GlcNAc-(\\d+)-");
         std::regex rGal("Gal-(\\d+)-");
@@ -107,38 +109,41 @@ public:
         std::regex rFuc("Fuc-(\\d+)-");
         std::regex rNeuAc("NeuAc-(\\d+)-");
         std::regex rNeuGc("NeuGc-(\\d+)-");
-        composite_.clear();
 
         if (std::regex_search(name.begin(), name.end(), result, rGlcNAc))
         {
-            composite_[Monosaccharide::GlcNAc] = std::stoi(result[1]);
+            composite[Monosaccharide::GlcNAc] = std::stoi(result[1]);
         }
 
         if (std::regex_search(name.begin(), name.end(), result, rGal))
         {
-            composite_[Monosaccharide::Gal] = std::stoi(result[1]);
+            composite[Monosaccharide::Gal] = std::stoi(result[1]);
         }
 
         if (std::regex_search(name.begin(), name.end(), result, rMan))
         {
-            composite_[Monosaccharide::Man] = std::stoi(result[1]);
+            composite[Monosaccharide::Man] = std::stoi(result[1]);
         }
 
         if (std::regex_search(name.begin(), name.end(), result, rFuc))
         {
-            composite_[Monosaccharide::Fuc] = std::stoi(result[1]);
+            composite[Monosaccharide::Fuc] = std::stoi(result[1]);
         }
 
         if (std::regex_search(name.begin(), name.end(), result, rNeuAc))
         {
-            composite_[Monosaccharide::NeuAc] = std::stoi(result[1]);
+            composite[Monosaccharide::NeuAc] = std::stoi(result[1]);
         }
 
         if (std::regex_search(name.begin(), name.end(), result, rNeuGc))
         {
-            composite_[Monosaccharide::NeuGc] = std::stoi(result[1]);
+            composite[Monosaccharide::NeuGc] = std::stoi(result[1]);
         }
-
+        return composite;
+    }
+    virtual void set_composition(const std::string& name)
+    {
+       set_composition(Interpret(name));
     }
 
     std::map<Monosaccharide, int>  CompositionConst() const
