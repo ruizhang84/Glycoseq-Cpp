@@ -34,9 +34,9 @@ public:
     }
 
     std::vector<std::string>& Glycans() { return glycans_; }
-    void set_glycans(const std::vector<std::string>& glycans) { glycans_ = glycans; }
-
-    void set_peptides(const std::vector<std::string>& peptides)
+    std::vector<std::string>& Peptides() { return peptides_; }
+    virtual void set_glycans(const std::vector<std::string>& glycans) { glycans_ = glycans; }
+    virtual void set_peptides(const std::vector<std::string>& peptides)
     {
         std::vector<std::shared_ptr<algorithm::search::Point<std::string>>> points;
         for(const auto& it : peptides)
@@ -57,13 +57,12 @@ public:
     void set_tolerance_by(algorithm::search::ToleranceBy by) 
         { by_ = by; searcher_.set_tolerance_by(by); searcher_.Init(); }
 
-    std::vector<SearchResult> Match(const double mz, const int charge)
+    virtual std::vector<SearchResult> Match(const double target)
     {
         std::vector<SearchResult> res;
-        double mass = util::mass::SpectrumMass::Compute(mz, charge);
         for(const auto& it : glycans_)
         {
-            double delta = mass -
+            double delta = target -
                  util::mass::GlycanMass::Compute(model::glycan::Glycan::Interpret(it));
             if (delta <= 0 ) continue;
 
@@ -84,6 +83,7 @@ protected:
     algorithm::search::ToleranceBy by_;
     algorithm::search::BucketSearch<std::string> searcher_;
     std::vector<std::string> glycans_;
+    std::vector<std::string> peptides_;
 
 }; 
 
