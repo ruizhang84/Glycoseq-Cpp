@@ -77,9 +77,12 @@ public:
     
         std::deque<std::unique_ptr<Glycan>> queue;
         queue.push_back(std::move(root));
+
         while (!queue.empty())
         {
             std::unique_ptr<Glycan> node = std::move(queue.front());
+            isomer_store_.Add(node->Name(), node->ID());
+
             queue.pop_front();
             for(const auto& it : candidates_)
             {
@@ -88,17 +91,16 @@ public:
                 {
                     if (SatisfyCriteria(g.get()))
                     {
-                        if (!isomer_store_.Find(g->ID()))
+                        std::string id = g->ID();
+                        if (!subset_store_.Find(id))
                         {
                             queue.push_back(std::move(g));
                         }
-                        subset_store_.AddSubset(g->ID(), node->ID());
-                        isomer_store_.Add(g->Name(), g->ID());
+                        subset_store_.AddSubset(id, node->ID());
                     }
                 }
             }
         }
-
     }
 
     GlycanStore Isomer() { return isomer_store_; }
