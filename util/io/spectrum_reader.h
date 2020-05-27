@@ -89,17 +89,22 @@ public:
             return -1;
         return parser_->RTFromScanNum(scan_num); 
     }
-    virtual std::vector<Spectrum> GetSpectrum()
+    virtual std::vector<Spectrum> GetSpectrum(int start, int last)
     {
         std::vector<Spectrum> result;
-        int start = GetFirstScan();
-        int last = GetLastScan();
         for (int scan_num = start; scan_num <= last; scan_num++)
         {
             if (parser_->Exist(scan_num))
                 result.push_back(GetSpectrum(scan_num));
         }
         return result;
+    }
+
+    virtual std::vector<Spectrum> GetSpectrum()
+    {
+        int start = GetFirstScan();
+        int last = GetLastScan();
+        return GetSpectrum(start, last);
     }
 
 protected:

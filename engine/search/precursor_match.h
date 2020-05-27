@@ -8,6 +8,7 @@
 #include "../../model/glycan/glycan.h"
 #include "../../util/mass/glycan.h"
 #include "../../util/mass/spectrum.h"
+#include "../../engine/glycan/glycan_builder.h"
 
 namespace engine{
 namespace search{
@@ -46,9 +47,10 @@ protected:
 class PrecursorMatcher
 {
 public:
-    PrecursorMatcher(double tol, algorithm::search::ToleranceBy by):
-        tolerance_(tol), by_(by), 
-            searcher_(algorithm::search::BucketSearch<std::string>(tol, by)){}
+    PrecursorMatcher(double tol, algorithm::search::ToleranceBy by, 
+        engine::glycan::GlycanStore isomer): tolerance_(tol), by_(by),
+            searcher_(algorithm::search::BucketSearch<std::string>(tol, by)),
+                isomer_(isomer){}
 
     void Init(const std::vector<std::string>& peptides, const std::vector<std::string>& glycans)
     {
@@ -87,8 +89,7 @@ public:
         MatchResultStore res;
         for(const auto& it : glycans_)
         {
-            double delta = target -
-                 util::mass::GlycanMass::Compute(model::glycan::Glycan::Interpret(it));
+            double delta = target - isomer_.QueryMass(it);
             if (delta <= 0 ) continue;
 
             std::vector<std::string> peptides = searcher_.Query(delta);
@@ -104,6 +105,7 @@ protected:
     double tolerance_;
     algorithm::search::ToleranceBy by_;
     algorithm::search::BucketSearch<std::string> searcher_;
+    engine::glycan::GlycanStore isomer_;
     std::vector<std::string> glycans_;
     std::vector<std::string> peptides_;
 

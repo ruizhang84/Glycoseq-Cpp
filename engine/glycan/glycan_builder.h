@@ -23,6 +23,7 @@ class GlycanStore
 {
 public:
     StringsMapping Map() const { return map_; }
+    std::unordered_map<std::string, double> Mass() const { return mass_; }
     std::unordered_set<std::string> Query(const std::string item) const
     {
         if (map_.find(item) != map_.end())
@@ -32,6 +33,16 @@ public:
         std::unordered_set<std::string> result;
         return result;
     }
+    double QueryMass(const std::string item) const
+    {
+        double mass = 0;
+        if (map_.find(item) != map_.end())
+        {
+           return Mass()[item];
+        }
+        return mass;
+    }
+
     std::vector<std::string> Collection() const
     {
         std::vector<std::string> collection;
@@ -53,6 +64,9 @@ public:
         }
         map_[name].insert(table_id);
     }
+    void Add(const std::string& name, const double mass)
+        { mass_[name] = mass; }
+
     void AddSubset(const std::string& table_id, const std::string& subset_id)
     {
         Add(table_id, subset_id);
@@ -68,6 +82,7 @@ protected:
     // glycan composition_str(name) -> table_str(id), by isomer
     // glycan_id -> id of its subset, by biosynthesis
     StringsMapping map_;
+    std::unordered_map<std::string, double> mass_;
 };
 
 class GlycanMassStore
@@ -139,6 +154,8 @@ public:
         {
             std::unique_ptr<Glycan> node = std::move(queue.front());
             isomer_store_.Add(node->Name(), node->ID());
+            isomer_store_.Add(node->Name(), 
+                util::mass::GlycanMass::Compute(node->Composition()));
 
             queue.pop_front();
             for(const auto& it : candidates_)
