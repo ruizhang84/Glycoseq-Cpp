@@ -41,27 +41,19 @@ BOOST_AUTO_TEST_CASE( precusor_match_test )
     }
 
     // // build glycans
-    auto start = std::chrono::high_resolution_clock::now(); 
     engine::glycan::GlycanBuilder builder(12, 12, 5, 4, 0);
     builder.Build();
 
-    auto stop = std::chrono::high_resolution_clock::now(); 
-    auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start); 
-    std::cout << duration.count() << std::endl; 
-    
     // spectrum matching
-    start = std::chrono::high_resolution_clock::now(); 
     PrecursorMatcher precursor_runner(0.01, algorithm::search::ToleranceBy::Dalton);
     engine::glycan::GlycanStore store = builder.Isomer();
     std::vector<std::string> glycans_str = store.Collection();
     precursor_runner.Init(peptides, glycans_str);
-    SpectrumSearcher spectrum_runner(10, algorithm::search::ToleranceBy::PPM, builder.Subset(), builder.Isomer());
-    stop = std::chrono::high_resolution_clock::now(); 
-    duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start); 
-    std::cout << duration.count() << std::endl; 
+    SpectrumSearcher spectrum_runner(10, algorithm::search::ToleranceBy::PPM, builder.Mass(), builder.Isomer());
+
 
     std::cout << "Start to scan\n"; 
-    start = std::chrono::high_resolution_clock::now(); 
+    auto start = std::chrono::high_resolution_clock::now(); 
     for(auto& spec : spectrum_reader.GetSpectrum())
     {
         double target = util::mass::SpectrumMass::Compute(spec.PrecursorMZ(), spec.PrecursorCharge());
@@ -76,8 +68,8 @@ BOOST_AUTO_TEST_CASE( precusor_match_test )
             std::cout << it.score << std::endl;
         }
     }
-    stop = std::chrono::high_resolution_clock::now(); 
-    duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start); 
+    auto stop = std::chrono::high_resolution_clock::now(); 
+    auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start); 
     std::cout << duration.count() << std::endl; 
 
 

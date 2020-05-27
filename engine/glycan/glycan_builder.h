@@ -8,12 +8,16 @@
 #include <memory>
 #include <unordered_set>
 #include "../../model/glycan/nglycan_complex.h"
+#include "../../util/mass/glycan.h"
 
 namespace engine{
 namespace glycan {
 
 typedef std::unordered_map<std::string, 
         std::unordered_set<std::string>> StringsMapping;
+
+typedef std::unordered_map<std::string, 
+        std::unordered_set<double>> DoublesMapping;
 
 class GlycanStore
 {
@@ -66,6 +70,50 @@ protected:
     StringsMapping map_;
 };
 
+class GlycanMassStore
+{
+public:
+    DoublesMapping Map() const
+        { return map_; }
+
+    std::unordered_set<double> Query(const std::string item) const
+    {
+        if (map_.find(item) != map_.end())
+        {
+           return Map()[item];
+        }
+        std::unordered_set<double> result;
+        return result;
+    }
+    bool Contains(const std::string item) const
+    {
+        return map_.find(item) != map_.end();
+    }
+    void Add(const std::string& name, const double mass)
+    {
+        if (map_.find(name) == map_.end())
+        {
+            map_[name] = std::unordered_set<double>();
+        }
+        map_[name].insert(mass);
+    }
+    void AddSubset(const std::string& name, 
+        const std::string& subset_id, const double mass)
+    {
+        Add(name, mass);
+        if (map_.find(subset_id) != map_.end())
+        {
+            std::unordered_set<double> subset =  map_[subset_id];
+            map_[name].insert(subset.begin(), subset.end());
+        }
+    }
+    void Clear(){ map_.clear(); }
+
+protected:
+
+    DoublesMapping map_;
+};
+
 using namespace model::glycan;
 
 class GlycanBuilder
@@ -101,11 +149,12 @@ public:
                     if (SatisfyCriteria(g.get()))
                     {
                         std::string id = g->ID();
-                        if (!subset_store_.Contains(id))
+                        if (!mass_store_.Contains(id))
                         {
                             queue.push_back(std::move(g));
                         }
-                        subset_store_.AddSubset(id, node->ID());
+                        mass_store_.AddSubset(id, node->ID(), 
+                            util::mass::GlycanMass::Compute(node->Composition()));
                     }
                 }
             }
@@ -113,11 +162,11 @@ public:
     }
 
     GlycanStore Isomer() { return isomer_store_; }
-    GlycanStore Subset() { return subset_store_; }
+    GlycanMassStore Mass() { return mass_store_; }
     void Clear() 
     {
         isomer_store_.Clear();
-        subset_store_.Clear();
+        mass_store_.Clear();
     }
 
     std::vector<Monosaccharide> Candidates() { return candidates_; }
@@ -173,7 +222,8 @@ protected:
     int neuAc_;
     int neuGc_;
     std::vector<Monosaccharide> candidates_;
-    GlycanStore isomer_store_, subset_store_;
+    GlycanStore isomer_store_;
+    GlycanMassStore mass_store_;
 
 
 };

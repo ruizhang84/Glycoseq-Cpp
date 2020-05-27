@@ -19,6 +19,8 @@
 #include "../../engine/glycan/glycan_builder.h"
 #include "../../engine/protein/protein_ptm.h"
 
+#include <iostream>
+
 namespace engine{
 namespace search{
 
@@ -30,49 +32,12 @@ struct SearchResult
     double score;
 };
 
-class GlycanMassStore
-{
-public:
-    GlycanMassStore(const engine::glycan::GlycanStore& subset_store)
-        { Init(subset_store); }
-    std::vector<double> Query(const std::string& name)
-    {
-        if(map_.find(name) != map_.end())
-            return map_[name];
-        std::vector<double> result;
-        return result;
-    }
-    std::unordered_map<std::string, std::vector<double>>& Map()
-        { return map_; }
-
-protected:
-    virtual void Init(const engine::glycan::GlycanStore& subset_store)
-    {
-        for(const auto& it : subset_store.Collection())
-        {
-            map_[it] = std::vector<double>();
-            for(const auto& s :subset_store.Query(it))
-            {
-                if (memory_.find(s) == memory_.end())
-                {
-                    memory_[s] = util::mass::GlycanMass::Compute(
-                        model::glycan::NGlycanComplex::InterpretID(s));
-                }
-                map_[it].push_back(memory_[s]);
-            }
-        }
-    }
-    std::unordered_map<std::string, double> memory_;
-    std::unordered_map<std::string, std::vector<double>> map_;
-};
-
-
 class SpectrumSearcher
 {
 public:
     SpectrumSearcher(double tol, algorithm::search::ToleranceBy by, 
-        const engine::glycan::GlycanStore& subset, const engine::glycan::GlycanStore& isomer):
-            tolerance_(tol), by_(by), glycan_mass_(GlycanMassStore(subset)), glycan_isomer_(isomer),
+        const engine::glycan::GlycanMassStore& subset, const engine::glycan::GlycanStore& isomer):
+            tolerance_(tol), by_(by), glycan_mass_(subset), glycan_isomer_(isomer),
                 searcher_(algorithm::search::BucketSearch<model::spectrum::Peak>(tol, by)),
                 binary_(algorithm::search::BinarySearch(tol, by)){}
 
@@ -196,7 +161,9 @@ protected:
         (const std::string& seq, const std::string& id)
     {
         std::vector<model::spectrum::Peak> res;
-        std::vector<double> subset_mass = glycan_mass_.Query(id);
+        std::unordered_set<double> subset = glycan_mass_.Query(id);
+        std::vector<double> subset_mass;
+        subset_mass.insert(subset_mass.end(), subset.begin(), subset.end());
         binary_.set_data(subset_mass);
         binary_.Init();
 
@@ -250,7 +217,7 @@ protected:
 
     double tolerance_;
     algorithm::search::ToleranceBy by_;
-    GlycanMassStore glycan_mass_;
+    engine::glycan::GlycanMassStore glycan_mass_;
     engine::glycan::GlycanStore glycan_isomer_;
     algorithm::search::BucketSearch<model::spectrum::Peak> searcher_;
     algorithm::search::BinarySearch binary_;
