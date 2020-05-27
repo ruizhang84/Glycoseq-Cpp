@@ -22,7 +22,7 @@ public:
     Proteases Enzyme() { return enzyme_; }
     void set_min_length(int length) { min_length_ = length; }
     void set_miss_cleavage(int num) { miss_cleavage_ = num; }
-    void SetProtease(Proteases enzyme) { enzyme_ = enzyme_; }
+    void SetProtease(Proteases enzyme) { enzyme_ = enzyme; }
 
     virtual std::unordered_set<std::string> Sequences
         (const std::string seq, std::function<bool(const std::string&)> filter)
