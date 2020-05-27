@@ -17,7 +17,7 @@ std::shared_ptr<Point<double>> CreatePoint(double value)
 
 BOOST_AUTO_TEST_CASE( Monosaccharide_test ) 
 {
-    SearchBase<double> searcher(20.0, ToleranceBy::Dalton);
+    BasicSearch<double> searcher(20.0, ToleranceBy::Dalton);
     std::vector<std::shared_ptr<Point<double>>> box; 
 
     for(int i=1; i<100; i++)

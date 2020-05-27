@@ -17,6 +17,7 @@ public:
         {
             if (std::toupper(s) == 'C')
             {
+                //Iodoacetamide
                 mass += 57.02146;
             }
             mass += GetAminoAcidMW(s);

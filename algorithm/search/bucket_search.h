@@ -2,6 +2,7 @@
 #define ALGORITHM_BUCKET_SEARCH_H
 
 #include <algorithm> 
+#include <iostream>
 #include "search.h"
 
 namespace algorithm {
@@ -9,7 +10,7 @@ namespace search {
 
 
 template <class T>
-class BucketSearch : public SearchBase<T>
+class BucketSearch : public BasicSearch<T>
 {
 typedef std::vector<std::vector<std::shared_ptr<Point<T>>>> Bucket;
 public:
@@ -22,10 +23,16 @@ public:
     };
 
     BucketSearch(double tol, ToleranceBy by):
-        SearchBase<T>(tol, by) { };
+        BasicSearch<T>(tol, by) { };
 
     void Init() override
     {
+        if (this->by_ == ToleranceBy::PPM)
+        {
+            std::cout << "Not implemented for PPM!" << std::endl;
+            return; //not recomendated!
+        }
+
         if (! this->data_.empty())
         {
             auto min_element = std::min_element(this->data_.begin(), this->data_.end(), PointComparer());
@@ -33,10 +40,8 @@ public:
             min_ = (*min_element)->Value();
             max_ = (*max_element)->Value();
 
-            Convert();
-
             // bucket size 
-            int bucket_size = (int) ((max_ - min_) / bin_length_ + 1);
+            int bucket_size = (int) ((max_ - min_) / this->tolerance_ + 1);
             bins_.reserve(bucket_size);
             bins_.assign(bucket_size, std::vector<std::shared_ptr<Point<T>>>());
 
@@ -85,22 +90,11 @@ public:
 
 protected:
     int Index(double target) 
-        { return (target - min_) / bin_length_; }
-    void Convert()
-    {
-        // convert ppm tolerance
-        if (this->by_ == ToleranceBy::PPM)
-        {
-            bin_length_ = this->tolerance_ / 10.0; // e.g. 10 ppm -> 1
-        }else{
-            bin_length_ = this->tolerance_;
-        }
-    }
+        { return (target - min_) / this->tolerance_; }
 
     double min_;
     double max_;
     Bucket bins_;
-    double bin_length_; // incase of PPM
 };
 
 } // namespace algorithm

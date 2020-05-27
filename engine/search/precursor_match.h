@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include <unordered_set>
-#include "../../algorithm/search/bucket_search.h"
+#include "../../algorithm/search/search.h"
 #include "../../util/mass/peptide.h"
 #include "../../model/glycan/glycan.h"
 #include "../../util/mass/glycan.h"
@@ -64,7 +64,7 @@ class PrecursorMatcher
 public:
     PrecursorMatcher(double tol, algorithm::search::ToleranceBy by, 
         engine::glycan::GlycanStore isomer): tolerance_(tol), by_(by),
-            searcher_(algorithm::search::BucketSearch<std::string>(tol, by)),
+            searcher_(algorithm::search::BasicSearch<std::string>(tol, by)),
                 isomer_(isomer){}
 
     void Init(const std::vector<std::string>& peptides, const std::vector<std::string>& glycans)
@@ -101,16 +101,27 @@ public:
 
     virtual MatchResultStore Match(const double target)
     {
+        return Match(target, 0);
+    }
+
+    virtual MatchResultStore Match(const double target, const int isotope)
+    {
         MatchResultStore res;
+        searcher_.set_base(target);
         for(const auto& glycan : glycans_)
         {
             double delta = target - isomer_.QueryMass(glycan);
             if (delta <= 0 ) continue;
 
-            std::vector<std::string> peptides = searcher_.Query(delta);
-            for(const auto& peptide : peptides)
+            for (int i = 0; i <= isotope; i++)
             {
-                res.Add(peptide, glycan);
+                
+                double q = delta - i * util::mass::SpectrumMass::kIon;
+                std::vector<std::string> peptides = searcher_.Query(q);
+                for(const auto& peptide : peptides)
+                {
+                    res.Add(peptide, glycan);
+                }
             }
         }
         return res;
@@ -119,7 +130,7 @@ public:
 protected:
     double tolerance_;
     algorithm::search::ToleranceBy by_;
-    algorithm::search::BucketSearch<std::string> searcher_;
+    algorithm::search::BasicSearch<std::string> searcher_;
     engine::glycan::GlycanStore isomer_;
     std::vector<std::string> glycans_;
     std::vector<std::string> peptides_;
