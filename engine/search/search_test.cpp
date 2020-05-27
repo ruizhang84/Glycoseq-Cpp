@@ -69,41 +69,75 @@ BOOST_AUTO_TEST_CASE( precusor_match_test )
     precursor_runner.Init(peptides, glycans_str);
     SpectrumSearcher spectrum_runner(0.01, algorithm::search::ToleranceBy::Dalton, builder.Mass(), builder.Isomer());
 
-    auto special_spec = spectrum_reader.GetSpectrum(8001);
+    auto special_spec = spectrum_reader.GetSpectrum(8172);
     double special_target = util::mass::SpectrumMass::Compute(special_spec.PrecursorMZ(), special_spec.PrecursorCharge());
-    std::cout << std::fixed << std::setprecision(6) << special_target << std::endl;
-    MatchResultStore special_r = precursor_runner.Match(special_target, 2);
+    MatchResultStore special_r = precursor_runner.Match(special_target, 2);    
+    // std::cout << special_spec.Scan() << " : " << std::endl;
+    // for(auto it : special_r.Map())
+    // {
+    //     std::cout << it.first << std::endl;
+    //     for(auto g: it.second)
+    //     {
+    //         std::cout << g << std::endl;
+    //     }
+    // }
     BOOST_CHECK(!special_r.Empty());
     
 
-    std::cout << "Start to scan\n"; 
-    auto start = std::chrono::high_resolution_clock::now(); 
-    for(auto& spec : spectrum_reader.GetSpectrum(8000, 9000))
+    special_spec = spectrum_reader.GetSpectrum(8001);
+    special_target = util::mass::SpectrumMass::Compute(special_spec.PrecursorMZ(), special_spec.PrecursorCharge());
+    special_r = precursor_runner.Match(special_target, 2);
+    spectrum_runner.set_candidate(special_r);
+    spectrum_runner.set_spectrum(special_spec);
+    std::vector<SearchResult> special_res = spectrum_runner.Search();
+    // std::string special_string = "PEPTIDE";
+    // for (int i = 0; i < (int) special_string.length()-1; i++)
+    // {
+    //     std::cout << util::mass::IonMass::Compute(special_string.substr(0, i+1), 
+    //         util::mass::IonType::c) << std::endl;
+    // }
+    // for (int i = 0; i < (int) special_string.length(); i++)
+    // {
+    //     std::cout << util::mass::IonMass::Compute(special_string.substr(i, special_string.length() - i), 
+    //         util::mass::IonType::z) << std::endl;
+    // }   
+    for(auto it : special_res)
     {
-        double target = util::mass::SpectrumMass::Compute(spec.PrecursorMZ(), spec.PrecursorCharge());
-        MatchResultStore r = precursor_runner.Match(target, 2);
-        if (r.Empty()) continue;
-
-        std::cout << spec.Scan() << " : " << std::endl;
-        for(auto it : r.Map())
-        {
-            std::cout << it.first << std::endl;
-            for(auto g: it.second)
-            {
-                 std::cout << g << std::endl;
-            }
-        }
-        
-        // for(auto it : spectrum_runner.Search())
-        // {
-        //     std::cout << it.glycan << std::endl;
-        //     std::cout << it.peptide << std::endl;
-        //     std::cout << it.score << std::endl;
-        // }
+        std::cout << it.glycan << std::endl;
+        std::cout << it.peptide << std::endl;
+        std::cout << it.score << std::endl;
     }
-    auto stop = std::chrono::high_resolution_clock::now(); 
-    auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start); 
-    std::cout << duration.count() << std::endl; 
+    BOOST_CHECK(!special_res.empty());
+    
+
+    // std::cout << "Start to scan\n"; 
+    // auto start = std::chrono::high_resolution_clock::now(); 
+    // for(auto& spec : spectrum_reader.GetSpectrum(8000, 9000))
+    // {
+    //     double target = util::mass::SpectrumMass::Compute(spec.PrecursorMZ(), spec.PrecursorCharge());
+    //     MatchResultStore r = precursor_runner.Match(target, 2);
+    //     if (r.Empty()) continue;
+
+    //     std::cout << spec.Scan() << " : " << std::endl;
+    //     for(auto it : r.Map())
+    //     {
+    //         std::cout << it.first << std::endl;
+    //         for(auto g: it.second)
+    //         {
+    //              std::cout << g << std::endl;
+    //         }
+    //     }
+        
+    //     // for(auto it : spectrum_runner.Search())
+    //     // {
+    //     //     std::cout << it.glycan << std::endl;
+    //     //     std::cout << it.peptide << std::endl;
+    //     //     std::cout << it.score << std::endl;
+    //     // }
+    // }
+    // auto stop = std::chrono::high_resolution_clock::now(); 
+    // auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start); 
+    // std::cout << duration.count() << std::endl; 
 
 }
 

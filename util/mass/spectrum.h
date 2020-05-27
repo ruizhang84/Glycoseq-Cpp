@@ -15,7 +15,6 @@ public:
     {
         return (mz - kIon) * charge;
     }
-
     static double ComputeMZ(const double mass, const int charge)
     {
         return (mass + kIon * charge) / charge;

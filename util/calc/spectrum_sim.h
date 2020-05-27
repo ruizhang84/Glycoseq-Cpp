@@ -87,8 +87,8 @@ protected:
             else
                 p2.erase(p2.begin() + p1.size());
 
-            std::sort(p1.begin(), p1.end());
-            std::sort(p2.begin(), p2.end());
+            std::sort(p1.begin(), p1.end(), MZComp);
+            std::sort(p2.begin(), p2.end(), MZComp);
         }
 
         // pairwise multiple sum
@@ -101,6 +101,9 @@ protected:
     }
     static bool IntensityGreater (model::spectrum::Peak& i, model::spectrum::Peak& j) 
         { return (i.Intensity() > j.Intensity()); }
+    static bool MZComp (model::spectrum::Peak& i, model::spectrum::Peak& j) 
+        { return (i.MZ() < j.MZ()); }
+
     int Index(model::spectrum::Peak& pk, double lower) 
         { return (pk.MZ() - lower) / tolerance_; } 
     double tolerance_;

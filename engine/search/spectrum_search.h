@@ -62,28 +62,50 @@ public:
         double max_score = 0;
         SearchResult best;
 
-        for(const auto& pep : candidate_.Peptides())
+        for(const auto& peptide : candidate_.Peptides())
         {
-            std::vector<model::spectrum::Peak> p1 = SearchOxonium(pep);
-            if (p1.empty()) continue;
-            for(const auto& composite: candidate_.Glycans(pep))
+            std::vector<model::spectrum::Peak> result_oxonium = SearchOxonium();
+            if (result_oxonium.empty()) continue;
+            std::cout << "yes" << std::endl;
+
+            for(const auto& composite: candidate_.Glycans(peptide))
             {
-                std::vector<int> positions = engine::protein::ProteinPTM::FindNGlycanSite(pep);
+                std::vector<int> positions = engine::protein::ProteinPTM::FindNGlycanSite(peptide);
+                std::unordered_map<int, std::vector<model::spectrum::Peak>> result_position;
                 for (const auto& pos : positions)
                 {
-                    std::vector<model::spectrum::Peak> p2 = SearchPeptides(pep, composite, pos);
-                    if (p2.empty()) continue;
-                    std::unordered_set<std::string> glycan_ids = glycan_isomer_.Query(composite);
-                    for(const auto & id : glycan_ids)
+                    std::vector<model::spectrum::Peak> result_temp = SearchPeptides(peptide, composite, pos);
+                    if (!result_temp.empty())
                     {
-                        std::vector<model::spectrum::Peak> p3 = SearchGlycans(pep, id);
-                        if (p3.empty()) continue;
-                        double score = IntensitySum(p1) + IntensitySum(p2) + IntensitySum(p3);
+                        result_position[pos] = result_temp;
+                        std::cout << "yes y" << std::endl;
+                    }
+                }
+
+                std::unordered_set<std::string> glycan_ids = glycan_isomer_.Query(composite);
+                std::unordered_map<std::string, std::vector<model::spectrum::Peak>> result_isomer;
+                for(const auto & isomer : glycan_ids)
+                {
+                    std::vector<model::spectrum::Peak> result_temp = SearchGlycans(peptide, isomer);
+                    if (!result_temp.empty())
+                    {
+                        result_isomer[isomer] = result_temp;
+                        std::cout << "yes yy" << std::endl;
+                    }
+                }
+
+                for(const auto& pos_it : result_position)
+                {
+                    for(const auto& isomer_it : result_isomer)
+                    {
+                        double score = IntensitySum(result_oxonium) + 
+                            IntensitySum(pos_it.second) + IntensitySum(isomer_it.second);
+                         
                         if (score > max_score)
                         {
                             max_score = score;
                             best.glycan = composite;
-                            best.peptide = pep;
+                            best.peptide = peptide;
                             best.score = score;
                         }
                     }
@@ -113,14 +135,12 @@ protected:
         searcher_.Init();
     }
 
-    virtual std::vector<model::spectrum::Peak> SearchOxonium(const std::string& seq)
+    virtual std::vector<model::spectrum::Peak> SearchOxonium()
     {
-        double mass = util::mass::PeptideMass::Compute(seq);
         std::vector<model::spectrum::Peak> res;
-        for (int i = 1; i <= 2; i++)
+        for (const auto& mass : oxonium_)
         {
-            std::vector<model::spectrum::Peak> p =
-                searcher_.Query(mass + util::mass::GlycanMass::kHexNAc * i);
+            std::vector<model::spectrum::Peak> p = searcher_.Query(mass);
             if (! p.empty())
             {
                 res.push_back(*std::max_element(p.begin(), p.end(), IntensityCmp));
@@ -141,10 +161,20 @@ protected:
             for(int charge = 1; charge <= spectrum_.PrecursorCharge(); charge++)
             {
                 double mz = util::mass::SpectrumMass::ComputeMZ(mass + extra, charge);
-                peptides_mass.push_back(mz);
+                peptides_mz.push_back(mz);
             }
         }
-        binary_.set_data(peptides_mass);
+        // peptides_mass = ComputeNonePTMPeptideMass(seq, pos);
+        // for (const auto& mass : peptides_mass)
+        // {
+        //     for(int charge = 1; charge <= spectrum_.PrecursorCharge(); charge++)
+        //     {
+        //         double mz = util::mass::SpectrumMass::ComputeMZ(mass, charge);
+        //         peptides_mz.push_back(mz);
+        //     }
+        // }
+
+        binary_.set_data(peptides_mz);
         binary_.Init();
 
         for(const auto& pk : spectrum_.Peaks())
@@ -189,7 +219,6 @@ protected:
         std::vector<double> mass_list;
         for (int i = pos; i < (int) seq.length() - 1; i++) // seldom at n
         {
-
             double mass = util::mass::IonMass::Compute(seq.substr(0, i+1), util::mass::IonType::c);
             mass_list.push_back(mass);
         }
@@ -201,19 +230,35 @@ protected:
         return mass_list;
     }
 
+    static std::vector<double> ComputeNonePTMPeptideMass(const std::string& seq, const int pos)
+    {
+        std::vector<double> mass_list;
+        for (int i = 0; i < pos; i++) // seldom at n
+        {
+            double mass = util::mass::IonMass::Compute(seq.substr(0, i+1), util::mass::IonType::c);
+            mass_list.push_back(mass);
+        }
+        for (int i = pos + 1; i < (int) seq.length(); i++)
+        {
+            double mass = util::mass::IonMass::Compute(seq.substr(i, seq.length()-i), util::mass::IonType::z);
+            mass_list.push_back(mass);
+        }
+        return mass_list;
+    }
+
+
     static bool IntensityCmp(const model::spectrum::Peak& p1, const model::spectrum::Peak& p2)
         { return (p1.Intensity() < p2.Intensity()); }
     
     static double IntensitySum(const std::vector<model::spectrum::Peak>& peaks)
-        { 
-            double sum = 0;
-            for(const auto& it : peaks)
-            {
-                sum += it.Intensity();
-            }
-            return sum;
+    { 
+        double sum = 0;
+        for(const auto& it : peaks)
+        {
+            sum += it.Intensity();
         }
-
+        return sum;
+    }
 
     double tolerance_;
     algorithm::search::ToleranceBy by_;
@@ -223,6 +268,14 @@ protected:
     algorithm::search::BinarySearch binary_;
     MatchResultStore candidate_;
     model::spectrum::Spectrum spectrum_;
+
+    const std::vector<double> oxonium_ 
+    {
+        util::mass::GlycanMass::kHexNAc,
+        util::mass::GlycanMass::kHexNAc - util::mass::GlycanMass::kWater,
+        util::mass::GlycanMass::kHexNAc - util::mass::GlycanMass::kWater * 2,
+        util::mass::GlycanMass::kHexNAc + util::mass::GlycanMass::kHex
+    };
 }; 
 
 } // namespace engine

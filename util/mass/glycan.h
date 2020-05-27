@@ -79,6 +79,7 @@ public:
     static constexpr double kFuc = 146.0579;
     static constexpr double kNeuAc = 291.0954;
     static constexpr double kNeuGc = 307.0903;
+    static constexpr double kWater = 18.0105;
 };
 
 
