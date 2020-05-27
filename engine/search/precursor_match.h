@@ -3,12 +3,14 @@
 
 #include <string>
 #include <vector>
+#include <unordered_set>
 #include "../../algorithm/search/bucket_search.h"
 #include "../../util/mass/peptide.h"
 #include "../../model/glycan/glycan.h"
 #include "../../util/mass/glycan.h"
 #include "../../util/mass/spectrum.h"
 #include "../../engine/glycan/glycan_builder.h"
+#include <iostream>
 
 namespace engine{
 namespace search{
@@ -16,32 +18,45 @@ namespace search{
 class MatchResultStore
 {
 public:
+    std::unordered_map<std::string, 
+        std::unordered_set<std::string>> Map() const { return map_; }
+    bool Empty() const { return peptides_.size() == 0; }
+    std::vector<std::string> Peptides() const { return peptides_; }
+    std::vector<std::string> Glycans() const
+    {
+        std::vector<std::string> res;
+        for (const auto& peptide : Peptides())
+        {
+            if (map_.find(peptide) != map_.end())
+            {
+                std::unordered_set<std::string> glycans = Map()[peptide];
+                res.insert(res.end(), glycans.begin(), glycans.end());
+            }
+        }
+        return res;
+    }
+    std::unordered_set<std::string> Glycans(const std::string& peptide) const
+    {
+        if (map_.find(peptide) != map_.end())
+        {
+            return Map()[peptide];
+        }
+        return std::unordered_set<std::string>();
+    }
     void Add(const std::string& peptide, const std::string& glycan)
     {
         if (map_.find(peptide) == map_.end())
         {
             peptides_.push_back(peptide);
-            map_[peptide] = std::vector<std::string>();
+            map_[peptide] = std::unordered_set<std::string>();
         }
-        map_[peptide].push_back(glycan);
-    }
-    std::unordered_map<std::string, 
-        std::vector<std::string>> Map() { return map_; }
-    bool Empty() { return peptides_.size() == 0; }
-    std::vector<std::string> Peptides() { return peptides_; }
-    std::vector<std::string> Glycans(const std::string& peptide)
-    {
-        if (map_.find(peptide) != map_.end())
-        {
-            return map_[peptide];
-        }
-        return std::vector<std::string>();
+        map_[peptide].insert(glycan);
     }
 
 protected:
     std::vector<std::string> peptides_;
     std::unordered_map<std::string, 
-        std::vector<std::string>> map_;
+        std::unordered_set<std::string>> map_;
 };
 
 class PrecursorMatcher
@@ -66,11 +81,11 @@ public:
     virtual void set_peptides(const std::vector<std::string>& peptides)
     {
         std::vector<std::shared_ptr<algorithm::search::Point<std::string>>> points;
-        for(const auto& it : peptides)
+        for(const auto& peptide : peptides)
         {
-            double mass = util::mass::PeptideMass::Compute(it);
+            double mass = util::mass::PeptideMass::Compute(peptide);
             std::shared_ptr<algorithm::search::Point<std::string>> p = 
-                std::make_shared<algorithm::search::Point<std::string>>(mass, it);
+                std::make_shared<algorithm::search::Point<std::string>>(mass, peptide);
             points.push_back(std::move(p));
         }
         searcher_.set_data(std::move(points));
@@ -87,15 +102,15 @@ public:
     virtual MatchResultStore Match(const double target)
     {
         MatchResultStore res;
-        for(const auto& it : glycans_)
+        for(const auto& glycan : glycans_)
         {
-            double delta = target - isomer_.QueryMass(it);
+            double delta = target - isomer_.QueryMass(glycan);
             if (delta <= 0 ) continue;
 
             std::vector<std::string> peptides = searcher_.Query(delta);
-            for(auto& p : peptides)
+            for(const auto& peptide : peptides)
             {
-                res.Add(p, it);
+                res.Add(peptide, glycan);
             }
         }
         return res;

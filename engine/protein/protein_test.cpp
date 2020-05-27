@@ -14,7 +14,7 @@ BOOST_AUTO_TEST_CASE( Monosaccharide_test )
     std::string seq = "MSALGAVIALLLWGQLFAVDSGNDSVTDIADDGCP"
                     "KPPEIAHGYVEHSVRYQCKNYYKLRTEGDGVYTLND";
     engine::protein::Digestion digest;
-    std::vector<std::string> seqs = digest.Sequences(seq, engine::protein::ProteinPTM::ContainsNGlycanSite);
+    std::unordered_set<std::string> seqs = digest.Sequences(seq, engine::protein::ProteinPTM::ContainsNGlycanSite);
     for(auto& s: seqs)
     {
         std::cout << s << std::endl;

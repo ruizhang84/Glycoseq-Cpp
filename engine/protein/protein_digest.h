@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <functional>
+#include <unordered_set>
 
 namespace engine {
 namespace protein {
@@ -23,10 +24,10 @@ public:
     void set_miss_cleavage(int num) { miss_cleavage_ = num; }
     void SetProtease(Proteases enzyme) { enzyme_ = enzyme_; }
 
-    virtual std::vector<std::string> Sequences
+    virtual std::unordered_set<std::string> Sequences
         (const std::string seq, std::function<bool(const std::string&)> filter)
     {
-        std::vector<std::string> seq_list;
+        std::unordered_set<std::string> seq_list;
         std::vector<int> cutoffs = FindCutOffPosition(seq);
 
         //generate substring from sequences
@@ -40,7 +41,7 @@ public:
                 {
                     std::string sub = seq.substr(start, end - start + 1);
                     if (filter(sub))
-                        seq_list.push_back(sub);
+                        seq_list.insert(sub);
                 }
             }
         }

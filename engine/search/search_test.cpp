@@ -29,13 +29,13 @@ BOOST_AUTO_TEST_CASE( precusor_match_test )
  
     engine::protein::Digestion digest;
     digest.SetProtease(engine::protein::Proteases::Trypsin);
-    std::vector<std::string> seqs = digest.Sequences(proteins.front().Sequence(),
+    std::unordered_set<std::string> seqs = digest.Sequences(proteins.front().Sequence(),
          engine::protein::ProteinPTM::ContainsNGlycanSite);
     digest.SetProtease(engine::protein::Proteases::GluC);
     std::vector<std::string> peptides;
     for(auto& it : seqs)
     {
-        std::vector<std::string> seq = digest.Sequences(it,
+        std::unordered_set<std::string> seq = digest.Sequences(it,
          engine::protein::ProteinPTM::ContainsNGlycanSite);
         peptides.insert(peptides.end(), seq.begin(), seq.end());
     }
@@ -46,8 +46,13 @@ BOOST_AUTO_TEST_CASE( precusor_match_test )
 
     // spectrum matching
     PrecursorMatcher precursor_runner(0.01, algorithm::search::ToleranceBy::Dalton, builder.Isomer());
-    engine::glycan::GlycanStore store = builder.Isomer();
-    std::vector<std::string> glycans_str = store.Collection();
+    std::vector<std::string> glycans_str = builder.Isomer().Collection();
+    for(auto it : peptides)
+    {
+        std::cout << it << std::endl;
+    }
+
+
     precursor_runner.Init(peptides, glycans_str);
     SpectrumSearcher spectrum_runner(10, algorithm::search::ToleranceBy::PPM, builder.Mass(), builder.Isomer());
 
@@ -61,18 +66,25 @@ BOOST_AUTO_TEST_CASE( precusor_match_test )
         if (r.Empty()) continue;
 
         std::cout << spec.Scan() << " : " << std::endl;
-        for(auto it : spectrum_runner.Search())
+        for(auto it : r.Map())
         {
-            std::cout << it.glycan << std::endl;
-            std::cout << it.peptide << std::endl;
-            std::cout << it.score << std::endl;
+            std::cout << it.first << std::endl;
+            for(auto g: it.second)
+            {
+                 std::cout << g << std::endl;
+            }
         }
+        
+        // for(auto it : spectrum_runner.Search())
+        // {
+        //     std::cout << it.glycan << std::endl;
+        //     std::cout << it.peptide << std::endl;
+        //     std::cout << it.score << std::endl;
+        // }
     }
     auto stop = std::chrono::high_resolution_clock::now(); 
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start); 
     std::cout << duration.count() << std::endl; 
-
-// 389, 578, 698, 891
 
 }
 
