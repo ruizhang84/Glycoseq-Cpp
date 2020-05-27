@@ -6,7 +6,6 @@
 #include <unordered_map>
 #include <memory>
 #include <algorithm>
-#include <numeric>
 #include "precursor_match.h"
 
 #include "../../algorithm/search/bucket_search.h"
@@ -113,9 +112,8 @@ public:
                     for(const auto & id : glycan_ids)
                     {
                         std::vector<model::spectrum::Peak> p3 = SearchGlycans(pep, id);
-                        double score = std::accumulate(p1.begin(), p1.end(), 0, IntensitySum)
-                            + std::accumulate(p2.begin(), p2.end(), 0, IntensitySum)
-                            + std::accumulate(p3.begin(), p3.end(), 0, IntensitySum);
+                        if (p3.empty()) continue;
+                        double score = IntensitySum(p1) + IntensitySum(p2) + IntensitySum(p3);
                         if (score > max_score)
                         {
                             max_score = score;
@@ -239,8 +237,15 @@ protected:
     static bool IntensityCmp(const model::spectrum::Peak& p1, const model::spectrum::Peak& p2)
         { return (p1.Intensity() < p2.Intensity()); }
     
-    static double IntensitySum(const model::spectrum::Peak& p1, const model::spectrum::Peak& p2)
-        { return p1.Intensity() + p2.Intensity(); }
+    static double IntensitySum(const std::vector<model::spectrum::Peak>& peaks)
+        { 
+            double sum = 0;
+            for(const auto& it : peaks)
+            {
+                sum += it.Intensity();
+            }
+            return sum;
+        }
 
 
     double tolerance_;
