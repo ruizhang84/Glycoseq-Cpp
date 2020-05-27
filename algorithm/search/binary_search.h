@@ -27,7 +27,7 @@ public:
     ToleranceBy ToleranceType() const { return by_; }
     void set_tolerance(double tol) { tolerance_ = tol; }
     void set_tolerance_by(ToleranceBy by) { by_ = by; }
-    void set_data(std::vector<double> data) { data_ = data; Init(); }
+    void set_data(std::vector<double> data) { data_ = data; }
 
 
     virtual bool Search(const double target)

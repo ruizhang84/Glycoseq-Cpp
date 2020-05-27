@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE( precusor_match_test )
     // spectrum matching
     PrecursorMatcher precursor_runner(0.01, algorithm::search::ToleranceBy::Dalton);
     precursor_runner.Init(peptides, glycans_str);
-    SpectrumSearcher spectrum_runner(10, algorithm::search::ToleranceBy::PPM, builder.Subset());
+    SpectrumSearcher spectrum_runner(10, algorithm::search::ToleranceBy::PPM, builder.Subset(), builder.Isomer());
 
     for(auto & it : builder.Subset().Map())
     {

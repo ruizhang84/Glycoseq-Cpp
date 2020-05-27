@@ -4,9 +4,9 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include <unordered_set>
 #include <memory>
 #include <algorithm>
+#include <numeric>
 #include "precursor_match.h"
 
 #include "../../algorithm/search/bucket_search.h"
@@ -18,6 +18,7 @@
 #include "../../util/mass/spectrum.h"
 #include "../../util/mass/ion.h"
 #include "../../engine/glycan/glycan_builder.h"
+#include "../../engine/protein/protein_ptm.h"
 
 namespace engine{
 namespace search{
@@ -33,36 +34,37 @@ struct SearchResult
 class GlycanMassStore
 {
 public:
-    GlycanMassStore(engine::glycan::GlycanStore subset_store){ Init(subset_store); }
-    std::unordered_set<double> Mass(const std::string& name)
+    GlycanMassStore(const engine::glycan::GlycanStore& subset_store)
+        { Init(subset_store); }
+    std::vector<double> Query(const std::string& name)
     {
         if(map_.find(name) != map_.end())
             return map_[name];
-        return std::unordered_set<double>();
+        std::vector<double> result;
+        return result;
     }
-    std::unordered_map<std::string, std::unordered_set<double>>& Map()
+    std::unordered_map<std::string, std::vector<double>>& Map()
         { return map_; }
 
 protected:
-    virtual void Init(engine::glycan::GlycanStore& subset_store)
+    virtual void Init(const engine::glycan::GlycanStore& subset_store)
     {
-        for(const auto& it : subset_store.Map())
+        for(const auto& it : subset_store.Collection())
         {
-            map_[it.first] = std::unordered_set<double>();
-            for(const auto& s : it.second)
+            map_[it] = std::vector<double>();
+            for(const auto& s :subset_store.Query(it))
             {
                 if (memory_.find(s) == memory_.end())
                 {
                     memory_[s] = util::mass::GlycanMass::Compute(
                         model::glycan::NGlycanComplex::InterpretID(s));
                 }
-                map_[it.first].insert(memory_[s]);
+                map_[it].push_back(memory_[s]);
             }
         }
-
     }
     std::unordered_map<std::string, double> memory_;
-    std::unordered_map<std::string, std::unordered_set<double>> map_;
+    std::unordered_map<std::string, std::vector<double>> map_;
 };
 
 
@@ -70,8 +72,8 @@ class SpectrumSearcher
 {
 public:
     SpectrumSearcher(double tol, algorithm::search::ToleranceBy by, 
-        const engine::glycan::GlycanStore subset):
-            tolerance_(tol), by_(by), glycan_mass_(GlycanMassStore(subset)), 
+        const engine::glycan::GlycanStore& subset, const engine::glycan::GlycanStore& isomer):
+            tolerance_(tol), by_(by), glycan_mass_(GlycanMassStore(subset)), glycan_isomer_(isomer),
                 searcher_(algorithm::search::BucketSearch<model::spectrum::Peak>(tol, by)),
                 binary_(algorithm::search::BinarySearch(tol, by)){}
 
@@ -92,6 +94,10 @@ public:
         SearchInit();
 
         std::vector<SearchResult> res;
+        
+        double max_score = 0;
+        SearchResult best;
+
         for(const auto& pep : candidate_.Peptides())
         {
             std::vector<model::spectrum::Peak> p1 = SearchOxonium(pep);
@@ -103,13 +109,28 @@ public:
                 {
                     std::vector<model::spectrum::Peak> p2 = SearchPeptides(pep, composite, pos);
                     if (p2.empty()) continue;
+                    std::unordered_set<std::string> glycan_ids = glycan_isomer_.Query(composite);
+                    for(const auto & id : glycan_ids)
+                    {
+                        std::vector<model::spectrum::Peak> p3 = SearchGlycans(pep, id);
+                        double score = std::accumulate(p1.begin(), p1.end(), 0, IntensitySum)
+                            + std::accumulate(p2.begin(), p2.end(), 0, IntensitySum)
+                            + std::accumulate(p3.begin(), p3.end(), 0, IntensitySum);
+                        if (score > max_score)
+                        {
+                            max_score = score;
+                            best.glycan = composite;
+                            best.peptide = pep;
+                            best.score = score;
+                        }
+                    }
                 }
             }
         }
+        if (max_score > 0)
+            res.push_back(best);
         return res;   
     }
-
-
 
 protected:
     virtual void SearchInit()
@@ -117,9 +138,13 @@ protected:
         std::vector<std::shared_ptr<algorithm::search::Point<model::spectrum::Peak>>> points;
         for(const auto& it : spectrum_.Peaks())
         {
-            std::shared_ptr<algorithm::search::Point<model::spectrum::Peak>> p = 
-                std::make_shared<algorithm::search::Point<model::spectrum::Peak>>(it.MZ(), it);
-            points.push_back(std::move(p));
+            for (int charge = 1; charge <= spectrum_.PrecursorCharge(); charge++)
+            {
+                double mass = util::mass::SpectrumMass::Compute(it.MZ(), charge); 
+                std::shared_ptr<algorithm::search::Point<model::spectrum::Peak>> p = 
+                    std::make_shared<algorithm::search::Point<model::spectrum::Peak>>(mass, it);
+                points.push_back(std::move(p));
+            }
         }
         searcher_.set_data(std::move(points));
         searcher_.Init();
@@ -145,8 +170,20 @@ protected:
         (const std::string& seq, const std::string& composite, const int pos)
     {
         std::vector<model::spectrum::Peak> res;
+        std::vector<double> peptides_mz;
         std::vector<double> peptides_mass = ComputePTMPeptideMass(seq, pos);
+        double extra = util::mass::GlycanMass::Compute(model::glycan::Glycan::Interpret(composite));
+        for (const auto& mass : peptides_mass)
+        {
+            for(int charge = 1; charge <= spectrum_.PrecursorCharge(); charge++)
+            {
+                double mz = util::mass::SpectrumMass::ComputeMZ(mass + extra, charge);
+                peptides_mass.push_back(mz);
+            }
+        }
         binary_.set_data(peptides_mass);
+        binary_.Init();
+
         for(const auto& pk : spectrum_.Peaks())
         {
             if (binary_.Search(pk.MZ()))
@@ -157,11 +194,35 @@ protected:
         return res;
     }
 
+    virtual std::vector<model::spectrum::Peak> SearchGlycans
+        (const std::string& seq, const std::string& id)
+    {
+        std::vector<model::spectrum::Peak> res;
+        std::vector<double> subset_mass = glycan_mass_.Query(id);
+        binary_.set_data(subset_mass);
+        binary_.Init();
+
+        double extra = util::mass::PeptideMass::Compute(seq);
+        for(const auto& pk : spectrum_.Peaks())
+        {
+            for(int charge = 1; charge <= spectrum_.PrecursorCharge(); charge++)
+            {
+                double mass = util::mass::SpectrumMass::Compute(pk.MZ(), charge) - extra;
+                if (binary_.Search(mass))
+                {
+                    res.push_back(pk);
+                    break;
+                }
+            }
+        }
+        return res;
+    }
+
     // for computing the peptide ions
     static std::vector<double> ComputePTMPeptideMass(const std::string& seq, const int pos)
     {
         std::vector<double> mass_list;
-        for (int i = pos; i < seq.length() - 1; i++) // seldom at n
+        for (int i = pos; i < (int) seq.length() - 1; i++) // seldom at n
         {
 
             double mass = util::mass::IonMass::Compute(seq.substr(0, i+1), util::mass::IonType::c);
@@ -178,11 +239,14 @@ protected:
     static bool IntensityCmp(const model::spectrum::Peak& p1, const model::spectrum::Peak& p2)
         { return (p1.Intensity() < p2.Intensity()); }
     
-    // virtual std::vector<model::spectrum::Peak> SearchGlycans(double target);
+    static double IntensitySum(const model::spectrum::Peak& p1, const model::spectrum::Peak& p2)
+        { return p1.Intensity() + p2.Intensity(); }
+
 
     double tolerance_;
     algorithm::search::ToleranceBy by_;
     GlycanMassStore glycan_mass_;
+    engine::glycan::GlycanStore glycan_isomer_;
     algorithm::search::BucketSearch<model::spectrum::Peak> searcher_;
     algorithm::search::BinarySearch binary_;
     MatchResultStore candidate_;

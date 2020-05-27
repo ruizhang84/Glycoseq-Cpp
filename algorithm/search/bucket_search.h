@@ -33,8 +33,10 @@ public:
             min_ = (*min_element)->Value();
             max_ = (*max_element)->Value();
 
+            Convert();
+
             // bucket size 
-            int bucket_size = (int) ((max_ - min_) / this->tolerance_ + 1);
+            int bucket_size = (int) ((max_ - min_) / bin_length_ + 1);
             bins_.reserve(bucket_size);
             bins_.assign(bucket_size, std::vector<std::shared_ptr<Point<T>>>());
 
@@ -83,11 +85,22 @@ public:
 
 protected:
     int Index(double target) 
-        { return (target - min_) / this->tolerance_; }
+        { return (target - min_) / bin_length_; }
+    void Convert()
+    {
+        // convert ppm tolerance
+        if (this->by_ == ToleranceBy::PPM)
+        {
+            bin_length_ = this->tolerance_ / 10.0; // e.g. 10 ppm -> 1
+        }else{
+            bin_length_ = this->tolerance_;
+        }
+    }
 
     double min_;
     double max_;
     Bucket bins_;
+    double bin_length_; // incase of PPM
 };
 
 } // namespace algorithm

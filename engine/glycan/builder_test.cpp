@@ -22,7 +22,6 @@ BOOST_AUTO_TEST_CASE( glycan_builder_test )
         std::cout << std::endl;
     }
     BOOST_CHECK(builder.Isomer().Map().size() > 10);
-
 }
 
 }

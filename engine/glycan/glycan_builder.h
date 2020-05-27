@@ -18,16 +18,17 @@ typedef std::unordered_map<std::string,
 class GlycanStore
 {
 public:
-    StringsMapping Map() { return map_; }
-    std::unordered_set<std::string> Query(const std::string item)
+    StringsMapping Map() const { return map_; }
+    std::unordered_set<std::string> Query(const std::string item) const
     {
         if (map_.find(item) != map_.end())
         {
-            return map_[item];
+           return Map()[item];
         }
-        return std::unordered_set<std::string>();
+        std::unordered_set<std::string> result;
+        return result;
     }
-    std::vector<std::string> Collection()
+    std::vector<std::string> Collection() const
     {
         std::vector<std::string> collection;
         for(const auto& it : map_)
@@ -36,7 +37,7 @@ public:
         }
         return collection;
     }
-    bool Contains(const std::string item)
+    bool Contains(const std::string item) const
     {
         return map_.find(item) != map_.end();
     }
