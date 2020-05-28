@@ -93,22 +93,22 @@ public:
                     }
                 }
 
-                if (result_position.empty())
-                {
-                    for(const auto& isomer_it : result_isomer)
-                    {
-                        double score = IntensitySum(result_oxonium) + 
-                            + IntensitySum(isomer_it.second);
+                // if (result_position.empty())
+                // {
+                //     for(const auto& isomer_it : result_isomer)
+                //     {
+                //         double score = IntensitySum(result_oxonium) + 
+                //             + IntensitySum(isomer_it.second);
                          
-                        if (score > max_score)
-                        {
-                            max_score = score;
-                            best.glycan = composite;
-                            best.peptide = peptide;
-                            best.score = score;
-                        }
-                    }
-                }
+                //         if (score > max_score)
+                //         {
+                //             max_score = score;
+                //             best.glycan = composite;
+                //             best.peptide = peptide;
+                //             best.score = score;
+                //         }
+                //     }
+                // }
 
                 for(const auto& pos_it : result_position)
                 {
@@ -173,33 +173,41 @@ protected:
         (const std::string& seq, const std::string& composite, const int pos)
     {
         std::vector<model::spectrum::Peak> res;
-        std::vector<double> peptides_mz = ComputePTMPeptideMass(seq, pos);
-        // double extra = util::mass::GlycanMass::Compute(model::glycan::Glycan::Interpret(composite));
-        // for (const auto& mz : peptides_mz)
-        // {
-        //     peptides_mz.push_back(mz + extra);
-            
-        // }
-
-        std::cout << seq << std::endl;
-        peptides_mz = ComputeNonePTMPeptideMass(seq, pos);
-        for (const auto& mz : peptides_mz)
+        std::vector<double> peptides_mz;
+       
+        // speed up
+        std::string key = seq + std::to_string(pos);
+        if (peptides_ptm_mz_.find(key) != peptides_ptm_mz_.end())
         {
-            peptides_mz.push_back(mz);
-            
+             peptides_ptm_mz_[key] = ComputePTMPeptideMass(seq, pos);
+             peptides_mz_[key] = ComputeNonePTMPeptideMass(seq, pos);
         }
 
-        binary_.set_data(peptides_mz);
+        // search ptm
+        binary_.set_data(peptides_ptm_mz_[key]);
+        binary_.Init();
+
+        double extra = util::mass::GlycanMass::Compute(model::glycan::Glycan::Interpret(composite));
+        for(const auto& pk : spectrum_.Peaks())
+        {
+            if (binary_.Search(pk.MZ()-extra))
+            {
+                res.push_back(pk);
+            }
+        }
+
+        // search peptides
+        binary_.set_data(peptides_mz_[key]);
         binary_.Init();
 
         for(const auto& pk : spectrum_.Peaks())
         {
             if (binary_.Search(pk.MZ()))
             {
-                std::cout << pk.MZ() << std::endl;
                 res.push_back(pk);
             }
         }
+
         return res;
     }
 
@@ -284,6 +292,8 @@ protected:
     algorithm::search::BinarySearch binary_;
     MatchResultStore candidate_;
     model::spectrum::Spectrum spectrum_;
+    std::unordered_map<std::string, std::vector<double>> peptides_ptm_mz_;
+    std::unordered_map<std::string, std::vector<double>> peptides_mz_; 
 
     const std::vector<double> oxonium_ 
     {
