@@ -5,6 +5,8 @@
 #include <iostream>
 #include "search.h"
 #include "bucket_search.h"
+#include <unordered_map>
+
 
 using namespace std;
 namespace algorithm {
@@ -35,9 +37,8 @@ BOOST_AUTO_TEST_CASE( Monosaccharide_test )
     res = bucket_searcher.Query(40);
     BOOST_CHECK(bucket_searcher.Search(50));
     BOOST_CHECK(res.size() == 39);
-
-
 }
+
 
 } // namespace algorithm
 } // namespace search 

@@ -26,10 +26,12 @@ namespace search{
 
 struct SearchResult
 {
+    int scan;
     std::string peptide;
     std::string glycan;
     int posit;
     double score;
+    
 };
 
 class SpectrumSearcher
@@ -66,7 +68,6 @@ public:
         {
             std::vector<model::spectrum::Peak> result_oxonium = SearchOxonium();
             if (result_oxonium.empty()) continue;
-            std::cout << "yes" << std::endl;
 
             for(const auto& composite: candidate_.Glycans(peptide))
             {
@@ -78,7 +79,6 @@ public:
                     if (!result_temp.empty())
                     {
                         result_position[pos] = result_temp;
-                        std::cout << "yes y" << std::endl;
                     }
                 }
 
@@ -90,7 +90,23 @@ public:
                     if (!result_temp.empty())
                     {
                         result_isomer[isomer] = result_temp;
-                        std::cout << "yes yy" << std::endl;
+                    }
+                }
+
+                if (result_position.empty())
+                {
+                    for(const auto& isomer_it : result_isomer)
+                    {
+                        double score = IntensitySum(result_oxonium) + 
+                            + IntensitySum(isomer_it.second);
+                         
+                        if (score > max_score)
+                        {
+                            max_score = score;
+                            best.glycan = composite;
+                            best.peptide = peptide;
+                            best.score = score;
+                        }
                     }
                 }
 
@@ -113,7 +129,10 @@ public:
             }
         }
         if (max_score > 0)
+        {
+            best.scan = spectrum_.Scan();
             res.push_back(best);
+        }
         return res;   
     }
 
