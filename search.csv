@@ -1,0 +1,4 @@
+scan#,peptide,glycan,score
+7671,VVLHPNYSQVD,GlcNAc-4-Man-3-Gal-2-NeuAc-2-,2.22986e+07
+12042,VVLHPNYSQVDIGLIK,GlcNAc-4-Man-3-Gal-2-Fuc-2-NeuAc-1-,3.89623e+06
+8362,MVSHHNLTTGATLINE,GlcNAc-4-Man-3-Gal-2-NeuAc-2-,2.53172e+06

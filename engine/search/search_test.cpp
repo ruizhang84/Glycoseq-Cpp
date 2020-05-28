@@ -15,15 +15,18 @@
 namespace engine{
 namespace search {
 
-BOOST_AUTO_TEST_CASE( precusor_match_test ) 
+BOOST_AUTO_TEST_CASE( search_engine_test ) 
 {
     // read spectrum
-    std::string path = "/home/yu/Documents/MultiGlycan-Cpp/data/test_EThcD.mgf";
+    std::string path = "/home/yu/Documents/MultiGlycan-Cpp/data/test_EThcD_H95_R1.mgf";
     std::unique_ptr<util::io::SpectrumParser> parser = 
         std::make_unique<util::io::MGFParser>(path, util::io::SpectrumType::EThcD);
     util::io::SpectrumReader spectrum_reader(path, std::move(parser));
     spectrum_reader.Init();
-    BOOST_CHECK(spectrum_reader.GetSpectrum(8030).PrecursorMZ() == 1010.6698);
+    int start_scan = spectrum_reader.GetFirstScan();
+    int last_scan = spectrum_reader.GetLastScan();
+    BOOST_CHECK(start_scan < last_scan);
+
 
 
     // read fasta and build peptides
@@ -44,8 +47,11 @@ BOOST_AUTO_TEST_CASE( precusor_match_test )
     }
     BOOST_CHECK(std::find(peptides.begin(), peptides.end(), "MVSHHNLTTGATLINE") != peptides.end());
 
+
+
     // // build glycans
-    engine::glycan::GlycanBuilder builder(12, 12, 5, 4, 0);
+    int hexNAc = 12, hex = 12, Fuc = 5, NeuAc = 4, NeuGc = 0;
+    engine::glycan::GlycanBuilder builder(hexNAc, hex, Fuc, NeuAc, NeuGc);
     builder.Build();
     model::glycan::NGlycanComplex glycan;
     std::map<model::glycan::Monosaccharide, int> composite;
@@ -62,17 +68,24 @@ BOOST_AUTO_TEST_CASE( precusor_match_test )
     std::vector<std::string> collection = builder.Isomer().Collection();
     BOOST_CHECK(std::find(collection.begin(), collection.end(), glycan.Name()) != collection.end());
 
+
+
     // spectrum matching
-    PrecursorMatcher precursor_runner(10, algorithm::search::ToleranceBy::PPM, builder.Isomer());
+    int special_scan = 8551;
+    double ms1_tol = 10, ms2_tol = 0.01;
+    int isotopic_count = 4;
+    algorithm::search::ToleranceBy ms1_by = algorithm::search::ToleranceBy::PPM;
+    algorithm::search::ToleranceBy ms2_by = algorithm::search::ToleranceBy::Dalton;
+
+    PrecursorMatcher precursor_runner(ms1_tol, ms1_by, builder.Isomer());
     std::vector<std::string> glycans_str = builder.Isomer().Collection();
-
     precursor_runner.Init(peptides, glycans_str);
-    SpectrumSearcher spectrum_runner(0.01, algorithm::search::ToleranceBy::Dalton, builder.Mass(), builder.Isomer());
+    SpectrumSearcher spectrum_runner(ms2_tol, ms2_by, builder.Mass(), builder.Isomer());
 
-    auto special_spec = spectrum_reader.GetSpectrum(8172);
+    auto special_spec = spectrum_reader.GetSpectrum(special_scan);
     double special_target = util::mass::SpectrumMass::Compute(special_spec.PrecursorMZ(), special_spec.PrecursorCharge());
-    MatchResultStore special_r = precursor_runner.Match(special_target, 2);    
-    // std::cout << special_spec.Scan() << " : " << std::endl;
+    MatchResultStore special_r = precursor_runner.Match(special_target, isotopic_count);    
+    std::cout << special_spec.Scan() << " : " << std::endl;
     // for(auto it : special_r.Map())
     // {
     //     std::cout << it.first << std::endl;
@@ -82,58 +95,35 @@ BOOST_AUTO_TEST_CASE( precusor_match_test )
     //     }
     // }
     BOOST_CHECK(!special_r.Empty());
-    
 
-    // special_spec = spectrum_reader.GetSpectrum(8001);
-    // special_target = util::mass::SpectrumMass::Compute(special_spec.PrecursorMZ(), special_spec.PrecursorCharge());
-    // special_r = precursor_runner.Match(special_target, 2);
-    // spectrum_runner.set_candidate(special_r);
-    // spectrum_runner.set_spectrum(special_spec);
-    // std::vector<SearchResult> special_res = spectrum_runner.Search();
-    // std::string special_string = "PEPTIDE";
-    // for (int i = 0; i < (int) special_string.length()-1; i++)
-    // {
-    //     std::cout << util::mass::IonMass::Compute(special_string.substr(0, i+1), 
-    //         util::mass::IonType::c) << std::endl;
-    // }
-    // for (int i = 0; i < (int) special_string.length(); i++)
-    // {
-    //     std::cout << util::mass::IonMass::Compute(special_string.substr(i, special_string.length() - i), 
-    //         util::mass::IonType::z) << std::endl;
-    // }   
-    // for(auto it : special_res)
-    // {
-    //     std::cout << it.glycan << std::endl;
-    //     std::cout << it.peptide << std::endl;
-    //     std::cout << it.score << std::endl;
-    // }
-    // BOOST_CHECK(!special_res.empty());
-    
-
-    std::cout << "Start to scan\n"; 
-    auto start = std::chrono::high_resolution_clock::now(); 
-    for(auto& spec : spectrum_reader.GetSpectrum())
+    special_spec = spectrum_reader.GetSpectrum(special_scan);
+    spectrum_runner.set_candidate(special_r);
+    spectrum_runner.set_spectrum(special_spec);
+    std::vector<SearchResult> special_res = spectrum_runner.Search();
+    for(auto it : special_res)
     {
-        double target = util::mass::SpectrumMass::Compute(spec.PrecursorMZ(), spec.PrecursorCharge());
-        MatchResultStore r = precursor_runner.Match(target, 2);
-        if (r.Empty()) continue;
-
-        spectrum_runner.set_spectrum(spec);
-        spectrum_runner.set_candidate(r);
-        std::vector<SearchResult> results = spectrum_runner.Search();
-        if (results.empty()) continue;
-        std::cout << "Scan " << spec.Scan() << ":" << std::endl;
-
-        for(auto it : results)
-        {
-            std::cout << it.glycan << std::endl;
-            std::cout << it.peptide << std::endl;
-            std::cout << it.score << std::endl;
-        }
+        std::cout << it.glycan << std::endl;
+        std::cout << it.peptide << std::endl;
+        std::cout << it.score << std::endl;
     }
-    auto stop = std::chrono::high_resolution_clock::now(); 
-    auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start); 
-    std::cout << duration.count() << std::endl; 
+    BOOST_CHECK(!special_res.empty());
+    
+    // std::cout << "scan time:\n"; 
+    // auto start = std::chrono::high_resolution_clock::now(); 
+    // for(auto& spec : spectrum_reader.GetSpectrum())
+    // {
+    //     double target = util::mass::SpectrumMass::Compute(spec.PrecursorMZ(), spec.PrecursorCharge());
+    //     MatchResultStore r = precursor_runner.Match(target, 2);
+    //     if (r.Empty()) continue;
+
+    //     spectrum_runner.set_spectrum(spec);
+    //     spectrum_runner.set_candidate(r);
+    //     std::vector<SearchResult> results = spectrum_runner.Search();
+    //     if (results.empty()) continue;
+    // }
+    // auto stop = std::chrono::high_resolution_clock::now(); 
+    // auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start); 
+    // std::cout << duration.count() << std::endl; 
 
 }
 

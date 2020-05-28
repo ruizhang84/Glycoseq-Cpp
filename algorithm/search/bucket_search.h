@@ -18,7 +18,7 @@ public:
     {
         bool operator()(std::shared_ptr<Point<T>> const& lhs, std::shared_ptr<Point<T>>  const& rhs) const
         {
-            return *lhs < *rhs;
+            return lhs->Value() < rhs->Value();
         }
     };
 
@@ -42,6 +42,7 @@ public:
 
             // bucket size 
             int bucket_size = (int) ((max_ - min_) / this->tolerance_ + 1);
+
             bins_.reserve(bucket_size);
             bins_.assign(bucket_size, std::vector<std::shared_ptr<Point<T>>>());
 

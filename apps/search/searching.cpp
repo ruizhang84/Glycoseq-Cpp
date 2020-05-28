@@ -1,3 +1,4 @@
+#include <fstream>
 #include <iostream>
 #include <chrono> 
 
@@ -13,7 +14,9 @@
 
 int main(int argc, char *argv[])
 {
-     // read spectrum
+    std::string out = "search.csv";
+
+    // read spectrum
     std::string path = "/home/yu/Documents/MultiGlycan-Cpp/data/test_EThcD.mgf";
     std::unique_ptr<util::io::SpectrumParser> parser = 
         std::make_unique<util::io::MGFParser>(path, util::io::SpectrumType::EThcD);
@@ -98,14 +101,20 @@ int main(int argc, char *argv[])
     fdr_runner.Init();
 
     std::vector<engine::search::SearchResult> results = fdr_runner.Filter();
+
+    std::ofstream outfile;
+    outfile.open (out);
+    outfile << "scan#,peptide,glycan,score\n";
+    
     for(auto it : results)
     {
-        std::cout <<"Scan: " << it.scan << std::endl;
-        std::cout << it.glycan << std::endl;
-        std::cout << it.peptide << std::endl;
-        std::cout << it.score << std::endl;
+        outfile << it.scan << ",";
+        outfile << it.peptide << ",";
+        outfile << it.glycan << ",";
+        outfile << it.score << "\n";
     }
-    
+    outfile.close();
+
     auto stop = std::chrono::high_resolution_clock::now(); 
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start); 
     std::cout << duration.count() << std::endl; 

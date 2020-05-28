@@ -37,7 +37,7 @@ struct SearchResult
 class SpectrumSearcher
 {
 public:
-    SpectrumSearcher(double tol, algorithm::search::ToleranceBy by, 
+    SpectrumSearcher(const double tol, const algorithm::search::ToleranceBy by, 
         const engine::glycan::GlycanMassStore& subset, const engine::glycan::GlycanStore& isomer):
             tolerance_(tol), by_(by), glycan_mass_(subset), glycan_isomer_(isomer),
                 searcher_(algorithm::search::BucketSearch<model::spectrum::Peak>(tol, by)),
@@ -77,7 +77,7 @@ public:
                 {
                     std::vector<model::spectrum::Peak> result_temp = SearchPeptides(peptide, composite, pos);
                     if (!result_temp.empty())
-                    {
+                    {  
                         result_position[pos] = result_temp;
                     }
                 }
@@ -150,6 +150,7 @@ protected:
                 points.push_back(std::move(p));
             }
         }
+                    
         searcher_.set_data(std::move(points));
         searcher_.Init();
     }
@@ -172,26 +173,21 @@ protected:
         (const std::string& seq, const std::string& composite, const int pos)
     {
         std::vector<model::spectrum::Peak> res;
-        std::vector<double> peptides_mz;
-        std::vector<double> peptides_mass = ComputePTMPeptideMass(seq, pos);
-        double extra = util::mass::GlycanMass::Compute(model::glycan::Glycan::Interpret(composite));
-        for (const auto& mass : peptides_mass)
-        {
-            for(int charge = 1; charge <= spectrum_.PrecursorCharge(); charge++)
-            {
-                double mz = util::mass::SpectrumMass::ComputeMZ(mass + extra, charge);
-                peptides_mz.push_back(mz);
-            }
-        }
-        // peptides_mass = ComputeNonePTMPeptideMass(seq, pos);
-        // for (const auto& mass : peptides_mass)
+        std::vector<double> peptides_mz = ComputePTMPeptideMass(seq, pos);
+        // double extra = util::mass::GlycanMass::Compute(model::glycan::Glycan::Interpret(composite));
+        // for (const auto& mz : peptides_mz)
         // {
-        //     for(int charge = 1; charge <= spectrum_.PrecursorCharge(); charge++)
-        //     {
-        //         double mz = util::mass::SpectrumMass::ComputeMZ(mass, charge);
-        //         peptides_mz.push_back(mz);
-        //     }
+        //     peptides_mz.push_back(mz + extra);
+            
         // }
+
+        std::cout << seq << std::endl;
+        peptides_mz = ComputeNonePTMPeptideMass(seq, pos);
+        for (const auto& mz : peptides_mz)
+        {
+            peptides_mz.push_back(mz);
+            
+        }
 
         binary_.set_data(peptides_mz);
         binary_.Init();
@@ -200,6 +196,7 @@ protected:
         {
             if (binary_.Search(pk.MZ()))
             {
+                std::cout << pk.MZ() << std::endl;
                 res.push_back(pk);
             }
         }
