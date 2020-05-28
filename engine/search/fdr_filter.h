@@ -29,18 +29,22 @@ public:
     {
         std::vector<SearchResult> res;
         if (cutoff_ < 0) return res;
-
-        
-
+        for(const auto& it : data_)
+        {
+            if (ComputeScore(it) >= cutoff_)
+            {
+                res.push_back(it);
+            }
+        }
         return res;
     }
 
 protected:
-    virtual double ComputeScore(const SearchResult& result) const
+    static double ComputeScore(const SearchResult& result)
         { return result.score; }
 
-    virtual bool ScoreGreater(const SearchResult& r1, const SearchResult& r2) const
-        { return ComputeScore(r1) > ComputeScore(r2); }
+    static bool ScoreGreater(const SearchResult& r1, const SearchResult& r2) 
+        { return (ComputeScore(r1) > ComputeScore(r2)); }
 
     virtual void CutoffInit()
     {
@@ -51,7 +55,6 @@ protected:
         {
             return;
         }
-
 
         std::sort(data_.begin(), data_.end(), ScoreGreater);
         std::sort(decoy_.begin(), decoy_.end(), ScoreGreater);

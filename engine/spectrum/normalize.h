@@ -20,24 +20,20 @@ public:
     //normalization on total ion intensity sums 
     static void Transform(std::vector<model::spectrum::Peak>& peaks)
     {
-        // double max_intensity = std::max_element(peaks.begin(), peaks.end(), IntensityCmp)->Intensity();
-        // for(auto& it : peaks)
-        // {
-        //     it.set_intensity(it.Intensity() / max_intensity);
-        // }
-        double sum = std::accumulate(peaks.begin(), peaks.end(), 0, IntensitySum);
+        double sum = 0;
         for(auto& it : peaks)
         {
-            it.set_intensity(it.Intensity() / sum);
+            sum += it.Intensity();
         }
-
+        for(auto& it : peaks)
+        {
+            it.set_intensity(it.Intensity() / sum * 100.0);
+        }
     }
 
 protected:
-    static bool IntensityCmp (model::spectrum::Peak& i, model::spectrum::Peak& j) 
+    static bool IntensityCmp (const model::spectrum::Peak& i, const model::spectrum::Peak& j) 
         { return (i.Intensity() < j.Intensity()); }
-    static double IntensitySum (model::spectrum::Peak& i, model::spectrum::Peak& j) 
-        { return i.Intensity() + j.Intensity(); }
 
 };
 

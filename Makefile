@@ -8,10 +8,16 @@ LIB = -I/usr/local/include -L/usr/local/lib -lpthread
 TEST_CASES := algorithm_base_test glycan_test io_test lsh_test sim_test lsh_clustering_test  
 TEST_CASES_2 := protein_test search_test glycan_builder_test search_engine_test
 
+search:
+	$(CC) $(CPPFLAGS) -o searching \
+	apps/search/searching.cpp model/glycan/nglycan_complex.cpp $(LIB)
+
 
 search_engine_test:
 	$(CC) $(CPPFLAGS) -o test/search_engine_test \
 	engine/search/search_test.cpp model/glycan/nglycan_complex.cpp $(INCLUDES)
+
+
 
 # app
 clustering:
