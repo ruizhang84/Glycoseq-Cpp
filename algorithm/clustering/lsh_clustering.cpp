@@ -7,18 +7,43 @@ std::unordered_map<int, std::vector<int>> LSHClustering::Clustering()
 {
     std::unordered_map<int, std::vector<int>> result;
     std::vector<std::tuple<int, int>> union_set;
-    std::vector<std::thread> thread_pool;
     
     // cluster
-    for(auto& cluster : cluster_)
-    {   
-        std::thread t(&LSHClustering::ParClustering, this, std::ref(cluster), std::ref(union_set));
-        thread_pool.push_back(std::move(t));
-    }
-    for(auto& t: thread_pool)
+    if ((int) cluster_.size() <= thread_)
     {
-        t.join();
+        std::vector<std::thread> thread_pool;
+        for(auto& cluster : cluster_)
+        {   
+            std::thread t(&LSHClustering::ParClustering, this, std::ref(cluster), std::ref(union_set));
+            thread_pool.push_back(std::move(t));
+        }
+        for(auto& t: thread_pool)
+        {
+            t.join();
+        }
     }
+    else
+    {
+        for(int i = 0; i < (int) cluster_.size(); i += thread_)
+        {
+            std::vector<std::thread> thread_pool;
+            int end = (int) cluster_.size() < (i + thread_)
+                ? (int) cluster_.size() : (i + thread_);
+
+            std::vector<util::calc::LSH> par_cluster(cluster_.begin() + i, cluster_.begin() + end);
+            for(auto& cluster : par_cluster)
+            {   
+                std::thread t(&LSHClustering::ParClustering, this, std::ref(cluster), std::ref(union_set));
+                thread_pool.push_back(std::move(t));
+            }
+            for(auto& t: thread_pool)
+            {
+                t.join();
+            }
+        }
+    }
+
+
 
     for(auto x : union_set)
     {

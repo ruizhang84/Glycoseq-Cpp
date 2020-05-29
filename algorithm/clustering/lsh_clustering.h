@@ -80,9 +80,9 @@ protected:
 class LSHClustering
 {
 public:
-    LSHClustering(int bin_size, int hash_func_num, int cluster_num,
+    LSHClustering(int bin_size, int hash_func_num, int cluster_num, int thread,
         LSHUnionFind* union_finder): bin_size_(bin_size), hash_func_num_(hash_func_num), 
-            cluster_num_(cluster_num), union_finder_(union_finder) { Init(); }
+            cluster_num_(cluster_num), thread_(thread), union_finder_(union_finder) { Init(); }
 
     void Init()
     {
@@ -95,6 +95,7 @@ public:
     void set_bin_size(int size) { bin_size_ = size; }
     void set_hash_func_num(int num) { hash_func_num_ = num; }
     void set_cluster_num(int num) { cluster_num_ = num; }
+    void set_thread_num(int num) { thread_ = num; }
     void set_data(std::unordered_map<int, std::vector<double>> data)
         { data_ = data; }
 
@@ -106,13 +107,18 @@ public:
 
     util::calc::LSH GenLSH() 
         { return util::calc::LSH(bin_size_, hash_func_num_); }
+
+
+
     int bin_size_;
     int hash_func_num_;
     int cluster_num_;
+    int thread_;
     std::vector<util::calc::LSH> cluster_;
     LSHUnionFind* union_finder_;
     std::unordered_map<int, std::vector<double>> data_; 
     std::mutex mutex_;  
+    
 };
 
 } // namespace clustering

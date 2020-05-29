@@ -21,7 +21,7 @@ void SearchingWorker(
     std::vector<std::string> peptides, 
     double ms1_tol, algorithm::search::ToleranceBy ms1_by,
     double ms2_tol, algorithm::search::ToleranceBy ms2_by,
-    double pseudo_mass)
+    int isotopic_count, double pseudo_mass)
 {
     engine::search::PrecursorMatcher precursor_runner(ms1_tol, ms1_by, builder.Isomer());
     std::vector<std::string> glycans_str = builder.Isomer().Collection();
@@ -32,12 +32,12 @@ void SearchingWorker(
     {
         // precusor
         double target = util::mass::SpectrumMass::Compute(spec.PrecursorMZ(), spec.PrecursorCharge());
-        engine::search::MatchResultStore r = precursor_runner.Match(target + pseudo_mass, spec.PrecursorCharge(), 2);
+        engine::search::MatchResultStore r = precursor_runner.Match(target + pseudo_mass, spec.PrecursorCharge(), isotopic_count);
         if (r.Empty()) continue;
 
         // process spectrum by normalization
         engine::spectrum::Normalizer::Transform(spec);
-        
+
         // msms
         spectrum_runner.set_spectrum(spec);
         spectrum_runner.set_candidate(r);
@@ -90,13 +90,13 @@ int main(int argc, char *argv[])
     std::vector<engine::search::SearchResult> targets;
     std::vector<model::spectrum::Spectrum> spectra = spectrum_reader.GetSpectrum();
     std::thread first(SearchingWorker, std::ref(targets), std::ref(builder), spectra,  peptides,
-        10, algorithm::search::ToleranceBy::PPM, 0.01, algorithm::search::ToleranceBy::Dalton, 0);
+        10, algorithm::search::ToleranceBy::PPM, 0.01, algorithm::search::ToleranceBy::Dalton, 2, 0);
 
     // seraching decoys 
     std::vector<engine::search::SearchResult> decoys;
     std::vector<model::spectrum::Spectrum> spectra_d = spectrum_reader.GetSpectrum();
     std::thread second(SearchingWorker, std::ref(decoys), std::ref(builder), spectra_d,  peptides,
-        10, algorithm::search::ToleranceBy::PPM, 0.01, algorithm::search::ToleranceBy::Dalton, 50);
+        10, algorithm::search::ToleranceBy::PPM, 0.01, algorithm::search::ToleranceBy::Dalton, 2, 50);
 
     first.join();
     second.join();

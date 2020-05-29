@@ -21,9 +21,9 @@ int main(int argc, char *argv[])
     engine::spectrum::SpectrumBinPacking bin_packer(tol, lower, upper);
     int bucket_size = bin_packer.BinSize();
 
-    algorithm::clustering::LSHClustering cluster_runner(bucket_size, 15, 2, &finder);
+    algorithm::clustering::LSHClustering cluster_runner(bucket_size, 15, 2, 5, &finder);
     // finder.Union(3, 64);
     cluster_runner.union_finder_->Union(3, 64);
-cluster_runner.union_finder_->Union(3, 64);
+    cluster_runner.union_finder_->Union(3, 64);
 }
 

@@ -68,4 +68,4 @@ test: ${TEST_CASES} ${TEST_CASES_2}
 
 # clean up
 clean:
-	rm -f core test/* *.o clustering
+	rm -f core test/* *.o clustering searching

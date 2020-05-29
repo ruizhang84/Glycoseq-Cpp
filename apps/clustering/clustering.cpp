@@ -22,15 +22,19 @@ int main(int argc, char *argv[]){
     extern char *optarg;
     int opt;
     std::string path, out_path;
+    // set up default 
     double tol = 0.05;
     double lower = 200;
     double upper = 2000;
-    int hash_func_num = 16;
-    int cluster_num = 10;
-    int thread = 20;
-    double cosine = 0.7;
+    int hash_func_num = 15;
+    int cluster_num = 100;
+    int thread = 5;
+    double cosine = 0.8;
+    path = "/home/yu/Documents/MultiGlycan-Cpp/data/test_EThcD.mgf";
+    out_path = "cluster.txt";
 
-    while ((opt = getopt(argc, argv, ":t:l:u:k:i:f:o:h:d:c")) != EOF)
+    // pharser parameter
+    while ((opt = getopt(argc, argv, ":f:o:t:l:u:K:L:s:p:h")) != EOF)
         switch(opt)
         {
             case 'f': 
@@ -53,25 +57,27 @@ int main(int argc, char *argv[]){
                 upper = atof(optarg);
                 std::cout <<"the upper bound of spectrum " << upper << std::endl; 
                 break;
-            case 'k': 
+            case 'K': 
                 hash_func_num = atoi(optarg);
                 std::cout <<"the number of hashing funciton to use " << hash_func_num << std::endl; 
                 break;
-            case 'i': 
+            case 'L': 
                 cluster_num =  atoi(optarg);
                 std::cout <<"Clustering iterations " << cluster_num << std::endl; 
                 break;
-            case 'c': 
+            case 's': 
                 cosine = atof(optarg);
                 std::cout <<"default cosine similarity threshold " << cosine << std::endl; 
-            case 'd': 
+            case 'p': 
                 thread =  atoi(optarg);
                 std::cout <<"default thread number " << thread << std::endl; 
                 break;
             case 'h': 
-                std::cout <<"clustering mgf spectrum, " 
-                    << "-f [file] -t [tolerance] -l [lower_bound] -u [upper_bound] "
-                    << "-k [function_num] -i [iterations] " << std::endl; 
+                std::cout <<"clustering mgf spectrum, parameter:\n" 
+                    << "-f [file] -o [output] \n"
+                    << "-t [tolerance] -l [lower_bound] -u [upper_bound] \n"
+                    << "-K [hash_function_num] -L [iterations] -s [cosine] \n" 
+                    << "-p [thread_num] " << std::endl; 
                 break;
             case ':':  
                 std::cout << "option needs a value" << std::endl; 
@@ -83,6 +89,7 @@ int main(int argc, char *argv[]){
                 std::cout <<"-h for help" << std::endl;
         }
 
+    // read spectrum
     auto start = high_resolution_clock::now(); 
     std::unique_ptr<SpectrumParser> parser = 
         std::make_unique<MGFParser>(path, SpectrumType::EThcD);
@@ -92,6 +99,7 @@ int main(int argc, char *argv[]){
     std::vector<Spectrum> spectra = spectrum_reader.GetSpectrum();
     std::unordered_map<int, std::vector<double>> data_set;
 
+    // binpacking spectra
     SpectrumBinPacking bin_packer(tol, lower, upper);
     int bucket_size = bin_packer.BinSize();
 
@@ -101,8 +109,9 @@ int main(int argc, char *argv[]){
         data_set[spec.Scan()] = v;   
     }
     
+    // start clustering
     LSHUnionFind finder (&spectrum_reader, cosine);
-    LSHClustering lsh(bucket_size, hash_func_num, cluster_num, &finder);
+    LSHClustering lsh(bucket_size, hash_func_num, cluster_num, thread, &finder);
     lsh.set_data(data_set);
     std::unordered_map<int, std::vector<int>> clustred = lsh.Clustering();
 
@@ -110,6 +119,7 @@ int main(int argc, char *argv[]){
     auto duration = duration_cast<seconds>(stop - start); 
     std::cout << duration.count() << std::endl; 
 
+    // write out result
     std::ofstream outfile;
     outfile.open (out_path);
     outfile << "scan num \n";
