@@ -92,6 +92,7 @@ public:
                     {
                         result_isomer[isomer] = result_temp;
                     }
+
                 }
 
 
@@ -234,12 +235,7 @@ protected:
                     binary_.set_scale(charge);
 
                 if (mass > extra && binary_.Search(mass-extra))
-                {
-                   std::cout << pk.MZ() << std::endl;
-                    std::cout << seq << std::endl;
-                    std::cout << id << std::endl;
-                    std::cout << charge << std::endl << std::endl;
-                     
+                {        
                     res.push_back(pk);
                     break;
                 }

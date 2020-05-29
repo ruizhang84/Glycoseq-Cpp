@@ -1,5 +1,6 @@
 #include <fstream>
 #include <iostream>
+#include <thread>  
 #include <chrono> 
 
 #include "../../util/io/mgf_parser.h"
@@ -12,9 +13,44 @@
 #include "../../engine/search/spectrum_search.h"
 #include "../../engine/search/fdr_filter.h"
 
+
+void SearchingWorker(
+    std::vector<engine::search::SearchResult>& decoys, 
+    engine::glycan::GlycanBuilder& builder,
+    std::vector<model::spectrum::Spectrum> spectra,
+    std::vector<std::string> peptides, 
+    double ms1_tol, algorithm::search::ToleranceBy ms1_by,
+    double ms2_tol, algorithm::search::ToleranceBy ms2_by,
+    double pseudo_mass)
+{
+    engine::search::PrecursorMatcher precursor_runner(ms1_tol, ms1_by, builder.Isomer());
+    std::vector<std::string> glycans_str = builder.Isomer().Collection();
+    precursor_runner.Init(peptides, glycans_str);
+    engine::search::SpectrumSearcher spectrum_runner(ms2_tol, ms2_by, builder.Mass(), builder.Isomer());
+
+    for(auto& spec : spectra)
+    {
+        // precusor
+        double target = util::mass::SpectrumMass::Compute(spec.PrecursorMZ(), spec.PrecursorCharge());
+        engine::search::MatchResultStore r = precursor_runner.Match(target + pseudo_mass, spec.PrecursorCharge(), 2);
+        if (r.Empty()) continue;
+
+        // process spectrum by normalization
+        engine::spectrum::Normalizer::Transform(spec);
+        
+        // msms
+        spectrum_runner.set_spectrum(spec);
+        spectrum_runner.set_candidate(r);
+        std::vector<engine::search::SearchResult> res = spectrum_runner.Search();
+        if (res.empty()) continue;
+
+        decoys.insert(decoys.end(), res.begin(), res.end());
+    }
+}
+
 int main(int argc, char *argv[])
 {
-    std::string out = "search.csv";
+    std::string out = "search2.csv";
 
     // read spectrum
     std::string path = "/home/yu/Documents/MultiGlycan-Cpp/data/test_EThcD.mgf";
@@ -46,53 +82,24 @@ int main(int argc, char *argv[])
     builder.Build();
     
 
-    // search setup
-    engine::search::PrecursorMatcher precursor_runner(10, algorithm::search::ToleranceBy::PPM, builder.Isomer());
-    std::vector<std::string> glycans_str = builder.Isomer().Collection();
-    precursor_runner.Init(peptides, glycans_str);
-    engine::search::SpectrumSearcher spectrum_runner(0.01, algorithm::search::ToleranceBy::Dalton, builder.Mass(), builder.Isomer());
-
+    // search
     std::cout << "Start to scan\n"; 
     auto start = std::chrono::high_resolution_clock::now();
 
-    // process spectrum by normalization
-    for(auto& spec : spectrum_reader.GetSpectrum())
-    {
-       engine::spectrum::Normalizer::Transform(spec);
-    }
-
     // seraching targets 
     std::vector<engine::search::SearchResult> targets;
-    for(auto& spec : spectrum_reader.GetSpectrum())
-    {
-        double target = util::mass::SpectrumMass::Compute(spec.PrecursorMZ(), spec.PrecursorCharge());
-        engine::search::MatchResultStore r = precursor_runner.Match(target, spec.PrecursorCharge(), 2);
-        if (r.Empty()) continue;
+    std::vector<model::spectrum::Spectrum> spectra = spectrum_reader.GetSpectrum();
+    std::thread first(SearchingWorker, std::ref(targets), std::ref(builder), spectra,  peptides,
+        10, algorithm::search::ToleranceBy::PPM, 0.01, algorithm::search::ToleranceBy::Dalton, 0);
 
-        spectrum_runner.set_spectrum(spec);
-        spectrum_runner.set_candidate(r);
-        std::vector<engine::search::SearchResult> res = spectrum_runner.Search();
-        if (res.empty()) continue;
-
-        targets.insert(targets.end(), res.begin(), res.end());
-    }
-    
     // seraching decoys 
     std::vector<engine::search::SearchResult> decoys;
-    double pseudo_mass = 50;
-    for(auto& spec : spectrum_reader.GetSpectrum())
-    {
-        double target = util::mass::SpectrumMass::Compute(spec.PrecursorMZ(), spec.PrecursorCharge());
-        engine::search::MatchResultStore r = precursor_runner.Match(target + pseudo_mass, spec.PrecursorCharge(), 2);
-        if (r.Empty()) continue;
+    std::vector<model::spectrum::Spectrum> spectra_d = spectrum_reader.GetSpectrum();
+    std::thread second(SearchingWorker, std::ref(decoys), std::ref(builder), spectra_d,  peptides,
+        10, algorithm::search::ToleranceBy::PPM, 0.01, algorithm::search::ToleranceBy::Dalton, 50);
 
-        spectrum_runner.set_spectrum(spec);
-        spectrum_runner.set_candidate(r);
-        std::vector<engine::search::SearchResult> res = spectrum_runner.Search();
-        if (res.empty()) continue;
-
-        decoys.insert(decoys.end(), res.begin(), res.end());
-    }
+    first.join();
+    second.join();
 
     // fdr filtering
     engine::search::FDRFilter fdr_runner(0.01);
