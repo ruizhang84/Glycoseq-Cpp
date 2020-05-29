@@ -18,7 +18,7 @@ class BasicSearch
 typedef std::vector<std::shared_ptr<Point<T>>> Points;
 public:
     BasicSearch(double tol, ToleranceBy by):
-        tolerance_(tol), by_(by), base_(-1) {};
+        tolerance_(tol), by_(by), base_(-1), scale_{1} {};
 
     virtual void Init() 
     {
@@ -30,12 +30,14 @@ public:
     Points& Data() { return data_; }
     ToleranceBy ToleranceType() const { return by_; }
     double Base() const { return base_; }
+    double Scale() const { return scale_; }
     void set_tolerance(double tol) { tolerance_ = tol; }
     void set_tolerance_by(ToleranceBy by) { by_ = by; }
     void set_data(std::vector<std::shared_ptr<Point<T>>> data)
         { data_ = data; }
     void set_base(double base) { base_ = base; }
-
+    void set_scale(double scale) { scale_ = scale; }
+    
     virtual std::vector<T> Query(const double target)
     {
         std::vector<T> result;
@@ -100,7 +102,7 @@ protected:
             return diff < tolerance_;
         case ToleranceBy::Dalton:
             diff = p->Value() - target;
-            return std::abs(diff) < tolerance_;
+            return std::abs(diff) < tolerance_ * scale_;
         default:
             break;
         }
@@ -113,6 +115,7 @@ protected:
     ToleranceBy by_;
     Points data_;
     double base_;
+    double scale_;  // due to charge when compare mass
 };
 
 } // namespace algorithm

@@ -18,22 +18,21 @@ public:
         switch (ion)
         {
             case IonType::a:
-                mass = mass - kOxygen * 2 - kHydrogen - kCarbon;
+                mass = mass - kOxygen * 2 - kHydrogen * 2 - kCarbon;
                 break;
             case IonType::b:
-                mass = mass - kOxygen - kHydrogen;
+                mass = mass - kOxygen - kHydrogen * 2;
                 break;
             case IonType::c:
-                mass = mass - kOxygen + kHydrogen * 2 + kNitrogen;
+                mass = mass - kOxygen + kHydrogen + kNitrogen;
                 break;
             case IonType::x:
-                mass += kCarbon + kOxygen - kHydrogen;
+                mass += kCarbon + kOxygen - kHydrogen * 2;
                 break;
             case IonType::y:
-                mass += kHydrogen;
                 break;
             case IonType::z:
-                mass = mass - kNitrogen - kHydrogen * 2;
+                mass = mass - kNitrogen - kHydrogen * 3;
                 break;
         }
         return mass;

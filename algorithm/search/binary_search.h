@@ -15,7 +15,7 @@ class BinarySearch
 {
 public:
     BinarySearch(double tol, ToleranceBy by):
-        tolerance_(tol), by_(by) {};
+        tolerance_(tol), by_(by), base_(-1), scale_(1) {};
 
     virtual void Init() 
     {
@@ -25,10 +25,13 @@ public:
     double Tolerance() const { return tolerance_; }
     std::vector<double>& Data() { return data_; }
     ToleranceBy ToleranceType() const { return by_; }
+    double Base() const { return base_; }
+    double Scale() const { return scale_; }
     void set_tolerance(double tol) { tolerance_ = tol; }
     void set_tolerance_by(ToleranceBy by) { by_ = by; }
     void set_data(std::vector<double> data) { data_ = data; }
-
+    void set_base(double base) { base_ = base; }
+    void set_scale(double scale) { scale_ = scale; }
 
     virtual bool Search(const double target)
     {
@@ -55,9 +58,12 @@ protected:
         switch (by_)
         {
         case ToleranceBy::PPM:
-            return util::mass::SpectrumMass::ComputePPM(p, target) < tolerance_;
+            if (base_ < 0)
+                return util::mass::SpectrumMass::ComputePPM(p, target) < tolerance_;
+            else
+                return std::abs(p - target) / base_ * 1000000.0 < tolerance_; 
         case ToleranceBy::Dalton:
-            return std::abs(p - target) < tolerance_;
+            return std::abs(p - target) < tolerance_ * scale_;
         default:
             break;
         }
@@ -67,6 +73,8 @@ protected:
     double tolerance_; 
     ToleranceBy by_;
     std::vector<double> data_;
+    double base_;
+    double scale_;
 };
 
 } // namespace algorithm

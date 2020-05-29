@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
     for(auto& spec : spectrum_reader.GetSpectrum())
     {
         double target = util::mass::SpectrumMass::Compute(spec.PrecursorMZ(), spec.PrecursorCharge());
-        engine::search::MatchResultStore r = precursor_runner.Match(target, 2);
+        engine::search::MatchResultStore r = precursor_runner.Match(target, spec.PrecursorCharge(), 2);
         if (r.Empty()) continue;
 
         spectrum_runner.set_spectrum(spec);
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
     for(auto& spec : spectrum_reader.GetSpectrum())
     {
         double target = util::mass::SpectrumMass::Compute(spec.PrecursorMZ(), spec.PrecursorCharge());
-        engine::search::MatchResultStore r = precursor_runner.Match(target + pseudo_mass, 2);
+        engine::search::MatchResultStore r = precursor_runner.Match(target + pseudo_mass, spec.PrecursorCharge(), 2);
         if (r.Empty()) continue;
 
         spectrum_runner.set_spectrum(spec);

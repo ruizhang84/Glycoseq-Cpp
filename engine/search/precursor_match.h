@@ -99,15 +99,19 @@ public:
     void set_tolerance_by(algorithm::search::ToleranceBy by) 
         { by_ = by; searcher_.set_tolerance_by(by); searcher_.Init(); }
 
-    virtual MatchResultStore Match(const double target)
+    virtual MatchResultStore Match(const double target, int charge)
     {
-        return Match(target, 0);
+        return Match(target, charge, 0);
     }
 
-    virtual MatchResultStore Match(const double target, const int isotope)
+    virtual MatchResultStore Match(const double target, int charge, const int isotope)
     {
         MatchResultStore res;
-        searcher_.set_base(target);
+        if (searcher_.ToleranceType() == algorithm::search::ToleranceBy::PPM)
+            searcher_.set_base(target);
+        else if (searcher_.ToleranceType() == algorithm::search::ToleranceBy::Dalton)
+            searcher_.set_scale(charge);
+
         for(const auto& glycan : glycans_)
         {
             double delta = target - isomer_.QueryMass(glycan);
@@ -115,7 +119,6 @@ public:
 
             for (int i = 0; i <= isotope; i++)
             {
-                
                 double q = delta - i * util::mass::SpectrumMass::kIon;
                 std::vector<std::string> peptides = searcher_.Query(q);
                 for(const auto& peptide : peptides)

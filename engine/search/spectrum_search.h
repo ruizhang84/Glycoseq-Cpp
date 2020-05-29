@@ -84,6 +84,7 @@ public:
 
                 std::unordered_set<std::string> glycan_ids = glycan_isomer_.Query(composite);
                 std::unordered_map<std::string, std::vector<model::spectrum::Peak>> result_isomer;
+
                 for(const auto & isomer : glycan_ids)
                 {
                     std::vector<model::spectrum::Peak> result_temp = SearchGlycans(peptide, isomer);
@@ -93,22 +94,6 @@ public:
                     }
                 }
 
-                // if (result_position.empty())
-                // {
-                //     for(const auto& isomer_it : result_isomer)
-                //     {
-                //         double score = IntensitySum(result_oxonium) + 
-                //             + IntensitySum(isomer_it.second);
-                         
-                //         if (score > max_score)
-                //         {
-                //             max_score = score;
-                //             best.glycan = composite;
-                //             best.peptide = peptide;
-                //             best.score = score;
-                //         }
-                //     }
-                // }
 
                 for(const auto& pos_it : result_position)
                 {
@@ -139,19 +124,15 @@ public:
 protected:
     virtual void SearchInit()
     {
-        std::vector<std::shared_ptr<algorithm::search::Point<model::spectrum::Peak>>> points;
+        std::vector<std::shared_ptr<algorithm::search::Point<model::spectrum::Peak>>> mz_points;
         for(const auto& it : spectrum_.Peaks())
         {
-            for (int charge = 1; charge <= spectrum_.PrecursorCharge(); charge++)
-            {
-                double mass = util::mass::SpectrumMass::Compute(it.MZ(), charge); 
-                std::shared_ptr<algorithm::search::Point<model::spectrum::Peak>> p = 
-                    std::make_shared<algorithm::search::Point<model::spectrum::Peak>>(mass, it);
-                points.push_back(std::move(p));
-            }
+            std::shared_ptr<algorithm::search::Point<model::spectrum::Peak>> p = 
+                std::make_shared<algorithm::search::Point<model::spectrum::Peak>>(it.MZ(), it);
+            mz_points.push_back(std::move(p));
         }
                     
-        searcher_.set_data(std::move(points));
+        searcher_.set_data(std::move(mz_points));
         searcher_.Init();
     }
 
@@ -160,10 +141,14 @@ protected:
         std::vector<model::spectrum::Peak> res;
         for (const auto& mass : oxonium_)
         {
-            std::vector<model::spectrum::Peak> p = searcher_.Query(mass);
-            if (! p.empty())
+            for(int charge = 1; charge <= spectrum_.PrecursorCharge(); charge++)
             {
-                res.push_back(*std::max_element(p.begin(), p.end(), IntensityCmp));
+                double mz = util::mass::SpectrumMass::ComputeMZ(mass, charge);
+                std::vector<model::spectrum::Peak> p = searcher_.Query(mz);
+                if (! p.empty())
+                {
+                    res.push_back(*std::max_element(p.begin(), p.end(), IntensityCmp));
+                }
             }
         }
         return res;
@@ -177,37 +162,53 @@ protected:
        
         // speed up
         std::string key = seq + std::to_string(pos);
-        if (peptides_ptm_mz_.find(key) != peptides_ptm_mz_.end())
+        if (peptides_ptm_mz_.find(key) == peptides_ptm_mz_.end())
         {
-             peptides_ptm_mz_[key] = ComputePTMPeptideMass(seq, pos);
-             peptides_mz_[key] = ComputeNonePTMPeptideMass(seq, pos);
+            peptides_ptm_mz_[key] = ComputePTMPeptideMass(seq, pos);
+            std::sort(peptides_ptm_mz_[key].begin(), peptides_ptm_mz_[key].end());
+
+            peptides_mz_[key] = ComputeNonePTMPeptideMass(seq, pos);
+            std::sort(peptides_mz_[key].begin(), peptides_mz_[key].end());
         }
 
         // search ptm
         binary_.set_data(peptides_ptm_mz_[key]);
-        binary_.Init();
-
         double extra = util::mass::GlycanMass::Compute(model::glycan::Glycan::Interpret(composite));
         for(const auto& pk : spectrum_.Peaks())
         {
-            if (binary_.Search(pk.MZ()-extra))
+            for (int charge = 1; charge <= spectrum_.PrecursorCharge(); charge++)
             {
-                res.push_back(pk);
+                double target = util::mass::SpectrumMass::Compute(pk.MZ(), charge);
+                if (binary_.ToleranceType() == algorithm::search::ToleranceBy::PPM)
+                    binary_.set_base(target);
+                else if (binary_.ToleranceType() == algorithm::search::ToleranceBy::Dalton)
+                    binary_.set_scale(charge);
+                if (target > extra && binary_.Search(target-extra))
+                {
+                    res.push_back(pk);
+                    break;
+                }
             }
         }
 
         // search peptides
         binary_.set_data(peptides_mz_[key]);
-        binary_.Init();
-
         for(const auto& pk : spectrum_.Peaks())
         {
-            if (binary_.Search(pk.MZ()))
+            for (int charge = 1; charge <= spectrum_.PrecursorCharge(); charge++)
             {
-                res.push_back(pk);
+                double target = util::mass::SpectrumMass::Compute(pk.MZ(), charge);
+                if (binary_.ToleranceType() == algorithm::search::ToleranceBy::PPM)
+                    binary_.set_base(target);
+                else if (binary_.ToleranceType() == algorithm::search::ToleranceBy::Dalton)
+                    binary_.set_scale(charge);
+                if (binary_.Search(target))
+                {
+                    res.push_back(pk);
+                    break;
+                }
             }
         }
-
         return res;
     }
 
@@ -226,9 +227,19 @@ protected:
         {
             for(int charge = 1; charge <= spectrum_.PrecursorCharge(); charge++)
             {
-                double mass = util::mass::SpectrumMass::Compute(pk.MZ(), charge) - extra;
-                if (binary_.Search(mass))
+                double mass = util::mass::SpectrumMass::Compute(pk.MZ(), charge);
+                if (binary_.ToleranceType() == algorithm::search::ToleranceBy::PPM)
+                    binary_.set_base(mass);
+                else if (binary_.ToleranceType() == algorithm::search::ToleranceBy::Dalton)
+                    binary_.set_scale(charge);
+
+                if (mass > extra && binary_.Search(mass-extra))
                 {
+                   std::cout << pk.MZ() << std::endl;
+                    std::cout << seq << std::endl;
+                    std::cout << id << std::endl;
+                    std::cout << charge << std::endl << std::endl;
+                     
                     res.push_back(pk);
                     break;
                 }
@@ -243,12 +254,16 @@ protected:
         std::vector<double> mass_list;
         for (int i = pos; i < (int) seq.length() - 1; i++) // seldom at n
         {
-            double mass = util::mass::IonMass::Compute(seq.substr(0, i+1), util::mass::IonType::c);
+            double mass = util::mass::IonMass::Compute(seq.substr(0, i+1), util::mass::IonType::b);
+            mass_list.push_back(mass);
+            mass = util::mass::IonMass::Compute(seq.substr(0, i+1), util::mass::IonType::c);
             mass_list.push_back(mass);
         }
         for (int i = 1; i <= pos; i++)
         {
-            double mass = util::mass::IonMass::Compute(seq.substr(i, seq.length()-i), util::mass::IonType::z);
+            double mass = util::mass::IonMass::Compute(seq.substr(i, seq.length()-i), util::mass::IonType::y);
+            mass_list.push_back(mass);
+            mass = util::mass::IonMass::Compute(seq.substr(i, seq.length()-i), util::mass::IonType::z);
             mass_list.push_back(mass);
         }
         return mass_list;
@@ -259,12 +274,16 @@ protected:
         std::vector<double> mass_list;
         for (int i = 0; i < pos; i++) // seldom at n
         {
-            double mass = util::mass::IonMass::Compute(seq.substr(0, i+1), util::mass::IonType::c);
+            double mass = util::mass::IonMass::Compute(seq.substr(0, i+1), util::mass::IonType::b);
+            mass_list.push_back(mass);
+            mass = util::mass::IonMass::Compute(seq.substr(0, i+1), util::mass::IonType::c);
             mass_list.push_back(mass);
         }
         for (int i = pos + 1; i < (int) seq.length(); i++)
         {
-            double mass = util::mass::IonMass::Compute(seq.substr(i, seq.length()-i), util::mass::IonType::z);
+            double mass = util::mass::IonMass::Compute(seq.substr(i, seq.length()-i), util::mass::IonType::y);
+            mass_list.push_back(mass);
+            mass = util::mass::IonMass::Compute(seq.substr(i, seq.length()-i), util::mass::IonType::z);
             mass_list.push_back(mass);
         }
         return mass_list;
