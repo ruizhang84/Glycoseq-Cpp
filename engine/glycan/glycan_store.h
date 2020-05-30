@@ -109,7 +109,8 @@ public:
     void AddSubset(const std::string& name, 
         const std::string& subset_id, const double mass)
     {
-        Add(name, mass);
+        if (mass > 0)
+            Add(name, mass);
         if (map_.find(subset_id) != map_.end())
         {
             std::unordered_set<double> subset =  map_[subset_id];

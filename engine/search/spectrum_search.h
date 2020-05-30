@@ -7,6 +7,7 @@
 #include <memory>
 #include <algorithm>
 #include "precursor_match.h"
+#include "search_score.h"
 
 #include "../../algorithm/search/bucket_search.h"
 #include "../../algorithm/search/binary_search.h"
@@ -24,24 +25,22 @@
 namespace engine{
 namespace search{
 
-struct SearchResult
-{
-    int scan;
-    std::string peptide;
-    std::string glycan;
-    int posit;
-    double score;
-    
-};
-
 class SpectrumSearcher
 {
 public:
     SpectrumSearcher(const double tol, const algorithm::search::ToleranceBy by, 
-        const engine::glycan::GlycanMassStore& subset, const engine::glycan::GlycanStore& isomer):
-            tolerance_(tol), by_(by), glycan_mass_(subset), glycan_isomer_(isomer),
+        engine::glycan::NGlycanBuilder* builder):
+            tolerance_(tol), by_(by), builder_(builder),
                 searcher_(algorithm::search::BucketSearch<model::spectrum::Peak>(tol, by)),
                 binary_(algorithm::search::BinarySearch(tol, by)){}
+
+    virtual void Init()
+    {
+        glycan_isomer_ = builder_->Isomer();
+        glycan_core_ = builder_->Core();
+        glycan_branch_ = builder_->Branch();
+        glycan_terminal_ = builder_->Terminal();
+    }
 
     model::spectrum::Spectrum& Spectrum() { return spectrum_; }
     MatchResultStore& Candidate() { return candidate_; }
@@ -62,62 +61,67 @@ public:
         std::vector<SearchResult> res;
         
         double max_score = 0;
-        SearchResult best;
 
         for(const auto& peptide : candidate_.Peptides())
         {
             std::vector<model::spectrum::Peak> result_oxonium = SearchOxonium();
             if (result_oxonium.empty()) continue;
+            double oxonium = Scorer::PeakValue(result_oxonium);
 
             for(const auto& composite: candidate_.Glycans(peptide))
             {
                 std::vector<int> positions = engine::protein::ProteinPTM::FindNGlycanSite(peptide);
-                std::unordered_map<int, std::vector<model::spectrum::Peak>> result_position;
+                std::unordered_map<int, double> result_position;
                 for (const auto& pos : positions)
                 {
                     std::vector<model::spectrum::Peak> result_temp = SearchPeptides(peptide, composite, pos);
                     if (!result_temp.empty())
                     {  
-                        result_position[pos] = result_temp;
+                        result_position[pos] = Scorer::PeakValue(result_temp);
                     }
                 }
 
                 std::unordered_set<std::string> glycan_ids = glycan_isomer_.Query(composite);
-                std::unordered_map<std::string, std::vector<model::spectrum::Peak>> result_isomer;
+                std::unordered_map<std::string, double> result_core, result_branch, result_terminal;
 
                 for(const auto & isomer : glycan_ids)
                 {
-                    std::vector<model::spectrum::Peak> result_temp = SearchGlycans(peptide, isomer);
-                    if (!result_temp.empty())
-                    {
-                        result_isomer[isomer] = result_temp;
-                    }
-
+                    result_core[isomer] = 
+                        Scorer::PeakValue(SearchGlycans(peptide, isomer, glycan_core_));
+                    result_branch[isomer] = 
+                        Scorer::PeakValue(SearchGlycans(peptide, isomer, glycan_branch_));
+                    result_terminal[isomer] = 
+                        Scorer::PeakValue(SearchGlycans(peptide, isomer, glycan_terminal_));
                 }
 
 
                 for(const auto& pos_it : result_position)
                 {
-                    for(const auto& isomer_it : result_isomer)
+                    for(const auto& isomer_it : result_core)
                     {
-                        double score = IntensitySum(result_oxonium) + 
-                            IntensitySum(pos_it.second) + IntensitySum(isomer_it.second);
-                         
-                        if (score > max_score)
+                        std::string isomer = isomer_it.first;
+                        double score = result_core[isomer] + result_branch[isomer] + result_terminal[isomer]
+                            + pos_it.second + oxonium; 
+
+                        if (score >= max_score)
                         {
+                            if (score > max_score)
+                                res.clear();
                             max_score = score;
-                            best.glycan = composite;
-                            best.peptide = peptide;
-                            best.score = score;
+                            SearchResult best;
+                            best.set_scan(spectrum_.Scan());
+                            best.set_glycan(composite);
+                            best.set_sequence(peptide);
+                            best.Add(oxonium, SearchType::Oxonium);
+                            best.Add(pos_it.second, SearchType::Peptide);
+                            best.Add(result_core[isomer], SearchType::Core);
+                            best.Add(result_branch[isomer], SearchType::Branch);
+                            best.Add(result_terminal[isomer], SearchType::Terminal);
+                            res.push_back(best);
                         }
                     }
                 }
             }
-        }
-        if (max_score > 0)
-        {
-            best.scan = spectrum_.Scan();
-            res.push_back(best);
         }
         return res;   
     }
@@ -214,7 +218,8 @@ protected:
     }
 
     virtual std::vector<model::spectrum::Peak> SearchGlycans
-        (const std::string& seq, const std::string& id)
+        (const std::string& seq, const std::string& id, 
+        engine::glycan::GlycanMassStore& glycan_mass_)
     {
         std::vector<model::spectrum::Peak> res;
         std::unordered_set<double> subset = glycan_mass_.Query(id);
@@ -288,27 +293,20 @@ protected:
 
     static bool IntensityCmp(const model::spectrum::Peak& p1, const model::spectrum::Peak& p2)
         { return (p1.Intensity() < p2.Intensity()); }
-    
-    static double IntensitySum(const std::vector<model::spectrum::Peak>& peaks)
-    { 
-        double sum = 0;
-        for(const auto& it : peaks)
-        {
-            sum += it.Intensity();
-        }
-        return sum;
-    }
 
     double tolerance_;
     algorithm::search::ToleranceBy by_;
-    engine::glycan::GlycanMassStore glycan_mass_;
-    engine::glycan::GlycanStore glycan_isomer_;
+    engine::glycan::NGlycanBuilder* builder_;
     algorithm::search::BucketSearch<model::spectrum::Peak> searcher_;
     algorithm::search::BinarySearch binary_;
     MatchResultStore candidate_;
     model::spectrum::Spectrum spectrum_;
     std::unordered_map<std::string, std::vector<double>> peptides_ptm_mz_;
     std::unordered_map<std::string, std::vector<double>> peptides_mz_; 
+
+    engine::glycan::GlycanStore glycan_isomer_;
+    engine::glycan::GlycanMassStore glycan_core_, glycan_branch_, glycan_terminal_;
+
 
     const std::vector<double> oxonium_ 
     {

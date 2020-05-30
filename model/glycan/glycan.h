@@ -146,8 +146,8 @@ public:
        set_composition(Interpret(name));
     }
 
-    std::map<Monosaccharide, int>  CompositionConst() const
-        { return std::map<Monosaccharide, int>(composite_); }
+    const std::map<Monosaccharide, int>&  CompositionConst() const
+        { return composite_; }
 
     virtual std::vector<std::unique_ptr<Glycan>> Grow(Monosaccharide suger)
     {

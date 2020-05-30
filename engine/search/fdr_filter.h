@@ -41,7 +41,7 @@ public:
 
 protected:
     static double ComputeScore(const SearchResult& result)
-        { return result.score; }
+        { return result.Score(); }
 
     static bool ScoreGreater(const SearchResult& r1, const SearchResult& r2) 
         { return (ComputeScore(r1) > ComputeScore(r2)); }

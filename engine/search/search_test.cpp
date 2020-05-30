@@ -4,7 +4,6 @@
 #include <iostream>
 #include <iomanip>
 #include "spectrum_search.h"
-#include "precursor_match.h"
 #include "../../util/io/mgf_parser.h"
 #include "../../util/io/fasta_reader.h"
 #include "../protein/protein_digest.h"
@@ -18,7 +17,7 @@ namespace search {
 BOOST_AUTO_TEST_CASE( search_engine_test ) 
 {
     // read spectrum
-    std::string path = "/home/yu/Documents/MultiGlycan-Cpp/data/test_EThcD_H84_R1.mgf";
+    std::string path = "/home/yu/Documents/MultiGlycan-Cpp/data/test_EThcD.mgf";
     std::unique_ptr<util::io::SpectrumParser> parser = 
         std::make_unique<util::io::MGFParser>(path, util::io::SpectrumType::EThcD);
     util::io::SpectrumReader spectrum_reader(path, std::move(parser));
@@ -51,8 +50,10 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
 
     // // build glycans
     int hexNAc = 12, hex = 12, Fuc = 5, NeuAc = 4, NeuGc = 0;
-    engine::glycan::GlycanBuilder builder(hexNAc, hex, Fuc, NeuAc, NeuGc);
-    builder.Build();
+    std::unique_ptr<engine::glycan::NGlycanBuilder> builder =
+        std::make_unique<engine::glycan::NGlycanBuilder>(hexNAc, hex, Fuc, NeuAc, NeuGc);
+    builder->Build();
+
     model::glycan::NGlycanComplex glycan;
     std::map<model::glycan::Monosaccharide, int> composite;
     composite[model::glycan::Monosaccharide::GlcNAc] = 5;
@@ -62,24 +63,27 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
     composite[model::glycan::Monosaccharide::NeuAc] = 1;  
     glycan.set_composition(composite);
     std::string glycan_name = glycan.Name();
-    BOOST_CHECK(builder.Isomer().QueryMass(glycan_name) == util::mass::GlycanMass::Compute(composite));
+    BOOST_CHECK(builder->Isomer().QueryMass(glycan_name) == util::mass::GlycanMass::Compute(composite));
     BOOST_CHECK(util::mass::GlycanMass::Compute(composite) == 
         util::mass::GlycanMass::Compute(model::glycan::Glycan::Interpret(glycan_name)));
-    std::vector<std::string> collection = builder.Isomer().Collection();
+    std::vector<std::string> collection = builder->Isomer().Collection();
     BOOST_CHECK(std::find(collection.begin(), collection.end(), glycan.Name()) != collection.end());
 
 
     // spectrum matching
-    int special_scan = 8778; // 8729, 8778
+    int special_scan = 8087; // 8729, 8778
     double ms1_tol = 10, ms2_tol = 0.01;
-    int isotopic_count = 4;
+    int isotopic_count = 2;
     algorithm::search::ToleranceBy ms1_by = algorithm::search::ToleranceBy::PPM;
     algorithm::search::ToleranceBy ms2_by = algorithm::search::ToleranceBy::Dalton;
 
-    PrecursorMatcher precursor_runner(ms1_tol, ms1_by, builder.Isomer());
-    std::vector<std::string> glycans_str = builder.Isomer().Collection();
+    PrecursorMatcher precursor_runner(ms1_tol, ms1_by, builder->Isomer());
+    std::vector<std::string> glycans_str = builder->Isomer().Collection();
     precursor_runner.Init(peptides, glycans_str);
-    SpectrumSearcher spectrum_runner(ms2_tol, ms2_by, builder.Mass(), builder.Isomer());
+
+
+    SpectrumSearcher spectrum_runner(ms2_tol, ms2_by, builder.get());
+    spectrum_runner.Init();
 
     auto special_spec = spectrum_reader.GetSpectrum(special_scan);
     double special_target = util::mass::SpectrumMass::Compute(special_spec.PrecursorMZ(), special_spec.PrecursorCharge());
@@ -94,6 +98,9 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
     //     }
     // }
     BOOST_CHECK(!special_r.Empty());
+    // GlcNAc-5-Man-3-Gal-3-Fuc-2-NeuAc-2-
+    // MVSHHNLTTGATLINE
+    // 202896
 
     std::cout << "scan start:\n"; 
     auto start = std::chrono::high_resolution_clock::now(); 
@@ -101,12 +108,22 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
     spectrum_runner.set_candidate(special_r);
     spectrum_runner.set_spectrum(special_spec);
     std::vector<SearchResult> special_res = spectrum_runner.Search();
-    // for(auto it : special_res)
-    // {
-    //     std::cout << it.glycan << std::endl;
-    //     std::cout << it.peptide << std::endl;
-    //     std::cout << it.score << std::endl;
-    // }
+
+
+    // compute score
+    std::unordered_map<SearchType, double> parameter 
+    {
+        {SearchType::Core, 1.0}, {SearchType::Branch, 1.0}, {SearchType::Terminal, 1.0},
+        {SearchType::Peptide, 1.0}, {SearchType::Oxonium, 1.0},
+    };
+
+    Scorer scorer(parameter);
+    for(auto it : special_res)
+    {
+        std::cout << it.Glycan() << std::endl;
+        std::cout << it.Sequence() << std::endl;
+        std::cout << scorer.ComputeScore(it) << std::endl;
+    }
     BOOST_CHECK(!special_res.empty());
     auto stop = std::chrono::high_resolution_clock::now(); 
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start); 

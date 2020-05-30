@@ -21,8 +21,22 @@ public:
             candidates_({Monosaccharide::GlcNAc, Monosaccharide::Man, Monosaccharide::Gal,
                 Monosaccharide::Fuc, Monosaccharide::NeuAc}){}
 
+    GlycanStore Isomer() { return isomer_store_; }
+    GlycanMassStore Mass() { return mass_store_; }
+    std::vector<Monosaccharide> Candidates() { return candidates_; }
+    int HexNAc() { return hexNAc_; }
+    int Hex() { return hex_; }
+    int Fuc() { return fuc_; }
+    int NeuAc() { return neuAc_; }
+    int NeuGc() { return neuGc_; }
+    void set_candidates(std::vector<Monosaccharide> sugers) { candidates_ = sugers; }
+    void set_HexNAc(int num) { hexNAc_ = num; }
+    void set_Hex(int num) { hex_ = num; }
+    void set_Fuc(int num) { fuc_ = num; }
+    void set_NeuAc(int num) { neuAc_ = num; }
+    void set_NeuGc(int num) { neuGc_ = num; }
 
-    void Build()
+    virtual void Build()
     {
         std::unique_ptr<NGlycanComplex> root = 
             std::make_unique<NGlycanComplex>();
@@ -48,38 +62,33 @@ public:
                         std::string id = g->ID();
                         if (!mass_store_.Contains(id))
                         {
-                            queue.push_back(std::move(g));
+                            AddSubset(g.get(), node.get());
+                            queue.push_back(std::move(g));   // addsubset first before move!
                         }
-                        mass_store_.AddSubset(id, node->ID(), 
-                            util::mass::GlycanMass::Compute(node->Composition()));
+                        else
+                        {
+                            AddSubset(g.get(), node.get());
+                        }
+                        
                     }
                 }
             }
         }
     }
 
-    GlycanStore Isomer() { return isomer_store_; }
-    GlycanMassStore Mass() { return mass_store_; }
-    void Clear() 
+    virtual void Clear() 
     {
         isomer_store_.Clear();
         mass_store_.Clear();
     }
 
-    std::vector<Monosaccharide> Candidates() { return candidates_; }
-    int HexNAc() { return hexNAc_; }
-    int Hex() { return hex_; }
-    int Fuc() { return fuc_; }
-    int NeuAc() { return neuAc_; }
-    int NeuGc() { return neuGc_; }
-    void set_candidates(std::vector<Monosaccharide> sugers) { candidates_ = sugers; }
-    void set_HexNAc(int num) { hexNAc_ = num; }
-    void set_Hex(int num) { hex_ = num; }
-    void set_Fuc(int num) { fuc_ = num; }
-    void set_NeuAc(int num) { neuAc_ = num; }
-    void set_NeuGc(int num) { neuGc_ = num; }
-
 protected:
+    virtual void AddSubset(Glycan* g, Glycan* node)
+    {
+        mass_store_.AddSubset(g->ID(), node->ID(), 
+            util::mass::GlycanMass::Compute(node->Composition()));
+    }
+
     bool SatisfyCriteria(const Glycan* glycan) const
     {
         int hexNAc = 0, hex = 0, fuc = 0, neuAc = 0, neuGc = 0;
@@ -124,6 +133,74 @@ protected:
 
 };
 
+class NGlycanBuilder : public GlycanBuilder
+{
+
+public:
+    NGlycanBuilder(int hexNAc, int hex, int fuc, int neuAc, int neuGc):
+        GlycanBuilder(hexNAc, hex, fuc, neuAc, neuGc){}
+
+    GlycanMassStore Core() { return core_store_; }
+    GlycanMassStore Branch() { return branch_store_; }
+    GlycanMassStore Terminal() { return terminal_store_; }
+
+    void Clear() override 
+    {
+        GlycanBuilder::Clear();
+        core_store_.Clear();
+        branch_store_.Clear();
+        terminal_store_.Clear();
+    }
+
+protected:
+    virtual bool IsCore(const Glycan* glycan) const
+    {
+       std::map<Monosaccharide, int> composite = glycan->CompositionConst();
+       return composite.find(Monosaccharide::GlcNAc) == composite.end()
+        || composite.find(Monosaccharide::Man) == composite.end()
+        || composite[Monosaccharide::GlcNAc] < 2
+        || composite[Monosaccharide::Man] < 3;
+    }
+
+    virtual bool IsTerminal(const Glycan* glycan) const
+    {
+       // fuc on core or terminal
+       std::map<Monosaccharide, int> composite = glycan->CompositionConst();
+       return  composite.find(Monosaccharide::Fuc) != composite.end() ||
+        composite.find(Monosaccharide::NeuAc) != composite.end() || 
+        composite.find(Monosaccharide::NeuGc) != composite.end();
+    }
+
+    void AddSubset(Glycan* g, Glycan* node) override
+    {
+        GlycanBuilder::AddSubset(g, node);
+
+        double placeholder_core = 0;
+        double placeholder_branch = 0;
+        double placeholder_terminal = 0;
+        if (IsCore(node))   // insert core mass
+        {
+            placeholder_core =
+                util::mass::GlycanMass::Compute(node->Composition());
+        }
+        else if(IsTerminal(node)) // insert terminal mass
+        {
+            placeholder_terminal =
+                util::mass::GlycanMass::Compute(node->Composition());
+        }
+        else
+        {
+            placeholder_branch = 
+                util::mass::GlycanMass::Compute(node->Composition());
+        }
+        core_store_.AddSubset(g->ID(), node->ID(), placeholder_core);
+        terminal_store_.AddSubset(g->ID(), node->ID(), placeholder_terminal);       
+        branch_store_.AddSubset(g->ID(), node->ID(), placeholder_branch);
+    }
+
+    GlycanMassStore core_store_, branch_store_, terminal_store_;
+
+};
 
 } // namespace engine
 } // namespace glycan
