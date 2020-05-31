@@ -37,7 +37,14 @@ public:
     ~SVMAnalyzer()
     {
         if (model_ != nullptr)
-            delete model_;
+        {
+            ProblemClear();
+            ModelClear();	
+        }
+        else if (problem_->l > 0)
+        {
+            ProblemClear();
+        }
         delete problem_;
         delete parameter_;
     }
@@ -49,7 +56,11 @@ public:
         
         // training the model
         if (model_ != nullptr)
-            delete model_;
+        {
+            ProblemClear();
+            ModelClear();	
+        }
+
         model_ = svm_train(problem_, parameter_);          
     }
 
@@ -64,6 +75,10 @@ public:
 
     virtual void set_problem(std::vector<SearchResult> targets, std::vector<SearchResult> decoys)
     {
+        if (problem_->l > 0)
+        {
+            ProblemClear();
+        }
 
         int size = (int) targets.size() + decoys.size();
         int index = 0;
@@ -90,6 +105,34 @@ public:
     }
 
 protected:
+    virtual void ModelClear()
+    {
+        int l = model_->l;
+        int k = model_->nr_class;
+        free(model_->label);
+        free(model_->rho);
+        if (model_->probA != NULL)
+            free(model_->probA);
+        if (model_->probB != NULL)
+            free(model_->probB);
+        free(model_->nSV);
+        for(int i = 0; i < l; i++)
+        {
+            delete (model_->SV)[i];
+        }
+        free(model_->sv_indices);
+        for(int i = 0; i < k; i++)
+        {
+            free((model_->sv_coef)[i]);
+        }
+        free(model_->sv_coef);
+    }
+
+    virtual void ProblemClear()
+    {
+        delete[] problem_->x;
+        delete problem_->y;
+    }
 
     virtual svm_node* SVMNode(const SearchResult& result)
     {
