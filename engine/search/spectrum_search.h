@@ -7,7 +7,7 @@
 #include <memory>
 #include <algorithm>
 #include "precursor_match.h"
-#include "search_score.h"
+#include "search_result.h"
 
 #include "../../algorithm/search/bucket_search.h"
 #include "../../algorithm/search/binary_search.h"
@@ -66,7 +66,7 @@ public:
         {
             std::vector<model::spectrum::Peak> result_oxonium = SearchOxonium();
             if (result_oxonium.empty()) continue;
-            double oxonium = Scorer::PeakValue(result_oxonium);
+            double oxonium = SearchResult::PeakValue(result_oxonium);
 
             for(const auto& composite: candidate_.Glycans(peptide))
             {
@@ -77,7 +77,7 @@ public:
                     std::vector<model::spectrum::Peak> result_temp = SearchPeptides(peptide, composite, pos);
                     if (!result_temp.empty())
                     {  
-                        result_position[pos] = Scorer::PeakValue(result_temp);
+                        result_position[pos] = SearchResult::PeakValue(result_temp);
                     }
                 }
 
@@ -87,11 +87,11 @@ public:
                 for(const auto & isomer : glycan_ids)
                 {
                     result_core[isomer] = 
-                        Scorer::PeakValue(SearchGlycans(peptide, isomer, glycan_core_));
+                        SearchResult::PeakValue(SearchGlycans(peptide, isomer, glycan_core_));
                     result_branch[isomer] = 
-                        Scorer::PeakValue(SearchGlycans(peptide, isomer, glycan_branch_));
+                        SearchResult::PeakValue(SearchGlycans(peptide, isomer, glycan_branch_));
                     result_terminal[isomer] = 
-                        Scorer::PeakValue(SearchGlycans(peptide, isomer, glycan_terminal_));
+                        SearchResult::PeakValue(SearchGlycans(peptide, isomer, glycan_terminal_));
                 }
 
 

@@ -9,6 +9,7 @@
 #include "../protein/protein_digest.h"
 #include "../protein/protein_ptm.h"
 #include "../glycan/glycan_builder.h"
+#include "../spectrum/normalize.h"
 #include <chrono> 
 
 namespace engine{
@@ -26,7 +27,10 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
     int last_scan = spectrum_reader.GetLastScan();
     BOOST_CHECK(start_scan < last_scan);
 
-
+    // process spectrum by normalization
+    model::spectrum::Spectrum spec = spectrum_reader.GetSpectrum(start_scan);
+    engine::spectrum::Normalizer::Transform(spec);
+    BOOST_CHECK(spec.Peaks().front().Intensity() < 1);
 
     // read fasta and build peptides
     util::io::FASTAReader fasta_reader("/home/yu/Documents/MultiGlycan-Cpp/data/haptoglobin.fasta");
@@ -81,7 +85,6 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
     std::vector<std::string> glycans_str = builder->Isomer().Collection();
     precursor_runner.Init(peptides, glycans_str);
 
-
     SpectrumSearcher spectrum_runner(ms2_tol, ms2_by, builder.get());
     spectrum_runner.Init();
 
@@ -117,7 +120,7 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
         {SearchType::Peptide, 1.0}, {SearchType::Oxonium, 1.0},
     };
 
-    Scorer scorer(parameter);
+    SimpleScorer scorer(parameter);
     for(auto it : special_res)
     {
         std::cout << it.Glycan() << std::endl;

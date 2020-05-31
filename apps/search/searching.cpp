@@ -12,7 +12,7 @@
 #include "../../engine/spectrum/normalize.h"
 #include "../../engine/search/precursor_match.h"
 #include "../../engine/search/spectrum_search.h"
-#include "../../engine/search/search_score.h"
+#include "../../engine/search/search_result.h"
 #include "../../engine/search/fdr_filter.h"
 
 
@@ -55,6 +55,18 @@ void SearchingWorker(
     mutex.lock();
         results.insert(results.end(), temp_result.begin(), temp_result.end());
     mutex.unlock();
+}
+
+void ScoringWorker(
+    std::vector<engine::search::SearchResult>& results,
+    std::unordered_map<engine::search::SearchType, double> parameter)
+{
+    engine::search::SimpleScorer scorer(parameter);
+    for(auto it : results)
+    {
+        double score = scorer.ComputeScore(it);
+        it.set_score(score);
+    }
 }
 
 int main(int argc, char *argv[])
@@ -115,50 +127,51 @@ int main(int argc, char *argv[])
     // search
     std::cout << "Start to scan\n"; 
     auto start = std::chrono::high_resolution_clock::now();
-    int first = spectrum_reader.GetFirstScan();
-    int last = spectrum_reader.GetLastScan();
 
     // seraching targets 
     std::vector<engine::search::SearchResult> targets;
-    int work_load = std::ceil((last - first) / n_thread);
-    std::vector< std::thread> thread_pool;
+    std::vector<model::spectrum::Spectrum> spectra = spectrum_reader.GetSpectrum();
+    int work_load = std::ceil(spectra.size() / n_thread);
+    std::vector< std::thread> target_thread_pool;
     for (int i = 0; i < n_thread; i ++)
     {
-        int first_scan = work_load * i;
-        int end_scan = work_load + first_scan - 1;
-        end_scan = end_scan > last ? last : end_scan;
-        std::vector<model::spectrum::Spectrum> spectra = spectrum_reader.GetSpectrum(first_scan, end_scan);
-        std::thread worker(SearchingWorker, std::ref(targets), builder.get(), spectra,  peptides,
-            ms1_tol, ms1_by, ms2_tol, ms2_by, isotopic_count, 0);
-        thread_pool.push_back(std::move(worker));
+        int begin = work_load * i;
+        int end = begin + work_load > (int) spectra.size() ? 
+            (int) spectra.size() : begin + work_load;
+
+        std::thread worker(SearchingWorker, std::ref(targets), builder.get(), 
+            std::vector<model::spectrum::Spectrum>(spectra.begin() + begin, spectra.begin() + end),  
+                peptides, ms1_tol, ms1_by, ms2_tol, ms2_by, isotopic_count, 0);
+        target_thread_pool.push_back(std::move(worker));
     }
-    for (auto& worker : thread_pool)
+    for (auto& worker : target_thread_pool)
     {
         worker.join();
     }
 
-
     // seraching decoys 
     std::vector<engine::search::SearchResult> decoys;
-    thread_pool.clear();
+    std::vector< std::thread> decoy_thread_pool;
+    spectra = spectrum_reader.GetSpectrum();
     for (int i = 0; i < n_thread; i ++)
     {
-        int first_scan = work_load * i;
-        int end_scan = work_load + first_scan - 1;
-        end_scan = end_scan > last ? last : end_scan;
-        std::vector<model::spectrum::Spectrum> spectra_d = spectrum_reader.GetSpectrum(first_scan, end_scan);
-        std::thread worker(SearchingWorker, std::ref(decoys), builder.get(), spectra_d,  peptides,
-                ms1_tol, ms1_by, ms2_tol, ms2_by, isotopic_count, pseudo_mass);
-        thread_pool.push_back(std::move(worker));
+        int begin = work_load * i;
+        int end = begin + work_load > (int) spectra.size() ? 
+            (int) spectra.size() : begin + work_load;
+        
+        std::thread worker(SearchingWorker, std::ref(decoys), builder.get(), 
+            std::vector<model::spectrum::Spectrum>(spectra.begin() + begin, spectra.begin() + end), 
+                peptides, ms1_tol, ms1_by, ms2_tol, ms2_by, isotopic_count, pseudo_mass);
+        decoy_thread_pool.push_back(std::move(worker));
     }
-    for (auto& worker : thread_pool)
+    for (auto& worker : decoy_thread_pool)
     {
         worker.join();
     }
 
 
     // set up scorer
-    std::unordered_map<engine::search::SearchType, double> parameter 
+    const std::unordered_map<engine::search::SearchType, double> parameter 
     {
         {engine::search::SearchType::Core, core}, 
         {engine::search::SearchType::Branch, branch}, 
@@ -166,22 +179,10 @@ int main(int argc, char *argv[])
         {engine::search::SearchType::Peptide, peptide}, 
         {engine::search::SearchType::Oxonium, oxonium},
     };
-    engine::search::Scorer scorer(parameter);
-    for(auto it : targets)
-    {
-        double score = scorer.ComputeScore(it);
-        it.set_score(score);
-        // std::cout << it.Scan() << std::endl;
-        // std::cout << it.Sequence() << std::endl;
-        // std::cout << it.Glycan() << std::endl;
-        // std::cout << it.Score() << std::endl;
-        
-    }
-    for(auto it : decoys)
-    {
-        double score = scorer.ComputeScore(it);
-        it.set_score(score);
-    }
+    std::thread scorer_first(ScoringWorker, std::ref(targets), parameter);
+    std::thread scorer_second(ScoringWorker, std::ref(decoys), parameter);   
+    scorer_first.join();
+    scorer_second.join();
 
     // fdr filtering
     engine::search::FDRFilter fdr_runner(fdr_rate);
