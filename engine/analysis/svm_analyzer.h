@@ -24,8 +24,8 @@ public:
         parameter_->svm_type = C_SVC;
         parameter_->kernel_type = POLY;
         parameter_->degree = 3;
-        parameter_->C = 1.0;
-        parameter_->gamma = 1.0;
+        parameter_->C = 1.0; //
+        parameter_->gamma = 1.0; //
         parameter_->eps = 0.001;
         parameter_->nu = 0.5;
         parameter_->p = 0.10;
@@ -69,8 +69,17 @@ public:
     {
         svm_node* node = SVMNode(result);
         double pred = svm_predict(model_, node);
-        delete node;
+        delete[] node;
         return pred;
+    }
+
+    virtual double PredictingProbability(const SearchResult& result)
+    {
+        svm_node* node = SVMNode(result);
+        double prob = 0;
+        svm_predict_probability(model_, node, &prob);
+        delete[] node;
+        return prob;
     }
 
     virtual void set_problem(std::vector<SearchResult> targets, std::vector<SearchResult> decoys)
@@ -130,8 +139,12 @@ protected:
 
     virtual void ProblemClear()
     {
+        for (int i = 0; i < problem_->l; i++)
+        {
+            delete[] (problem_->x)[i];
+        }
         delete[] problem_->x;
-        delete problem_->y;
+        delete[] problem_->y;
     }
 
     virtual svm_node* SVMNode(const SearchResult& result)

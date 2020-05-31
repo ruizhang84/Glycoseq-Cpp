@@ -33,7 +33,8 @@ analyzer.Training(v1, v2);
 SearchResult r;
 r.Add(1.0, SearchType::Core);
 std::cout << analyzer.Predicting(r) << std::endl;
-
+std::cout << analyzer.PredictingProbability(r) << std::endl;
+BOOST_CHECK(analyzer.Predicting(r) == 1);
 
 }
 
