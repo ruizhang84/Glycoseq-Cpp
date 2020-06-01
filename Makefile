@@ -6,16 +6,14 @@ INCLUDES = -I/usr/local/include -L/usr/local/lib -lboost_unit_test_framework -st
 LIB = -I/usr/local/include -L/usr/local/lib -lpthread
 
 TEST_CASES := algorithm_base_test glycan_test io_test lsh_test sim_test lsh_clustering_test  
-TEST_CASES_2 := protein_test search_test glycan_builder_test search_engine_test
+TEST_CASES_2 := protein_test search_test glycan_builder_test search_engine_test svm_test
 
 
-svm_test:
-	$(CC) $(CPPFLAGS) -o test/svm_test \
-	engine/analysis/svm_test.cpp lib/svm.cpp $(INCLUDES)
+
 
 search:
 	$(CC) $(CPPFLAGS) -o searching \
-	apps/search/searching.cpp model/glycan/nglycan_complex.cpp $(LIB)
+	apps/search/searching.cpp model/glycan/nglycan_complex.cpp lib/svm.cpp $(LIB)
 
 
 
@@ -66,6 +64,10 @@ glycan_builder_test:
 search_engine_test:
 	$(CC) $(CPPFLAGS) -o test/search_engine_test \
 	engine/search/search_test.cpp model/glycan/nglycan_complex.cpp $(INCLUDES)
+
+svm_test:
+	$(CC) $(CPPFLAGS) -o test/svm_test \
+	engine/analysis/svm_test.cpp lib/svm.cpp $(INCLUDES)
 
 # test
 test: ${TEST_CASES} ${TEST_CASES_2}

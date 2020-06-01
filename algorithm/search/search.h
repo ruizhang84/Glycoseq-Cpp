@@ -3,7 +3,8 @@
 
 #include <vector>
 #include <memory>
-#include <cstdlib> 
+#include <cstdlib>
+#include <algorithm> 
 #include "point.h"
 #include "../../util/mass/spectrum.h"
 

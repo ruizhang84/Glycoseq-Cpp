@@ -116,7 +116,6 @@ public:
 protected:
     virtual void ModelClear()
     {
-        int l = model_->l;
         int k = model_->nr_class;
         free(model_->label);
         free(model_->rho);
@@ -125,10 +124,6 @@ protected:
         if (model_->probB != NULL)
             free(model_->probB);
         free(model_->nSV);
-        for(int i = 0; i < l; i++)
-        {
-            delete (model_->SV)[i];
-        }
         free(model_->sv_indices);
         for(int i = 0; i < k; i++)
         {
@@ -141,7 +136,8 @@ protected:
     {
         for (int i = 0; i < problem_->l; i++)
         {
-            delete[] (problem_->x)[i];
+            alloc_.destroy(*(problem_->x+i));
+            alloc_.deallocate(*(problem_->x+i), kDims+1);
         }
         delete[] problem_->x;
         delete[] problem_->y;
@@ -149,12 +145,14 @@ protected:
 
     virtual svm_node* SVMNode(const SearchResult& result)
     {
-        svm_node* node = new svm_node[kDims+1];
+        svm_node* node = alloc_.allocate(kDims + 1);
         for (int i = 0; i < kDims; i++)
         {
+           
             node[i].index = i;
             node[i].value = 0;
         }
+        alloc_.construct(node+kDims);
         node[kDims].index = -1;
 
         for (const auto& it : result.Match())
@@ -187,6 +185,7 @@ protected:
     svm_model* model_;
     svm_problem* problem_;
     svm_parameter* parameter_;
+    std::allocator<svm_node> alloc_;
 };
 
 
