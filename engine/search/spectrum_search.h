@@ -139,7 +139,7 @@ public:
     }
 
 protected:
-    virtual void SearchInit()
+    void SearchInit()
     {
         std::vector<std::shared_ptr<algorithm::search::Point<model::spectrum::Peak>>> mz_points;
         for(const auto& it : spectrum_.Peaks())
@@ -153,7 +153,7 @@ protected:
         searcher_.Init();
     }
 
-    virtual std::vector<model::spectrum::Peak> SearchOxonium()
+    std::vector<model::spectrum::Peak> SearchOxonium()
     {
         std::vector<model::spectrum::Peak> res;
         for (const auto& mass : oxonium_)
@@ -171,7 +171,7 @@ protected:
         return res;
     }
 
-    virtual std::vector<model::spectrum::Peak> SearchPeptides
+    std::vector<model::spectrum::Peak> SearchPeptides
         (const std::string& seq, const std::string& composite, const int pos)
     {
         std::vector<model::spectrum::Peak> res;
@@ -229,7 +229,7 @@ protected:
         return res;
     }
 
-    virtual std::vector<model::spectrum::Peak> SearchGlycans
+    std::vector<model::spectrum::Peak> SearchGlycans
         (const std::string& seq, const std::string& id, 
         engine::glycan::GlycanMassStore& glycan_mass_)
     {
