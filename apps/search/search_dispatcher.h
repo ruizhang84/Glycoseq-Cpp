@@ -126,10 +126,12 @@ protected:
             std::vector<engine::search::SearchResult> res = spectrum_runner.Search();
             if (res.empty()) continue;
 
-            mutex_.lock();
-                results.insert(results.end(), res.begin(), res.end());
-            mutex_.unlock();
+            temp_result.insert(temp_result.end(), res.begin(), res.end());
         }
+        
+        mutex_.lock();
+            results.insert(results.end(), temp_result.begin(), temp_result.end());
+        mutex_.unlock();
     }
 
     std::mutex mutex_; 
