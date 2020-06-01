@@ -27,8 +27,8 @@ void ScoringWorker(
 {
     for(auto it : results)
     {
-        double score = analyzer.PredictingProbability(it);
-        it.set_score(score);
+        double prob = analyzer.PredictingProbability(it);
+        it.set_score(prob);
     }
 }
 
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 {
     std::string spectra_path = "/home/yu/Documents/MultiGlycan-Cpp/data/test_EThcD.mgf";
     std::string fasta_path = "/home/yu/Documents/MultiGlycan-Cpp/data/haptoglobin.fasta";
-    std::string out_path = "search2.csv";
+    std::string out_path = "search.csv";
     SearchParameter parameter;
 
     // read spectrum
@@ -76,60 +76,44 @@ int main(int argc, char *argv[])
     auto start = std::chrono::high_resolution_clock::now();
 
     // seraching decoys 
-    SearchDispatcher decoy_searcher(spectrum_reader.GetSpectrum(), builder.get(), peptides, parameter);
+    SearchDispatcher decoy_searcher(spectrum_reader.GetSpectrum(4240, 4500), builder.get(), peptides, parameter);
     std::vector<engine::search::SearchResult> decoys = decoy_searcher.Dispatch();
 
     // seraching targets 
     parameter.pseudo_mass = 0;
-    SearchDispatcher target_searcher(spectrum_reader.GetSpectrum(), builder.get(), peptides, parameter);
+    SearchDispatcher target_searcher(spectrum_reader.GetSpectrum(4240, 4500), builder.get(), peptides, parameter);
     std::vector<engine::search::SearchResult> targets = target_searcher.Dispatch();
 
     // set up scorer
-    // engine::analysis::SVMAnalyzer analyzer;
-    // analyzer.Training(targets, decoys);
+    engine::analysis::SVMAnalyzer analyzer;
+    analyzer.Training(targets, decoys);
 
-    // std::thread scorer_first(ScoringWorker, std::ref(targets), std::ref(analyzer));
-    // std::thread scorer_second(ScoringWorker, std::ref(decoys), std::ref(analyzer));   
-    // scorer_first.join();
-    // scorer_second.join();
+    std::thread scorer_first(ScoringWorker, std::ref(targets), std::ref(analyzer));
+    std::thread scorer_second(ScoringWorker, std::ref(decoys), std::ref(analyzer));   
+    scorer_first.join();
+    scorer_second.join();
 
-    // // fdr filtering
-    // engine::search::FDRFilter fdr_runner(parameter.fdr_rate);
-    // fdr_runner.set_data(targets);
-    // fdr_runner.set_decoy(decoys);
-    // fdr_runner.Init();
+    // fdr filtering
+    engine::search::FDRFilter fdr_runner(parameter.fdr_rate);
+    fdr_runner.set_data(targets);
+    fdr_runner.set_decoy(decoys);
+    fdr_runner.Init();
 
-    // std::vector<engine::search::SearchResult> results = fdr_runner.Filter();
+    std::vector<engine::search::SearchResult> results = fdr_runner.Filter();
 
     // output analysis results
     std::ofstream outfile;
     outfile.open (out_path);
-    outfile << "scan#,peptide,glycan,score,,,,,\n";
+    outfile << "scan#,peptide,glycan,score\n";
     
-    for(auto it : targets)
+    for(auto it : results)
     {
         outfile << it.Scan() << ",";
         outfile << it.Sequence() << ",";
         outfile << it.Glycan() << ",";
-        for(auto j : it.Match())
-        {
-            outfile << j.second << ",";
-        }
-        outfile << "target\n";
+        outfile << it.Score() << "\n";
     }
-
-
-    for(auto it : decoys)
-    {
-        outfile << it.Scan() << ",";
-        outfile << it.Sequence() << ",";
-        outfile << it.Glycan() << ",";
-        for(auto j : it.Match())
-        {
-            outfile << j.second << ",";
-        }
-        outfile << "decoy\n";
-    }
+    
     outfile.close();
 
     auto stop = std::chrono::high_resolution_clock::now(); 

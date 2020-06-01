@@ -45,15 +45,15 @@ public:
         {
             ProblemClear();
         }
+
+        delete[] problem_->x;
+        delete[] problem_->y;
         delete problem_;
         delete parameter_;
     }
 
     virtual void Training(std::vector<SearchResult> targets, std::vector<SearchResult> decoys)
     {
-        // set up problem
-        set_problem(targets, decoys);
-        
         // training the model
         if (model_ != nullptr)
         {
@@ -61,6 +61,9 @@ public:
             ModelClear();	
         }
 
+        // set up problem
+        set_problem(targets, decoys);
+    
         model_ = svm_train(problem_, parameter_);          
     }
 
@@ -124,10 +127,11 @@ protected:
         if (model_->probB != NULL)
             free(model_->probB);
         free(model_->nSV);
+        free(model_->SV);
         free(model_->sv_indices);
-        for(int i = 0; i < k; i++)
+        for(int i = 0; i < k-1; i++)
         {
-            free((model_->sv_coef)[i]);
+            free(model_->sv_coef[i]);
         }
         free(model_->sv_coef);
     }
@@ -139,8 +143,6 @@ protected:
             alloc_.destroy(*(problem_->x+i));
             alloc_.deallocate(*(problem_->x+i), kDims+1);
         }
-        delete[] problem_->x;
-        delete[] problem_->y;
     }
 
     virtual svm_node* SVMNode(const SearchResult& result)
