@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
 
 
     // spectrum matching
-    int special_scan = 8087; // 8729, 8778
+    int special_scan = 2742; // 8729, 8778
     double ms1_tol = 10, ms2_tol = 0.01;
     int isotopic_count = 2;
     algorithm::search::ToleranceBy ms1_by = algorithm::search::ToleranceBy::PPM;
@@ -108,6 +108,7 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
     std::cout << "scan start:\n"; 
     auto start = std::chrono::high_resolution_clock::now(); 
     special_spec = spectrum_reader.GetSpectrum(special_scan);
+    engine::spectrum::Normalizer::Transform(special_spec);
     spectrum_runner.set_candidate(special_r);
     spectrum_runner.set_spectrum(special_spec);
     std::vector<SearchResult> special_res = spectrum_runner.Search();
@@ -125,6 +126,10 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
     {
         std::cout << it.Glycan() << std::endl;
         std::cout << it.Sequence() << std::endl;
+        for(auto i : it.Match())
+        {
+            std::cout << i.second << std::endl;
+        }
         std::cout << scorer.ComputeScore(it) << std::endl;
     }
     BOOST_CHECK(!special_res.empty());

@@ -74,46 +74,61 @@ int main(int argc, char *argv[])
     // search
     std::cout << "Start to scan\n"; 
     auto start = std::chrono::high_resolution_clock::now();
-    SearchDispatcher search_dispatcher(spectrum_reader.GetSpectrum(), builder.get(), peptides, parameter);
 
     // seraching decoys 
-    std::vector<engine::search::SearchResult> decoys = 
-        search_dispatcher.Dispatch();
+    SearchDispatcher decoy_searcher(spectrum_reader.GetSpectrum(), builder.get(), peptides, parameter);
+    std::vector<engine::search::SearchResult> decoys = decoy_searcher.Dispatch();
 
     // seraching targets 
     parameter.pseudo_mass = 0;
-    search_dispatcher.set_parameter(parameter);
-    std::vector<engine::search::SearchResult> targets =
-        search_dispatcher.Dispatch();
+    SearchDispatcher target_searcher(spectrum_reader.GetSpectrum(), builder.get(), peptides, parameter);
+    std::vector<engine::search::SearchResult> targets = target_searcher.Dispatch();
 
     // set up scorer
-    engine::analysis::SVMAnalyzer analyzer;
-    analyzer.Training(targets, decoys);
+    // engine::analysis::SVMAnalyzer analyzer;
+    // analyzer.Training(targets, decoys);
 
-    std::thread scorer_first(ScoringWorker, std::ref(targets), std::ref(analyzer));
-    std::thread scorer_second(ScoringWorker, std::ref(decoys), std::ref(analyzer));   
-    scorer_first.join();
-    scorer_second.join();
+    // std::thread scorer_first(ScoringWorker, std::ref(targets), std::ref(analyzer));
+    // std::thread scorer_second(ScoringWorker, std::ref(decoys), std::ref(analyzer));   
+    // scorer_first.join();
+    // scorer_second.join();
 
-    // fdr filtering
-    engine::search::FDRFilter fdr_runner(parameter.fdr_rate);
-    fdr_runner.set_data(targets);
-    fdr_runner.set_decoy(decoys);
-    fdr_runner.Init();
+    // // fdr filtering
+    // engine::search::FDRFilter fdr_runner(parameter.fdr_rate);
+    // fdr_runner.set_data(targets);
+    // fdr_runner.set_decoy(decoys);
+    // fdr_runner.Init();
 
-    std::vector<engine::search::SearchResult> results = fdr_runner.Filter();
+    // std::vector<engine::search::SearchResult> results = fdr_runner.Filter();
 
     // output analysis results
     std::ofstream outfile;
     outfile.open (out_path);
-    outfile << "scan#,peptide,glycan,score\n";
+    outfile << "scan#,peptide,glycan,score,,,,,\n";
     
-    for(auto it : results)
+    for(auto it : targets)
     {
         outfile << it.Scan() << ",";
         outfile << it.Sequence() << ",";
         outfile << it.Glycan() << ",";
-        outfile << it.Score() << "\n";
+        for(auto j : it.Match())
+        {
+            outfile << j.second << ",";
+        }
+        outfile << "target\n";
+    }
+
+
+    for(auto it : decoys)
+    {
+        outfile << it.Scan() << ",";
+        outfile << it.Sequence() << ",";
+        outfile << it.Glycan() << ",";
+        for(auto j : it.Match())
+        {
+            outfile << j.second << ",";
+        }
+        outfile << "decoy\n";
     }
     outfile.close();
 

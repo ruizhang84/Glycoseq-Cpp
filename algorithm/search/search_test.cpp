@@ -17,7 +17,7 @@ std::shared_ptr<Point<double>> CreatePoint(double value)
     return make_shared<Point<double>>(value, value);
 }
 
-BOOST_AUTO_TEST_CASE( Monosaccharide_test ) 
+BOOST_AUTO_TEST_CASE( Algorithm_test ) 
 {
     BasicSearch<double> searcher(20.0, ToleranceBy::Dalton);
     std::vector<std::shared_ptr<Point<double>>> box; 

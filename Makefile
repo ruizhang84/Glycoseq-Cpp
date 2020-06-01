@@ -63,7 +63,7 @@ glycan_builder_test:
 
 search_engine_test:
 	$(CC) $(CPPFLAGS) -o test/search_engine_test \
-	engine/search/search_test.cpp model/glycan/nglycan_complex.cpp $(INCLUDES)
+	engine/search/search_engine_test.cpp model/glycan/nglycan_complex.cpp $(INCLUDES)
 
 svm_test:
 	$(CC) $(CPPFLAGS) -o test/svm_test \

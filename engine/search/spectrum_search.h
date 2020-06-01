@@ -59,6 +59,7 @@ public:
         SearchInit();
 
         std::vector<SearchResult> res;
+        std::unordered_map<std::string, SearchResult> res_map;
         
         double max_score = 0;
 
@@ -80,6 +81,7 @@ public:
                         result_position[pos] = SearchResult::PeakValue(result_temp);
                     }
                 }
+                if (result_position.empty()) continue;
 
                 std::unordered_set<std::string> glycan_ids = glycan_isomer_.Query(composite);
                 std::unordered_map<std::string, double> result_core, result_branch, result_terminal;
@@ -106,22 +108,32 @@ public:
                         if (score >= max_score)
                         {
                             if (score > max_score)
-                                res.clear();
+                                res_map.clear();
+
                             max_score = score;
-                            SearchResult best;
-                            best.set_scan(spectrum_.Scan());
-                            best.set_glycan(composite);
-                            best.set_sequence(peptide);
-                            best.Add(oxonium, SearchType::Oxonium);
-                            best.Add(pos_it.second, SearchType::Peptide);
-                            best.Add(result_core[isomer], SearchType::Core);
-                            best.Add(result_branch[isomer], SearchType::Branch);
-                            best.Add(result_terminal[isomer], SearchType::Terminal);
-                            res.push_back(best);
+                            std::string glycopeptide = peptide + composite;
+                            if (res_map.find(glycopeptide) == res_map.end())
+                            {
+                                SearchResult best;
+                                best.set_scan(spectrum_.Scan());
+                                best.set_glycan(composite);
+                                best.set_sequence(peptide);
+                                best.set_site(pos_it.first);
+                                best.Add(oxonium, SearchType::Oxonium);
+                                best.Add(pos_it.second, SearchType::Peptide);
+                                best.Add(result_core[isomer], SearchType::Core);
+                                best.Add(result_branch[isomer], SearchType::Branch);
+                                best.Add(result_terminal[isomer], SearchType::Terminal);
+                                res_map[glycopeptide] = best;
+                            }
                         }
                     }
                 }
             }
+        }
+        for(const auto& it : res_map)
+        {
+            res.push_back(it.second);
         }
         return res;   
     }
