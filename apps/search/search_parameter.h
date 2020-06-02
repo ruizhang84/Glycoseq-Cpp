@@ -24,7 +24,7 @@ struct SearchParameter
     int isotopic_count = 2;
     // fdr
     double pseudo_mass = 50;
-    double fdr_rate = 1.01;
+    double fdr_rate = 0.01;
 };
 
 

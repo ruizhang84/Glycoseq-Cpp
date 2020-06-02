@@ -36,10 +36,19 @@ analyzer.set_problem(v1, v2);
 
 analyzer.Training(v1, v2);
 SearchResult r;
-r.Add(1.0, SearchType::Core);
+int i = 0;
+    r.Add(i, SearchType::Core);
+// r.Add(i+2, SearchType::Branch);
+// r.Add(i+3, SearchType::Terminal);
+// r.Add(i+4, SearchType::Peptide);
+// r.Add(i+5, SearchType::Oxonium);
 std::cout << analyzer.Predicting(r) << std::endl;
-std::cout << analyzer.PredictingProbability(r) << std::endl;
-BOOST_CHECK(analyzer.Predicting(r) == 1);
+for (auto p : analyzer.PredictingProbability(r) )
+{
+    std::cout << p << std::endl;
+}
+
+BOOST_CHECK(analyzer.Predicting(r) == 0);
 
 }
 

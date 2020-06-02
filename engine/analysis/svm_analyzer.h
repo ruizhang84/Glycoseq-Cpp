@@ -68,20 +68,31 @@ public:
     }
 
 
-    virtual double Predicting(const SearchResult& result)
+    virtual int Predicting(const SearchResult& result)
     {
         svm_node* node = SVMNode(result);
         double pred = svm_predict(model_, node);
-        delete[] node;
+        alloc_.destroy(node);
+        alloc_.deallocate(node, kDims+1);
         return pred;
     }
 
-    virtual double PredictingProbability(const SearchResult& result)
+    virtual std::vector<double> PredictingProbability(const SearchResult& result)
     {
+        std::vector<double> prob;
         svm_node* node = SVMNode(result);
-        double prob = 0;
-        svm_predict_probability(model_, node, &prob);
-        delete[] node;
+        int nr_class = svm_get_nr_class(model_);
+        double* estimate = new double[nr_class];
+
+        svm_predict_probability(model_, node, estimate);
+        for(int i = 0; i < nr_class; i++)
+        {
+            prob.push_back(estimate[i]);
+        }
+
+        alloc_.destroy(node);
+        alloc_.deallocate(node, kDims+1);
+        delete [] estimate;
         return prob;
     }
 

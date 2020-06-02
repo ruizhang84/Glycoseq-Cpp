@@ -25,10 +25,18 @@ void ScoringWorker(
     std::vector<engine::search::SearchResult>& results,
     engine::analysis::SVMAnalyzer& analyzer)
 {
-    for(auto it : results)
+    for(auto& it : results)
     {
-        double prob = analyzer.PredictingProbability(it);
-        it.set_score(prob);
+        int match = analyzer.Predicting(it);
+        std::vector<double> prob = analyzer.PredictingProbability(it);
+        if(match > 0)
+        {
+            it.set_score(std::max(prob[0], prob[1]));
+        }
+        else
+        {
+            it.set_score(std::min(prob[0], prob[1]));
+        }        
     }
 }
 
@@ -76,12 +84,12 @@ int main(int argc, char *argv[])
     auto start = std::chrono::high_resolution_clock::now();
 
     // seraching decoys 
-    SearchDispatcher decoy_searcher(spectrum_reader.GetSpectrum(4240, 4500), builder.get(), peptides, parameter);
+    SearchDispatcher decoy_searcher(spectrum_reader.GetSpectrum(), builder.get(), peptides, parameter);
     std::vector<engine::search::SearchResult> decoys = decoy_searcher.Dispatch();
 
     // seraching targets 
     parameter.pseudo_mass = 0;
-    SearchDispatcher target_searcher(spectrum_reader.GetSpectrum(4240, 4500), builder.get(), peptides, parameter);
+    SearchDispatcher target_searcher(spectrum_reader.GetSpectrum(), builder.get(), peptides, parameter);
     std::vector<engine::search::SearchResult> targets = target_searcher.Dispatch();
 
     // set up scorer
@@ -95,8 +103,7 @@ int main(int argc, char *argv[])
 
     // fdr filtering
     engine::search::FDRFilter fdr_runner(parameter.fdr_rate);
-    fdr_runner.set_data(targets);
-    fdr_runner.set_decoy(decoys);
+    fdr_runner.set_data(targets, decoys);
     fdr_runner.Init();
 
     std::vector<engine::search::SearchResult> results = fdr_runner.Filter();
@@ -113,6 +120,7 @@ int main(int argc, char *argv[])
         outfile << it.Glycan() << ",";
         outfile << it.Score() << "\n";
     }
+   
     
     outfile.close();
 
