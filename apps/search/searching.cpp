@@ -93,34 +93,67 @@ int main(int argc, char *argv[])
     std::vector<engine::search::SearchResult> targets = target_searcher.Dispatch();
 
     // set up scorer
-    engine::analysis::SVMAnalyzer analyzer;
-    analyzer.Training(targets, decoys);
+    // engine::analysis::SVMAnalyzer analyzer;
+    // analyzer.Training(targets, decoys);
 
-    std::thread scorer_first(ScoringWorker, std::ref(targets), std::ref(analyzer));
-    std::thread scorer_second(ScoringWorker, std::ref(decoys), std::ref(analyzer));   
-    scorer_first.join();
-    scorer_second.join();
+    // std::thread scorer_first(ScoringWorker, std::ref(targets), std::ref(analyzer));
+    // std::thread scorer_second(ScoringWorker, std::ref(decoys), std::ref(analyzer));   
+    // scorer_first.join();
+    // scorer_second.join();
 
     // fdr filtering
-    engine::search::FDRFilter fdr_runner(parameter.fdr_rate);
-    fdr_runner.set_data(targets, decoys);
-    fdr_runner.Init();
+    // engine::search::FDRFilter fdr_runner(parameter.fdr_rate);
+    // fdr_runner.set_data(targets, decoys);
+    // fdr_runner.Init();
 
-    std::vector<engine::search::SearchResult> results = fdr_runner.Filter();
+    // std::vector<engine::search::SearchResult> results = fdr_runner.Filter();
 
     // output analysis results
     std::ofstream outfile;
     outfile.open (out_path);
     outfile << "scan#,peptide,glycan,score\n";
     
-    for(auto it : results)
+    // for(auto it : results)
+    // {
+    //     outfile << it.Scan() << ",";
+    //     outfile << it.Sequence() << ",";
+    //     outfile << it.Glycan() << ",";
+    //     outfile << it.Score() << "\n";
+    // }
+   
+       for(auto it : targets)
     {
         outfile << it.Scan() << ",";
         outfile << it.Sequence() << ",";
         outfile << it.Glycan() << ",";
-        outfile << it.Score() << "\n";
+        outfile << it.Score() << ",target\n";
     }
    
+
+       for(auto it : decoys)
+    {
+        outfile << it.Scan() << ",";
+        outfile << it.Sequence() << ",";
+        outfile << it.Glycan() << ",";
+        outfile << it.Score() << ",decoy\n";
+    }
+   
+    for(auto i : targets)
+    {
+        for(auto j : decoys)
+        {
+            if (i.Scan() == j.Scan())
+            {
+                std::cout << i.Scan() << std::endl;
+                std::cout << i.Sequence() << std::endl;
+                std::cout << i.Glycan() << std::endl;
+                std::cout << j.Sequence() << std::endl;
+                std::cout << j.Glycan() << std::endl;
+            }
+               
+        }
+    }
+
     
     outfile.close();
 

@@ -102,8 +102,9 @@ public:
                     for(const auto& isomer_it : result_core)
                     {
                         std::string isomer = isomer_it.first;
-                        double score = result_core[isomer] + result_branch[isomer] + result_terminal[isomer]
-                            + pos_it.second + oxonium; 
+                        double score = result_core[isomer] + result_branch[isomer] + result_terminal[isomer];
+                        if (score == 0) continue;
+                        score  += pos_it.second + oxonium; 
 
                         if (score >= max_score)
                         {
@@ -126,6 +127,17 @@ public:
                                 best.Add(result_terminal[isomer], SearchType::Terminal);
                                 res_map[glycopeptide] = best;
                             }
+                            else
+                            {
+                                SearchResult best = res_map[glycopeptide];
+                                best.set_site(pos_it.first);
+                                best.Add(oxonium, SearchType::Oxonium);
+                                best.Add(pos_it.second, SearchType::Peptide);
+                                best.Add(result_core[isomer], SearchType::Core);
+                                best.Add(result_branch[isomer], SearchType::Branch);
+                                best.Add(result_terminal[isomer], SearchType::Terminal);
+                            }
+                            
                         }
                     }
                 }

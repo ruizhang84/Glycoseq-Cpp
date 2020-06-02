@@ -34,11 +34,7 @@ public:
     
     void Add(double value, SearchType type)
     {
-        if (match_.find(type) == match_.end())
-        {
-            match_[type] = 0;
-        }
-        match_[type] += value;
+        match_[type] = value;
     }
 
     static double PeakValue(const std::vector<model::spectrum::Peak>& peaks)
