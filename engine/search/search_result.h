@@ -60,22 +60,22 @@ protected:
 class SimpleScorer
 {
 public:
-    SimpleScorer(const std::unordered_map<SearchType, double>& parameter):
-        param_(parameter){}
+    SimpleScorer(const std::unordered_map<SearchType, double>& weight):
+        weight_(weight){}
 
-    const std::unordered_map<SearchType, double> Parameter() const 
-        { return param_; }
-    void set_parameter(const std::unordered_map<SearchType, double>& param)
-        { param_ = param; }
+    const std::unordered_map<SearchType, double> Weight() const 
+        { return weight_; }
+    void set_weight(const std::unordered_map<SearchType, double>& weight)
+        { weight_ = weight; }
 
     virtual double ComputeScore(const SearchResult& result)
     {
         double score = 0;
         for(const auto& it : result.Match())
         {
-            if (param_.find(it.first) != param_.end())
+            if (weight_.find(it.first) != weight_.end())
             {
-                score += it.second * param_[it.first];
+                score += it.second * weight_[it.first];
             }
             
         }
@@ -83,7 +83,7 @@ public:
     }
 
 protected:
-    std::unordered_map<SearchType, double> param_;
+    std::unordered_map<SearchType, double> weight_;
 };
 
 } // namespace engine
