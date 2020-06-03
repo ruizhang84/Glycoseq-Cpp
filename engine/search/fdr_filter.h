@@ -31,7 +31,7 @@ public:
     {
         std::vector<SearchResult> res;
         if (cutoff_ < 0) return target_;
-        // std::cout << cutoff_ << std::endl;
+
         for(const auto& it : target_)
         {
             if (ComputeScore(it) >= cutoff_)
@@ -39,6 +39,8 @@ public:
                 res.push_back(it);
             }
         }
+        if (!res.empty())
+            std::sort(res.begin(), res.end(), ScanOrder);
         return res;
     }
 
@@ -48,6 +50,9 @@ protected:
 
     static bool ScoreLess(const SearchResult& r1, const SearchResult& r2) 
         { return (ComputeScore(r1) < ComputeScore(r2)); }
+
+    static bool ScanOrder(const SearchResult& r1, const SearchResult& r2)
+        { return r1.Scan() < r2.Scan(); }
 
     virtual void CutoffInit()
     {

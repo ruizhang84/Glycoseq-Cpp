@@ -16,10 +16,10 @@ enum class SearchType { Core, Branch, Terminal, Peptide, Oxonium, Matches, Precu
 class SearchResult
 {
 public:
-    int Scan() { return scan_; }
-    int ModifySite() { return pos_; }
-    std::string Sequence() { return peptide_; }
-    std::string Glycan() { return glycan_; }
+    int Scan() const { return scan_; }
+    int ModifySite() const { return pos_; }
+    std::string Sequence() const { return peptide_; }
+    std::string Glycan() const { return glycan_; }
     double Score() const { return score_; }
     const std::unordered_map<SearchType, double> Match() const 
         { return match_; }

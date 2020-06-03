@@ -2,7 +2,7 @@
 #define APP_SEARCH_SEARCH_PARAMETER_H
 
 #include "../../algorithm/search/search.h"
-
+#include "../../engine/search/search_result.h"
 
 struct SearchParameter
 {
@@ -23,8 +23,21 @@ struct SearchParameter
     // isotopic effects on precursor
     int isotopic_count = 2;
     // fdr
-    double pseudo_mass = 50;
+    double pseudo_mass = 0;
     double fdr_rate = 0.01;
+    // scoring weight
+    std::unordered_map<engine::search::SearchType, double> weights 
+    {
+        {engine::search::SearchType::Core, 1.0}, 
+        {engine::search::SearchType::Branch, 1.0}, 
+        {engine::search::SearchType::Terminal, 1.0},
+        {engine::search::SearchType::Peptide, 1.0}, 
+        {engine::search::SearchType::Oxonium, 1.0},
+        {engine::search::SearchType::Matches, 1.0},
+        {engine::search::SearchType::Precursor, 1.0}
+    };
+    void set_search_weight(double w, engine::search::SearchType type)
+        { weights[type] = w; }
 };
 
 
