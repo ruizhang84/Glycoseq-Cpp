@@ -22,7 +22,7 @@ public:
 
         // set up parameter
         parameter_->svm_type = C_SVC;
-        parameter_->kernel_type = POLY;
+        parameter_->kernel_type = LINEAR;
         parameter_->degree = 3;
         parameter_->C = 1.0; //
         parameter_->gamma = 1.0; //

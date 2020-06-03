@@ -11,7 +11,7 @@
 namespace engine{
 namespace search{
 
-enum class SearchType { Core, Branch, Terminal, Peptide, Oxonium};
+enum class SearchType { Core, Branch, Terminal, Peptide, Oxonium, Matches, Precursor };
 
 class SearchResult
 {
@@ -23,6 +23,12 @@ public:
     double Score() const { return score_; }
     const std::unordered_map<SearchType, double> Match() const 
         { return match_; }
+    double Value(SearchType type) 
+    { 
+        if (match_.find(type) != match_.end())
+            return match_[type];
+        return  0;
+    }
 
     void set_scan(int scan) { scan_ = scan; }
     void set_site(int pos) { pos_ = pos; }
