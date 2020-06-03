@@ -5,6 +5,8 @@
 #include <mutex> 
 #include <chrono> 
 
+#include <argp.h>
+
 #include "search_parameter.h"
 #include "search_dispatcher.h"
 #include "search_helper.h"
@@ -21,12 +23,207 @@
 #include "../../engine/search/fdr_filter.h"
 
 
+const char *argp_program_version =
+  "glycoseq v2.0";
+const char *argp_program_bug_address =
+  "<rz20@iu.edu>";
+
+static char doc[] =
+  "Glycoseq -- a program to search glycopeptide from high thoughput LS-MS/MS";
+
+static struct argp_option options[] = {
+    {"path", 'i',    "spectrum.mgf",  0,  "mgf, Spectrum MS/MS Input Path" },
+    {"spath", 'f',    "protein.fasta",  0,  "fasta, Protein Sequence Input Path" },
+    {"output",    'o',    "result.csv",   0,  "csv, Results Output Path" },
+    {"pthread",   'd',  "6",  0,  "Number of Searching Threads" },
+    {"HexNAc",   'x',  "12",  0,  "Search Up to Number of HexNAc" },
+    {"HexNA",   'y',  "12",  0,  "Search Up to Number of Hex" },
+    {"Fuc",   'z',  "5",  0,  "Search Up to Number of Fuc" },
+    {"NeuAc",   'u',  "4",  0,  "Search Up to Number of NeuAc" },
+    {"NeuGc",   'w',  "0",  0,  "Search Up to Number of NeuGc" },
+    {"ms1_tol",   'm',  "10",  0,  "MS Tolereance" },
+    {"ms2_tol",   'n',  "0.01",  0,  "MS2 Tolereance" },
+    {"ms1_by",   'k',  "0",  0, "MS Tolereance By Int: PPM (0) or Dalton (1)" },
+    {"ms2_by",   'l',  "1",  0, "MS2 Tolereance By Int: PPM (0) or Dalton (1)" },
+    {"fdr_rate",   'r',  "0.01",  0, "FDR rate" },
+    {"core",    'c',  "1.0",  0, "Score Weight for Core Glycan Matches" },
+    {"Branch",  'b',  "1.0",  0, "Score Weight for Branch Glycan Matches" },
+    {"Terminal",    't',  "1.0",  0, "Score Weight for Terminal Glycan Matches" },
+    {"Sequence", 's',  "1.0",  0, "Score Weight for Peptide Fragment Matches" },
+    {"NPeak",   'p',  "1.0",  0, "Score Weight for Number of Peaks" },
+    {"Mass",  'e',  "1.0",  0, "Score Weight for Precursor Mass Erorr" },
+    { 0 }
+};
+
+struct arguments
+{
+    char * spectra_path = strdup("spectrum.mgf");
+    char * fasta_path = strdup("protein.fasta");
+    char * out_path = strdup("result.csv");
+    // upper bound of glycan seaerch
+    int n_thread = 6;
+    int hexNAc_upper_bound = 12;
+    int hex_upper_bound = 12;
+    int fuc_upper_bound = 5;
+    int neuAc_upper_bound = 4;
+    int neuGc_upper_bound = 0;
+    // searching precision
+    double ms1_tol = 10;
+    double ms2_tol = 0.01;
+    int ms1_by = 0;
+    int ms2_by = 1;
+    // fdr
+    double fdr_rate = 0.01;
+    // weights
+    double core_w = 1.0;
+    double branch_w = 1.0;
+    double terminal_w = 1.0;
+    double peptide_w = 1.0;
+    double oxonium_w = 1.0;
+    double match_w = 1.0;
+    double precursor_w = 1.0;
+};
+
+
+static error_t
+parse_opt (int key, char *arg, struct argp_state *state)
+{
+    error_t err = 0;
+    struct arguments *arguments =  static_cast<struct arguments*>(state->input);
+
+    switch (key)
+    {
+    case 'b':
+        arguments->branch_w = atof(arg);
+        break;
+
+    case 'c':
+        arguments->core_w = atof(arg);
+        break;
+
+    case 'd':
+        arguments->n_thread = atoi(arg);
+        break;
+
+    case 'e':
+        arguments->precursor_w = atof(arg);
+        break;
+
+    case 'f':
+        arguments->fasta_path = arg;
+        break;
+
+    case 'i':
+        arguments->spectra_path = arg;
+        break;
+
+    case 'k':
+        arguments->ms1_by = atoi(arg);
+        break;
+
+    case 'l':
+        arguments->ms2_by = atoi(arg);
+        break;
+
+    case 'm':
+        arguments->ms1_tol = atof(arg);
+        break;
+
+    case 'n':
+        arguments->ms2_tol = atof(arg);
+        break;
+
+    case 'o':
+        arguments->out_path = arg;
+        break;
+
+    case 'p':
+        arguments->match_w = atof(arg);
+        break;
+
+    case 'r':
+        arguments->fdr_rate = atof(arg);
+        break;
+
+    case 's':
+        arguments->peptide_w = atof(arg);
+        break;
+
+    case 't':
+        arguments->terminal_w = atof(arg);
+        break;
+
+    case 'u':
+        arguments->neuAc_upper_bound = atoi(arg);
+        break;
+
+    case 'w':
+        arguments->neuGc_upper_bound = atoi(arg);
+        break;
+
+    case 'x':
+        arguments->hexNAc_upper_bound = atoi(arg);
+        break;
+
+    case 'y':
+        arguments->hex_upper_bound = atoi(arg);
+        break;
+
+    case 'z':
+        arguments->fuc_upper_bound = atoi(arg);
+        break;
+
+    default:
+        return ARGP_ERR_UNKNOWN;
+    }
+    return err;
+}
+
+static struct argp argp = { options, parse_opt, 0, doc };
+
+
+SearchParameter GetParameter(const struct arguments& arguments)
+{
+    SearchParameter parameter;
+    parameter.n_thread = arguments.n_thread;
+    parameter.hexNAc_upper_bound = arguments.hexNAc_upper_bound;
+    parameter.hex_upper_bound = arguments.hex_upper_bound;
+    parameter.neuAc_upper_bound = arguments.neuAc_upper_bound;
+    parameter.neuGc_upper_bound = arguments.neuGc_upper_bound;
+    parameter.ms1_tol = arguments.ms1_tol;
+    parameter.ms1_by = arguments.ms1_by == 0 ?
+        algorithm::search::ToleranceBy::PPM :
+        algorithm::search::ToleranceBy::Dalton;
+    parameter.ms2_tol = arguments.ms2_by;
+    parameter.ms2_by = arguments.ms2_by == 0 ?
+        algorithm::search::ToleranceBy::PPM :
+        algorithm::search::ToleranceBy::Dalton;
+    parameter.fdr_rate = arguments.fdr_rate;
+    parameter.set_search_weight(arguments.core_w,
+        engine::search::SearchType::Core);
+    parameter.set_search_weight(arguments.core_w,
+        engine::search::SearchType::Core);
+    parameter.set_search_weight(arguments.branch_w,
+        engine::search::SearchType::Branch);
+    parameter.set_search_weight(arguments.terminal_w,
+        engine::search::SearchType::Terminal);
+    parameter.set_search_weight(arguments.peptide_w,
+        engine::search::SearchType::Peptide);
+    parameter.set_search_weight(arguments.match_w,
+        engine::search::SearchType::Matches);
+    parameter.set_search_weight(arguments.precursor_w,
+        engine::search::SearchType::Precursor);
+}
+
 int main(int argc, char *argv[])
 {
-    std::string spectra_path = "/home/yu/Documents/MultiGlycan-Cpp/data/test_EThcD.mgf";
-    std::string fasta_path = "/home/yu/Documents/MultiGlycan-Cpp/data/haptoglobin.fasta";
-    std::string out_path = "search3.csv";
-    SearchParameter parameter;
+    // parse arguments
+    struct arguments arguments;
+    argp_parse (&argp, argc, argv, 0, 0, &arguments);
+    std::string spectra_path = arguments.spectra_path;
+    std::string fasta_path = arguments.fasta_path;
+    std::string out_path = arguments.out_path;
+    SearchParameter parameter = GetParameter(arguments);
 
     // read spectrum
     std::unique_ptr<util::io::SpectrumParser> parser = 

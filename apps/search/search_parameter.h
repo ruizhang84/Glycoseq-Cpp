@@ -6,6 +6,7 @@
 
 struct SearchParameter
 {
+    
     // upper bound of glycan seaerch
     int n_thread = 6;
     int hexNAc_upper_bound = 12;
