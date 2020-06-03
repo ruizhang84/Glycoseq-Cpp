@@ -196,19 +196,19 @@ SearchParameter GetParameter(const struct arguments& arguments)
     parameter.ms1_by = arguments.ms1_by == 0 ?
         algorithm::search::ToleranceBy::PPM :
         algorithm::search::ToleranceBy::Dalton;
-    parameter.ms2_tol = arguments.ms2_by;
+    parameter.ms2_tol = arguments.ms2_tol;
     parameter.ms2_by = arguments.ms2_by == 0 ?
         algorithm::search::ToleranceBy::PPM :
         algorithm::search::ToleranceBy::Dalton;
     parameter.fdr_rate = arguments.fdr_rate;
     parameter.set_search_weight(arguments.core_w,
         engine::search::SearchType::Core);
-    parameter.set_search_weight(arguments.core_w,
-        engine::search::SearchType::Core);
     parameter.set_search_weight(arguments.branch_w,
         engine::search::SearchType::Branch);
     parameter.set_search_weight(arguments.terminal_w,
         engine::search::SearchType::Terminal);
+    parameter.set_search_weight(arguments.oxonium_w,
+        engine::search::SearchType::Oxonium);
     parameter.set_search_weight(arguments.peptide_w,
         engine::search::SearchType::Peptide);
     parameter.set_search_weight(arguments.match_w,

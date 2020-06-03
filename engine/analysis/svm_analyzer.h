@@ -68,7 +68,7 @@ public:
     }
 
 
-    virtual int Predicting(const SearchResult& result)
+    int Predicting(const SearchResult& result)
     {
         svm_node* node = SVMNode(result);
         double pred = svm_predict(model_, node);
@@ -77,7 +77,7 @@ public:
         return pred;
     }
 
-    virtual std::vector<double> PredictingProbability(const SearchResult& result)
+    std::vector<double> PredictingProbability(const SearchResult& result)
     {
         std::vector<double> prob;
         svm_node* node = SVMNode(result);
@@ -96,7 +96,25 @@ public:
         return prob;
     }
 
-    virtual void set_problem(std::vector<SearchResult> targets, std::vector<SearchResult> decoys)
+    void SaveModel(const std::string& path)
+    {
+        if (model_ != nullptr)
+        {
+            const char* c_path = path.c_str();
+            svm_save_model(c_path, model_);
+        }
+    }
+
+    void LoadModel(const std::string& path)
+    {
+        if (model_ != nullptr)
+            ModelClear();
+            
+        const char* c_path = path.c_str();
+        model_ = svm_load_model(c_path);
+    }
+
+    void set_problem(std::vector<SearchResult> targets, std::vector<SearchResult> decoys)
     {
         if (problem_->l > 0)
         {
@@ -128,7 +146,7 @@ public:
     }
 
 protected:
-    virtual void ModelClear()
+    void ModelClear()
     {
         int k = model_->nr_class;
         free(model_->label);
@@ -147,7 +165,7 @@ protected:
         free(model_->sv_coef);
     }
 
-    virtual void ProblemClear()
+    void ProblemClear()
     {
         for (int i = 0; i < problem_->l; i++)
         {
@@ -156,7 +174,7 @@ protected:
         }
     }
 
-    virtual svm_node* SVMNode(const SearchResult& result)
+    svm_node* SVMNode(const SearchResult& result)
     {
         svm_node* node = alloc_.allocate(kDims + 1);
         for (int i = 0; i < kDims; i++)
