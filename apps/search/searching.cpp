@@ -57,8 +57,10 @@ static struct argp_option options[] = {
 
 struct arguments
 {
-    char * spectra_path = strdup("spectrum.mgf");
-    char * fasta_path = strdup("protein.fasta");
+    char * spectra_path = 
+        strdup("/home/yu/Documents/MultiGlycan-Cpp/data/test_EThcD.mgf");
+    char * fasta_path = 
+        strdup("/home/yu/Documents/MultiGlycan-Cpp/data/haptoglobin.fasta");
     char * out_path = strdup("result.csv");
     // upper bound of glycan seaerch
     int n_thread = 6;
@@ -213,6 +215,7 @@ SearchParameter GetParameter(const struct arguments& arguments)
         engine::search::SearchType::Matches);
     parameter.set_search_weight(arguments.precursor_w,
         engine::search::SearchType::Precursor);
+    return parameter;
 }
 
 int main(int argc, char *argv[])
@@ -220,9 +223,9 @@ int main(int argc, char *argv[])
     // parse arguments
     struct arguments arguments;
     argp_parse (&argp, argc, argv, 0, 0, &arguments);
-    std::string spectra_path = arguments.spectra_path;
-    std::string fasta_path = arguments.fasta_path;
-    std::string out_path = arguments.out_path;
+    std::string spectra_path(arguments.spectra_path) ;
+    std::string fasta_path(arguments.fasta_path);
+    std::string out_path(arguments.out_path) ;
     SearchParameter parameter = GetParameter(arguments);
 
     // read spectrum
