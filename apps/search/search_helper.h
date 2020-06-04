@@ -8,24 +8,45 @@
 #include "../../engine/analysis/svm_analyzer.h"
 
 // generate peptides by digestion
-std::unordered_set<std::string> PeptidesDigestion(const std::string& fasta_path)
+std::unordered_set<std::string> PeptidesDigestion
+    (const std::string& fasta_path, SearchParameter parameter)
 {
     util::io::FASTAReader fasta_reader(fasta_path);
     std::vector<model::protein::Protein> proteins = fasta_reader.Read();
    
     engine::protein::Digestion digest;
-    digest.SetProtease(engine::protein::Proteases::Trypsin);
-    std::unordered_set<std::string> seqs = digest.Sequences(proteins.front().Sequence(),
-         engine::protein::ProteinPTM::ContainsNGlycanSite);
-    digest.SetProtease(engine::protein::Proteases::GluC);
-    std::unordered_set<std::string> double_seqs;
-    for(auto& it : seqs)
+    digest.set_miss_cleavage(parameter.miss_cleavage);
+    std::unordered_set<std::string> peptides;
+
+    // digestion
+    std::deque<engine::protein::Proteases> proteases(parameter.proteases);
+    engine::protein::Proteases enzyme = proteases.front();
+    digest.SetProtease(enzyme);
+    proteases.pop_front();
+    for(const auto& protein : proteins)
     {
-        std::unordered_set<std::string> seq = digest.Sequences(it,
+        std::unordered_set<std::string> seqs = digest.Sequences(protein.Sequence(),
             engine::protein::ProteinPTM::ContainsNGlycanSite);
-        double_seqs.insert(seq.begin(), seq.end());
+        peptides.insert(seqs.begin(), seqs.end());
     }
-    return double_seqs;
+        
+    // double digestion or more
+    while (proteases.size() > 0)
+    {
+        std::unordered_set<std::string> double_seqs;
+        enzyme = proteases.front();
+        digest.SetProtease(enzyme);
+        proteases.pop_front();
+        for(const auto& seq : peptides)
+        {
+            std::unordered_set<std::string> seqs = digest.Sequences(seq,
+                engine::protein::ProteinPTM::ContainsNGlycanSite);
+            double_seqs.insert(seqs.begin(), seqs.end());
+        }
+        peptides.insert(double_seqs.begin(), double_seqs.end());
+    }   
+
+    return peptides;
 }
 
 // assign score to searching results
@@ -38,6 +59,57 @@ void ScoringWorker(
     {
         double score = scorer.ComputeScore(it);
         it.set_score(score);
+    }
+
+    // compute coelution of peptide sequence
+    std::unordered_map<std::string, int> count;
+    for(auto i : results)
+    {
+        if (count.find(i.Sequence()) == count.end())
+        {
+            count[i.Sequence()] = 0;
+        }
+        count[i.Sequence()] += 1;
+    }
+    std::vector<std::unordered_map<std::string, int>> bucket_count;
+    int bucket =  50;
+    for(int i = 0; i < bucket; i ++)
+    {
+        std::unordered_map<std::string, int> temp;
+        bucket_count.push_back(temp);
+    }
+    for(auto i : results)
+    {
+        int scan = i.Scan();
+        int index = scan / 500;
+        std::unordered_map<std::string, int>& temp = bucket_count[index];
+        
+        if (temp.find(i.Sequence()) == temp.end())
+        {
+            temp[i.Sequence()] = 0;
+        }
+        temp[i.Sequence()] += 1;
+    }
+    for(auto& it : results)
+    {
+        std::string s = it.Sequence();
+        int scan = it.Scan();
+        int index = scan / 500;
+        int counts = bucket_count[index][s];
+        if (index > 0)
+        {
+            std::unordered_map<std::string, int> temp = bucket_count[index-1];
+            if (temp.find(s) != temp.end())
+                counts += temp[s];
+        }
+
+        std::unordered_map<std::string, int> temp = bucket_count[index+1];
+        if (temp.find(s) != temp.end())
+            counts += temp[s];
+          
+        
+        double score = counts * 1.0 / count[s];
+        it.set_score(it.Score() + score);
     }
 }
 

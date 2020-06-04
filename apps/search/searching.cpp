@@ -35,7 +35,9 @@ static struct argp_option options[] = {
     {"path", 'i',    "spectrum.mgf",  0,  "mgf, Spectrum MS/MS Input Path" },
     {"spath", 'f',    "protein.fasta",  0,  "fasta, Protein Sequence Input Path" },
     {"output",    'o',    "result.csv",   0,  "csv, Results Output Path" },
-    {"pthread",   'q',  "6",  0,  "Number of Searching Threads" },
+    {"pthread",   'p',  "6",  0,  "Number of Searching Threads" },
+    {"digestion",   'd',  "TG",  0,  "The Digestion, Trypsin (T), Pepsin (P), Chymotrypsin (C), GluC (G)" }, 
+    {"miss_cleavage",   'c',  "2",  0,  "The Missing Cleavage Upto" },    
     {"HexNAc",   'x',  "12",  0,  "Search Up to Number of HexNAc" },
     {"HexNA",   'y',  "12",  0,  "Search Up to Number of Hex" },
     {"Fuc",   'z',  "5",  0,  "Search Up to Number of Fuc" },
@@ -46,22 +48,31 @@ static struct argp_option options[] = {
     {"ms1_by",   'k',  "0",  0, "MS Tolereance By Int: PPM (0) or Dalton (1)" },
     {"ms2_by",   'l',  "1",  0, "MS2 Tolereance By Int: PPM (0) or Dalton (1)" },
     {"fdr_rate",   'r',  "0.01",  0, "FDR rate" },
-    {"Core",    'c',  "1.0",  0, "Score Weight for Core Glycan Matches" },
-    {"Branch",  'b',  "1.0",  0, "Score Weight for Branch Glycan Matches" },
-    {"Terminal",    't',  "1.0",  0, "Score Weight for Terminal Glycan Matches" },
-    {"Sequence", 's',  "1.0",  0, "Score Weight for Peptide Fragment Matches" },
-    {"NPeak",   'p',  "1.0",  0, "Score Weight for Number of Peaks" },
-    {"Mass",  'e',  "1.0",  0, "Score Weight for Precursor Mass Erorr" },
+    {"Core",    'C',  "1.0",  0, "Score Weight for Core Glycan Matches" },
+    {"Branch",  'B',  "1.0",  0, "Score Weight for Branch Glycan Matches" },
+    {"Terminal",    'T',  "1.0",  0, "Score Weight for Terminal Glycan Matches" },
+    {"Sequence", 'S',  "1.0",  0, "Score Weight for Peptide Fragment Matches" },
+    {"NPeak",   'N',  "1.0",  0, "Score Weight for Number of Peaks" },
+    {"Mass",  'M',  "1.0",  0, "Score Weight for Precursor Mass Erorr" },
+    {"Coelution",  'E',  "1.0",  0, "Score Weight for Coelution factor" },
     { 0 }
 };
 
+static std::string default_spectra_path = 
+        "/home/yu/Documents/MultiGlycan-Cpp/data/test_EThcD.mgf";
+static std::string default_fasta_path = 
+        "/home/yu/Documents/MultiGlycan-Cpp/data/haptoglobin.fasta";
+static std::string default_out_path = "result.csv";
+static std::string default_digestion = "TG";
+
 struct arguments
 {
-    char * spectra_path = 
-        strdup("/home/yu/Documents/MultiGlycan-Cpp/data/test_EThcD.mgf");
-    char * fasta_path = 
-        strdup("/home/yu/Documents/MultiGlycan-Cpp/data/haptoglobin.fasta");
-    char * out_path = strdup("result.csv");
+    char * spectra_path = const_cast<char*> (default_spectra_path.c_str());
+    char * fasta_path = const_cast<char*> (default_fasta_path.c_str());
+    char * out_path = const_cast<char*> (default_out_path.c_str());
+    //digestion
+    int miss_cleavage = 2;
+    char * digestion = const_cast<char*> (default_digestion.c_str());
     // upper bound of glycan seaerch
     int n_thread = 6;
     int hexNAc_upper_bound = 12;
@@ -84,6 +95,7 @@ struct arguments
     double oxonium_w = 1.0;
     double match_w = 1.0;
     double precursor_w = 1.0;
+    double coelution_w = 1.0;
 };
 
 
@@ -95,16 +107,24 @@ parse_opt (int key, char *arg, struct argp_state *state)
 
     switch (key)
     {
-    case 'b':
+    case 'B':
         arguments->branch_w = atof(arg);
         break;
-
+    
     case 'c':
-        arguments->core_w = atof(arg);
+        arguments->miss_cleavage = atoi(arg);
         break;
 
-    case 'e':
-        arguments->precursor_w = atof(arg);
+    case 'C':
+        arguments->core_w = atof(arg);
+        break;
+    
+    case 'd':
+        arguments->digestion = arg;
+        break;
+
+    case 'E':
+        arguments->coelution_w = atof(arg);
         break;
 
     case 'f':
@@ -126,6 +146,10 @@ parse_opt (int key, char *arg, struct argp_state *state)
     case 'm':
         arguments->ms1_tol = atof(arg);
         break;
+    
+    case 'M':
+        arguments->precursor_w = atof(arg);
+        break;
 
     case 'n':
         arguments->ms2_tol = atof(arg);
@@ -134,24 +158,24 @@ parse_opt (int key, char *arg, struct argp_state *state)
     case 'o':
         arguments->out_path = arg;
         break;
-
+    
     case 'p':
-        arguments->match_w = atof(arg);
-        break;
-
-    case 'q':
         arguments->n_thread = atoi(arg);
+        break;
+    
+    case 'P':
+        arguments->match_w = atof(arg);
         break;
 
     case 'r':
         arguments->fdr_rate = atof(arg);
         break;
 
-    case 's':
+    case 'S':
         arguments->peptide_w = atof(arg);
         break;
 
-    case 't':
+    case 'T':
         arguments->terminal_w = atof(arg);
         break;
 
@@ -188,6 +212,7 @@ SearchParameter GetParameter(const struct arguments& arguments)
 {
     SearchParameter parameter;
     parameter.n_thread = arguments.n_thread;
+    parameter.miss_cleavage = arguments.miss_cleavage;
     parameter.hexNAc_upper_bound = arguments.hexNAc_upper_bound;
     parameter.hex_upper_bound = arguments.hex_upper_bound;
     parameter.neuAc_upper_bound = arguments.neuAc_upper_bound;
@@ -215,6 +240,33 @@ SearchParameter GetParameter(const struct arguments& arguments)
         engine::search::SearchType::Matches);
     parameter.set_search_weight(arguments.precursor_w,
         engine::search::SearchType::Precursor);
+    parameter.set_search_weight(arguments.coelution_w,
+        engine::search::SearchType::Coelution);
+
+    std::string protease(arguments.digestion);
+    for(const char& c : protease)
+    {
+        switch (c)
+        {
+        case 'T': case 't':
+            parameter.proteases.push_back(engine::protein::Proteases::Trypsin);
+            break;
+
+        case 'G': case 'g':
+            parameter.proteases.push_back(engine::protein::Proteases::GluC);
+            break;
+
+        case 'P': case 'p':
+            parameter.proteases.push_back(engine::protein::Proteases::Pepsin);
+            break;
+        case 'C': case 'c':
+            parameter.proteases.push_back(engine::protein::Proteases::Chymotrypsin);
+            break;
+
+        default:
+            break;
+        }
+    }
     return parameter;
 }
 
@@ -227,9 +279,6 @@ int main(int argc, char *argv[])
     std::string fasta_path(arguments.fasta_path);
     std::string out_path(arguments.out_path) ;
     SearchParameter parameter = GetParameter(arguments);
-    free(arguments.spectra_path);
-    free(arguments.fasta_path);
-    free(arguments.out_path);
 
     // read spectrum
     std::unique_ptr<util::io::SpectrumParser> parser = 
@@ -239,20 +288,20 @@ int main(int argc, char *argv[])
 
     // read fasta and build peptides
     std::vector<std::string> peptides, decoy_peptides;
-    std::unordered_set<std::string> seqs = PeptidesDigestion(fasta_path);
+    std::unordered_set<std::string> seqs = PeptidesDigestion(fasta_path, parameter);
     for(const auto& s : seqs)
     {
-        // std::string decoy_s(s);
+        std::string decoy_s(s);
         peptides.push_back(s);
-        // std::reverse(decoy_s.begin(), decoy_s.end());
-        // decoy_peptides.push_back(decoy_s);
+        std::reverse(decoy_s.begin(), decoy_s.end());
+        decoy_peptides.push_back(decoy_s);
     }
-    std::unordered_set<std::string> decoy_seqs =
-        PeptidesDigestion("/home/yu/Documents/MultiGlycan-Cpp/data/titin.fasta");
-    for(const auto& s : decoy_seqs)
-    {
-        decoy_peptides.push_back(s);
-    }
+    // std::unordered_set<std::string> decoy_seqs =
+    //     PeptidesDigestion("/home/yu/Documents/MultiGlycan-Cpp/data/titin.fasta", parameter);
+    // for(const auto& s : decoy_seqs)
+    // {
+    //     decoy_peptides.push_back(s);
+    // }
     
     // // build glycans
     std::unique_ptr<engine::glycan::NGlycanBuilder> builder =

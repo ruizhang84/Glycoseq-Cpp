@@ -11,7 +11,7 @@
 namespace engine{
 namespace search{
 
-enum class SearchType { Core, Branch, Terminal, Peptide, Oxonium, Matches, Precursor };
+enum class SearchType { Core, Branch, Terminal, Peptide, Oxonium, Matches, Precursor, Coelution };
 
 class SearchResult
 {

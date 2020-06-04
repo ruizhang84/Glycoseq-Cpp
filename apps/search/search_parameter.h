@@ -1,12 +1,15 @@
 #ifndef APP_SEARCH_SEARCH_PARAMETER_H
 #define APP_SEARCH_SEARCH_PARAMETER_H
 
+#include <deque>
+
 #include "../../algorithm/search/search.h"
+#include "../../engine/protein/protein_digest.h"
 #include "../../engine/search/search_result.h"
 
 struct SearchParameter
 {
-    
+
     // upper bound of glycan seaerch
     int n_thread = 6;
     int hexNAc_upper_bound = 12;
@@ -26,6 +29,13 @@ struct SearchParameter
     // fdr
     double pseudo_mass = 0;
     double fdr_rate = 0.01;
+    // protease
+    std::deque<engine::protein::Proteases> proteases
+    {
+        engine::protein::Proteases::Trypsin,
+        engine::protein::Proteases::GluC
+    };
+    int miss_cleavage = 2;
     // scoring weight
     std::unordered_map<engine::search::SearchType, double> weights 
     {
@@ -35,7 +45,8 @@ struct SearchParameter
         {engine::search::SearchType::Peptide, 1.0}, 
         {engine::search::SearchType::Oxonium, 1.0},
         {engine::search::SearchType::Matches, 1.0},
-        {engine::search::SearchType::Precursor, 1.0}
+        {engine::search::SearchType::Precursor, 1.0},
+        {engine::search::SearchType::Coelution, 1.0}
     };
     void set_search_weight(double w, engine::search::SearchType type)
         { weights[type] = w; }
