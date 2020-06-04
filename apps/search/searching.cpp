@@ -155,6 +155,10 @@ parse_opt (int key, char *arg, struct argp_state *state)
         arguments->ms2_tol = atof(arg);
         break;
 
+    case 'N':
+        arguments->match_w = atof(arg);
+        break;
+
     case 'o':
         arguments->out_path = arg;
         break;
@@ -163,10 +167,6 @@ parse_opt (int key, char *arg, struct argp_state *state)
         arguments->n_thread = atoi(arg);
         break;
     
-    case 'P':
-        arguments->match_w = atof(arg);
-        break;
-
     case 'r':
         arguments->fdr_rate = atof(arg);
         break;
@@ -289,20 +289,18 @@ int main(int argc, char *argv[])
     // read fasta and build peptides
     std::vector<std::string> peptides, decoy_peptides;
     std::unordered_set<std::string> seqs = PeptidesDigestion(fasta_path, parameter);
+    peptides.insert(peptides.end(), seqs.begin(), seqs.end());
     for(const auto& s : seqs)
     {
         std::string decoy_s(s);
-        peptides.push_back(s);
         std::reverse(decoy_s.begin(), decoy_s.end());
         decoy_peptides.push_back(decoy_s);
     }
     // std::unordered_set<std::string> decoy_seqs =
     //     PeptidesDigestion("/home/yu/Documents/MultiGlycan-Cpp/data/titin.fasta", parameter);
-    // for(const auto& s : decoy_seqs)
-    // {
-    //     decoy_peptides.push_back(s);
-    // }
+    // decoy_peptides.insert(decoy_peptides.end(), decoy_seqs.begin(), decoy_seqs.end());
     
+   
     // // build glycans
     std::unique_ptr<engine::glycan::NGlycanBuilder> builder =
         std::make_unique<engine::glycan::NGlycanBuilder>(parameter.hexNAc_upper_bound, 
