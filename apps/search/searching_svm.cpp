@@ -35,7 +35,7 @@ static struct argp_option options[] = {
     {"path", 'i',    "spectrum.mgf",  0,  "mgf, Spectrum MS/MS Input Path" },
     {"spath", 'f',    "protein.fasta",  0,  "fasta, Protein Sequence Input Path" },
     {"output",    'o',    "result.csv",   0,  "csv, Results Output Path" },
-    {"pthread",   'd',  "6",  0,  "Number of Searching Threads" },
+    {"pthread",   'q',  "6",  0,  "Number of Searching Threads" },
     {"HexNAc",   'x',  "12",  0,  "Search Up to Number of HexNAc" },
     {"HexNA",   'y',  "12",  0,  "Search Up to Number of Hex" },
     {"Fuc",   'z',  "5",  0,  "Search Up to Number of Fuc" },
@@ -81,10 +81,6 @@ parse_opt (int key, char *arg, struct argp_state *state)
 
     switch (key)
     {
-    case 'd':
-        arguments->n_thread = atoi(arg);
-        break;
-
     case 'f':
         arguments->fasta_path = arg;
         break;
@@ -111,6 +107,10 @@ parse_opt (int key, char *arg, struct argp_state *state)
 
     case 'o':
         arguments->out_path = arg;
+        break;
+    
+    case 'q':
+        arguments->n_thread = atoi(arg);
         break;
 
     case 'r':

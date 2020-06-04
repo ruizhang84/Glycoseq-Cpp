@@ -35,7 +35,7 @@ static struct argp_option options[] = {
     {"path", 'i',    "spectrum.mgf",  0,  "mgf, Spectrum MS/MS Input Path" },
     {"spath", 'f',    "protein.fasta",  0,  "fasta, Protein Sequence Input Path" },
     {"output",    'o',    "result.csv",   0,  "csv, Results Output Path" },
-    {"pthread",   'd',  "6",  0,  "Number of Searching Threads" },
+    {"pthread",   'q',  "6",  0,  "Number of Searching Threads" },
     {"HexNAc",   'x',  "12",  0,  "Search Up to Number of HexNAc" },
     {"HexNA",   'y',  "12",  0,  "Search Up to Number of Hex" },
     {"Fuc",   'z',  "5",  0,  "Search Up to Number of Fuc" },
@@ -46,7 +46,7 @@ static struct argp_option options[] = {
     {"ms1_by",   'k',  "0",  0, "MS Tolereance By Int: PPM (0) or Dalton (1)" },
     {"ms2_by",   'l',  "1",  0, "MS2 Tolereance By Int: PPM (0) or Dalton (1)" },
     {"fdr_rate",   'r',  "0.01",  0, "FDR rate" },
-    {"core",    'c',  "1.0",  0, "Score Weight for Core Glycan Matches" },
+    {"Core",    'c',  "1.0",  0, "Score Weight for Core Glycan Matches" },
     {"Branch",  'b',  "1.0",  0, "Score Weight for Branch Glycan Matches" },
     {"Terminal",    't',  "1.0",  0, "Score Weight for Terminal Glycan Matches" },
     {"Sequence", 's',  "1.0",  0, "Score Weight for Peptide Fragment Matches" },
@@ -103,10 +103,6 @@ parse_opt (int key, char *arg, struct argp_state *state)
         arguments->core_w = atof(arg);
         break;
 
-    case 'd':
-        arguments->n_thread = atoi(arg);
-        break;
-
     case 'e':
         arguments->precursor_w = atof(arg);
         break;
@@ -141,6 +137,10 @@ parse_opt (int key, char *arg, struct argp_state *state)
 
     case 'p':
         arguments->match_w = atof(arg);
+        break;
+
+    case 'q':
+        arguments->n_thread = atoi(arg);
         break;
 
     case 'r':
@@ -227,6 +227,9 @@ int main(int argc, char *argv[])
     std::string fasta_path(arguments.fasta_path);
     std::string out_path(arguments.out_path) ;
     SearchParameter parameter = GetParameter(arguments);
+    free(arguments.spectra_path);
+    free(arguments.fasta_path);
+    free(arguments.out_path);
 
     // read spectrum
     std::unique_ptr<util::io::SpectrumParser> parser = 
@@ -239,10 +242,16 @@ int main(int argc, char *argv[])
     std::unordered_set<std::string> seqs = PeptidesDigestion(fasta_path);
     for(const auto& s : seqs)
     {
-        std::string decoy_s(s);
+        // std::string decoy_s(s);
         peptides.push_back(s);
-        std::reverse(decoy_s.begin(), decoy_s.end());
-        decoy_peptides.push_back(decoy_s);
+        // std::reverse(decoy_s.begin(), decoy_s.end());
+        // decoy_peptides.push_back(decoy_s);
+    }
+    std::unordered_set<std::string> decoy_seqs =
+        PeptidesDigestion("/home/yu/Documents/MultiGlycan-Cpp/data/titin.fasta");
+    for(const auto& s : decoy_seqs)
+    {
+        decoy_peptides.push_back(s);
     }
     
     // // build glycans
@@ -284,22 +293,6 @@ int main(int argc, char *argv[])
 
     // output analysis results
     ReportResults(out_path, results);
-   
-    // for(auto i : targets)
-    // {
-    //     for(auto j : decoys)
-    //     {
-    //         if (i.Scan() == j.Scan())
-    //         {
-    //             std::cout << i.Scan() << std::endl;
-    //             std::cout << i.Sequence() << std::endl;
-    //             std::cout << i.Glycan() << std::endl;
-    //             std::cout << j.Sequence() << std::endl;
-    //             std::cout << j.Glycan() << std::endl;
-    //         }
-               
-    //     }
-    // }
 
     auto stop = std::chrono::high_resolution_clock::now(); 
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start); 
