@@ -104,6 +104,8 @@ public:
                 {
                     std::vector<model::spectrum::Peak> result_temp;
                     result_temp = SearchGlycans(peptide, isomer, glycan_core_);
+                    if (result_temp.empty()) continue;
+                    
                     result_core[isomer] = SearchResult::PeakValue(result_temp);
                     matched_isomer[isomer] = (int) result_temp.size();
                     result_temp = SearchGlycans(peptide, isomer, glycan_branch_);

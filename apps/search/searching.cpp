@@ -60,9 +60,9 @@ static struct argp_option options[] = {
 };
 
 static std::string default_spectra_path = 
-        "/home/yu/Documents/MultiGlycan-Cpp/data/test_EThcD.mgf";
+        "/home/yu/Documents/GlycoSeq-Cpp/data/ZC_20171218_H95_R1.mgf";
 static std::string default_fasta_path = 
-        "/home/yu/Documents/MultiGlycan-Cpp/data/haptoglobin.fasta";
+        "/home/yu/Documents/GlycoSeq-Cpp/data/haptoglobin.fasta";
 static std::string default_out_path = "result.csv";
 static std::string default_digestion = "TG";
 
@@ -298,7 +298,7 @@ int main(int argc, char *argv[])
         decoy_peptides.push_back(decoy_s);
     }
     // std::unordered_set<std::string> decoy_seqs =
-    //     PeptidesDigestion("/home/yu/Documents/MultiGlycan-Cpp/data/titin.fasta", parameter);
+    //     PeptidesDigestion("/home/yu/Documents/GlycoSeq-Cpp/data/titin.fasta", parameter);
     // decoy_peptides.insert(decoy_peptides.end(), decoy_seqs.begin(), decoy_seqs.end());
     
    
@@ -309,6 +309,9 @@ int main(int argc, char *argv[])
                 parameter.neuAc_upper_bound, parameter.neuGc_upper_bound);
     builder->Build();
     
+    // std::unique_ptr<engine::glycan::NGlycanBuilder> decoy_builder =
+    //     std::make_unique<engine::glycan::NGlycanBuilder>(2, 3, 0, 0, 0);
+    // decoy_builder->Build();
 
     // search
     std::cout << "Start to scan\n"; 

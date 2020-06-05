@@ -230,14 +230,14 @@ int main(int argc, char *argv[])
     // read fasta and build peptides
     std::vector<std::string> peptides, decoy_peptides;
     std::unordered_set<std::string> seqs = PeptidesDigestion(fasta_path, parameter);
+    peptides.insert(peptides.end(), seqs.begin(), seqs.end());
     for(const auto& s : seqs)
     {
         std::string decoy_s(s);
-        peptides.push_back(s);
         std::reverse(decoy_s.begin(), decoy_s.end());
         decoy_peptides.push_back(decoy_s);
     }
-    
+
     // // build glycans
     std::unique_ptr<engine::glycan::NGlycanBuilder> builder =
         std::make_unique<engine::glycan::NGlycanBuilder>(parameter.hexNAc_upper_bound, 
