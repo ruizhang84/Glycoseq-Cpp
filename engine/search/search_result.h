@@ -21,7 +21,7 @@ public:
     std::string Sequence() const { return peptide_; }
     std::string Glycan() const { return glycan_; }
     double Score() const { return score_; }
-    const std::unordered_map<SearchType, double> Match() const 
+    std::unordered_map<SearchType, double> Match()
         { return match_; }
     double Value(SearchType type) 
     { 
@@ -74,10 +74,10 @@ public:
     void set_weight(const std::unordered_map<SearchType, double>& weight)
         { weight_ = weight; }
 
-    virtual double ComputeScore(const SearchResult& result)
+    virtual double ComputeScore(SearchResult& result)
     {
         double score = 0;
-        for(const auto& it : result.Match())
+        for(auto& it : result.Match())
         {
             if (weight_.find(it.first) != weight_.end())
             {
