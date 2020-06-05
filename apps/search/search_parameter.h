@@ -2,6 +2,7 @@
 #define APP_SEARCH_SEARCH_PARAMETER_H
 
 #include <deque>
+#include <map>
 
 #include "../../algorithm/search/search.h"
 #include "../../engine/protein/protein_digest.h"
@@ -37,7 +38,7 @@ struct SearchParameter
     };
     int miss_cleavage = 2;
     // scoring weight
-    std::unordered_map<engine::search::SearchType, double> weights 
+    std::map<engine::search::SearchType, double> weights 
     {
         {engine::search::SearchType::Core, 1.0}, 
         {engine::search::SearchType::Branch, 1.0}, 

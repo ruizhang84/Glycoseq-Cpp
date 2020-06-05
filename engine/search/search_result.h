@@ -3,7 +3,7 @@
 
 
 #include <vector>
-#include <unordered_map>
+#include <map>
 #include "../../model/spectrum/spectrum.h"
 
 #include <iostream>
@@ -21,7 +21,7 @@ public:
     std::string Sequence() const { return peptide_; }
     std::string Glycan() const { return glycan_; }
     double Score() const { return score_; }
-    const std::unordered_map<SearchType, double> Match() const 
+    const std::map<SearchType, double> Match() const 
         { return match_; }
     double Value(SearchType type) 
     { 
@@ -35,7 +35,7 @@ public:
     void set_sequence(std::string seq) { peptide_ = seq; }
     void set_glycan(std::string glycan) { glycan_ = glycan; }
     void set_score(double score) { score_ = score; }
-    void set_match(std::unordered_map<SearchType, double> match)
+    void set_match(std::map<SearchType, double> match)
         { match_ = match; }
     
     void Add(double value, SearchType type)
@@ -59,19 +59,19 @@ protected:
     std::string glycan_;
     int pos_;
     double score_;
-    std::unordered_map<SearchType, double> match_;
+    std::map<SearchType, double> match_;
     
 };
 
 class SimpleScorer
 {
 public:
-    SimpleScorer(const std::unordered_map<SearchType, double>& weight):
+    SimpleScorer(const std::map<SearchType, double>& weight):
         weight_(weight){}
 
-    const std::unordered_map<SearchType, double> Weight() const 
+    const std::map<SearchType, double> Weight() const 
         { return weight_; }
-    void set_weight(const std::unordered_map<SearchType, double>& weight)
+    void set_weight(const std::map<SearchType, double>& weight)
         { weight_ = weight; }
 
     virtual double ComputeScore(const SearchResult& result)
@@ -89,7 +89,7 @@ public:
     }
 
 protected:
-    std::unordered_map<SearchType, double> weight_;
+    std::map<SearchType, double> weight_;
 };
 
 } // namespace engine

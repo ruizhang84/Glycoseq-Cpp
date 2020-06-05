@@ -1,4 +1,5 @@
 #include <map>
+#include <unordered_map>
 #include <fstream>
 
 #include "../../util/io/fasta_reader.h"
@@ -52,7 +53,7 @@ std::unordered_set<std::string> PeptidesDigestion
 // assign score to searching results
 void ScoringWorker(
     std::vector<engine::search::SearchResult>& results,
-    std::unordered_map<engine::search::SearchType, double> weights)
+    std::map<engine::search::SearchType, double> weights)
 {
     engine::search::SimpleScorer scorer(weights);
     for(auto& it : results)
