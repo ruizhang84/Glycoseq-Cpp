@@ -87,16 +87,16 @@ struct arguments
     int ms1_by = 0;
     int ms2_by = 1;
     // fdr
-    double fdr_rate = 0.01;
+    double fdr_rate = 0.02;
     // weights
     double core_w = 1.0;
     double branch_w = 1.0;
     double terminal_w = 1.0;
     double peptide_w = 1.0;
     double oxonium_w = 1.0;
-    double match_w = 1.0;
-    double precursor_w = 1.0;
-    double coelution_w = 1.0;
+    double match_w = 0.0;
+    double precursor_w = 0.0;
+    double coelution_w = 0.0;
 };
 
 

@@ -71,34 +71,37 @@ public:
         std::unordered_map<std::string, SearchResult> res_map;
         
         double max_score = 0;
-        int peak_size = (int) spectrum_.Peaks().size();
+        double spectrum_v = 0;
+        for(const auto& peak : spectrum_.Peaks())
+        {
+            spectrum_v += peak.Intensity() * peak.Intensity();
+        }
+        spectrum_v = std::sqrt(spectrum_v);
+
         for(const auto& peptide : candidate_.Peptides())
         {
             std::vector<model::spectrum::Peak> result_oxonium = SearchOxonium();
             if (result_oxonium.empty()) continue;
             double oxonium = SearchResult::PeakValue(result_oxonium);
-            int oxonium_matched = 0;
-            oxonium_matched += result_oxonium.size();
 
             for(const auto& composite: candidate_.Glycans(peptide))
             {
                 std::vector<int> positions = engine::protein::ProteinPTM::FindNGlycanSite(peptide);
                 std::unordered_map<int, double> result_position;
-                std::unordered_map<int, int> matched_position;
+                
                 for (const auto& pos : positions)
                 {
                     std::vector<model::spectrum::Peak> result_temp = SearchPeptides(peptide, composite, pos);
                     if (!result_temp.empty())
                     {  
                         result_position[pos] = SearchResult::PeakValue(result_temp);
-                        matched_position[pos] = (int) result_temp.size();
                     }
                 }
                 if (result_position.empty()) continue;
 
                 std::unordered_set<std::string> glycan_ids = glycan_isomer_.Query(composite);
                 std::unordered_map<std::string, double> result_core, result_branch, result_terminal;
-                std::unordered_map<std::string, int> matched_isomer;
+
 
                 for(const auto & isomer : glycan_ids)
                 {
@@ -107,13 +110,10 @@ public:
                     if (result_temp.empty()) continue;
                     
                     result_core[isomer] = SearchResult::PeakValue(result_temp);
-                    matched_isomer[isomer] = (int) result_temp.size();
                     result_temp = SearchGlycans(peptide, isomer, glycan_branch_);
                     result_branch[isomer] = SearchResult::PeakValue(result_temp);
-                    matched_isomer[isomer] += (int) result_temp.size();
                     result_temp = SearchGlycans(peptide, isomer, glycan_terminal_);
                     result_terminal[isomer] = SearchResult::PeakValue(result_temp);
-                    matched_isomer[isomer] += (int) result_temp.size(); 
                 }
 
 
@@ -143,15 +143,16 @@ public:
                             }
                             
                             SearchResult& best = res_map[glycopeptide];
+                            double denominator = 4;
+                            denominator += (int) peptide.length() * 2.0;
+                            denominator += (int) glycan_core_.Query(isomer_it.first).size();
+                            denominator += (int) glycan_branch_.Query(isomer_it.first).size();
+                            denominator += (int) glycan_terminal_.Query(isomer_it.first).size();
+                            // double val = score * 1.00 / (std::sqrt(denominator) * spectrum_v);
+                            double val = score * 1.00 /  spectrum_v;
+
                             best.set_site(pos_it.first);
-                            best.Add(oxonium, SearchType::Oxonium);
-                            best.Add(pos_it.second, SearchType::Peptide);
-                            best.Add(result_core[isomer], SearchType::Core);
-                            best.Add(result_branch[isomer], SearchType::Branch);
-                            best.Add(result_terminal[isomer], SearchType::Terminal);
-                            double matched = (oxonium_matched + matched_position[pos_it.first]
-                                +  matched_isomer[isomer] + 0.0) / peak_size;
-                            best.Add(matched, SearchType::Matches);
+                            best.Add(val, SearchType::Oxonium);
                         }
                     }
                 }
@@ -161,24 +162,24 @@ public:
             return res;
             
         // compute precursor differ
-        double precursor_mass = 
-            util::mass::SpectrumMass::Compute(spectrum_.PrecursorMZ(), spectrum_.PrecursorCharge());
-        for(auto& it : res_map)
-        {
-            SearchResult best = it.second;
-            double mass = util::mass::PeptideMass::Compute(best.Sequence())
-                + util::mass::GlycanMass::Compute(model::glycan::Glycan::Interpret(best.Glycan()));
+        // double precursor_mass = 
+        //     util::mass::SpectrumMass::Compute(spectrum_.PrecursorMZ(), spectrum_.PrecursorCharge());
+        // for(auto& it : res_map)
+        // {
+        //     SearchResult best = it.second;
+        //     double mass = util::mass::PeptideMass::Compute(best.Sequence())
+        //         + util::mass::GlycanMass::Compute(model::glycan::Glycan::Interpret(best.Glycan()));
             
-            double ppm = kPPM;
-            for (int i = 0; i <= isotopic_; i ++)
-            {
-                double isotopic_mass = util::mass::SpectrumMass::kIon * i + mass;
-                double isotopic_ppm = util::mass::SpectrumMass::ComputePPM(isotopic_mass, precursor_mass);
-                ppm = (ppm <= isotopic_ppm) ? ppm : isotopic_ppm;
-            }
-            double ratio = 1.0 - ppm / kPPM;
-            it.second.Add(ratio, SearchType::Precursor);
-        }
+        //     double ppm = kPPM;
+        //     for (int i = 0; i <= isotopic_; i ++)
+        //     {
+        //         double isotopic_mass = util::mass::SpectrumMass::kIon * i + mass;
+        //         double isotopic_ppm = util::mass::SpectrumMass::ComputePPM(isotopic_mass, precursor_mass);
+        //         ppm = (ppm <= isotopic_ppm) ? ppm : isotopic_ppm;
+        //     }
+        //     double ratio = 1.0 - ppm / kPPM;
+        //     it.second.Add(ratio, SearchType::Precursor);
+        // }
         
         // save 
         for(const auto& it : res_map)

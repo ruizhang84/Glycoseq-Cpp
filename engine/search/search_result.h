@@ -48,7 +48,7 @@ public:
         double sum = 0;
         for(const auto& it : peaks)
         {
-            sum += it.Intensity();
+            sum += it.Intensity() * it.Intensity();
         }
         return sum;
     }
