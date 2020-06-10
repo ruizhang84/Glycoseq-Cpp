@@ -323,15 +323,15 @@ int main(int argc, char *argv[])
     std::vector<std::string> peptides, decoy_peptides;
     std::unordered_set<std::string> seqs = PeptidesDigestion(fasta_path, parameter);
     peptides.insert(peptides.end(), seqs.begin(), seqs.end());
-    for(const auto& s : seqs)
-    {
-        std::string decoy_s(s);
-        std::reverse(decoy_s.begin(), decoy_s.end());
-        decoy_peptides.push_back(decoy_s);
-    }
-    // std::unordered_set<std::string> decoy_seqs =
-    //     PeptidesDigestion("/home/yu/Documents/GlycoSeq-Cpp/data/titin.fasta", parameter);
-    // decoy_peptides.insert(decoy_peptides.end(), decoy_seqs.begin(), decoy_seqs.end());
+    // for(const auto& s : seqs)
+    // {
+    //     std::string decoy_s(s);
+    //     std::reverse(decoy_s.begin(), decoy_s.end());
+    //     decoy_peptides.push_back(decoy_s);
+    // }
+    std::unordered_set<std::string> decoy_seqs =
+        PeptidesDigestion("/home/yu/Documents/GlycoSeq-Cpp/data/titin.fasta", parameter);
+    decoy_peptides.insert(decoy_peptides.end(), decoy_seqs.begin(), decoy_seqs.end());
     
    
     // // build glycans
@@ -370,7 +370,7 @@ int main(int argc, char *argv[])
     std::cout << "target:" << targets.size() <<" " << decoys.size() << std::endl;
 
     // get score lists of each spectrum
-    std::unordered_map<int, std::vector<double>> v;
+    std::map<int, std::vector<double>> v;
     for(const auto& it : decoys)
     {
         int i = it.Scan();
@@ -383,7 +383,8 @@ int main(int argc, char *argv[])
 
     // compute p value
     std::vector<engine::search::SearchResult> results;
-    std::unordered_map<int, double> s_v;
+    std::map<int, engine::search::SearchResult> s_results;
+    std::map<int, double> s_v;
     for(const auto& it : targets)
     {
         if (v.find(it.Scan()) == v.end())
@@ -393,8 +394,13 @@ int main(int argc, char *argv[])
         else
         {
             std::vector<double> score_list = v[it.Scan()];
+            double avg = mean(score_list);
+            if (avg > it.Score()) continue;
+
             double p = pValue(score_list, it.Score());
+
             s_v[it.Scan()] = p;
+            s_results[it.Scan()] = it;
         }
     }
     std::vector<double> p_values;
@@ -402,17 +408,27 @@ int main(int argc, char *argv[])
     {
         p_values.push_back(it.second);
     }
+
     std::sort(p_values.begin(), p_values.end());
-    std::unordered_map<int, double> r_s_v;
+    std::map<int, double> r_s_v;
+    int size = (int) p_values.size();
+    double c = 0;
+    for(int i = 1; i <= size; i ++)
+    {
+        c += 1.0 /i;
+    }
     for(const auto& it : s_v)
     {
         double p = it.second;
         
-
-
+        auto i = std::find(p_values.begin(), p_values.end(), p);
+        int d = std::distance(p_values.begin(), i);
+        double r_p = d * p * 1.0 / size / c;
+        if (r_p < parameter.fdr_rate)
+        {
+            results.push_back(s_results[it.first]);
+        }
     }
-
-
 
     // output analysis results
     ReportResults(out_path, results);
