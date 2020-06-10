@@ -8,6 +8,7 @@
 #include "search_parameter.h"
 #include "../../engine/spectrum/normalize.h"
 #include "../../engine/search/spectrum_search.h"
+#include "../../engine/search/decoy_search.h"
 
 class SearchQueue
 {
@@ -90,6 +91,22 @@ public:
         return results;
     }
 
+    std::vector<engine::search::SearchResult> DecoyDispatch()
+    {
+        std::vector<engine::search::SearchResult> results;
+        std::vector< std::thread> thread_pool;
+        for (int i = 0; i < parameter_.n_thread; i ++)
+        {
+            std::thread worker(&SearchDispatcher::DecoySearchingWorker, this, std::ref(results));
+            thread_pool.push_back(std::move(worker));
+        }
+        for (auto& worker : thread_pool)
+        {
+            worker.join();
+        }
+        return results;
+    }
+
 protected:
     void SearchingWorker(
         std::vector<engine::search::SearchResult>& results)
@@ -97,6 +114,49 @@ protected:
         engine::search::PrecursorMatcher precursor_runner
             (parameter_.ms1_tol, parameter_.ms1_by, builder_->Isomer());
         engine::search::SpectrumSearcher spectrum_runner
+            (parameter_.ms2_tol, parameter_.ms2_by, parameter_.isotopic_count, builder_);
+        std::vector<std::string> glycans_str = builder_->Isomer().Collection();
+        precursor_runner.Init(peptides_, glycans_str);
+        spectrum_runner.Init();
+
+        std::vector<engine::search::SearchResult> temp_result;
+        
+        while (true)
+        {
+            model::spectrum::Spectrum spec = queue_.TryGetSpectrum();
+            if (spec.Scan() < 0) break;
+            
+            // precusor
+            double target = 
+                util::mass::SpectrumMass::Compute(spec.PrecursorMZ(), spec.PrecursorCharge());
+            engine::search::MatchResultStore r = 
+                precursor_runner.Match(target + parameter_.pseudo_mass, 
+                    spec.PrecursorCharge(), parameter_.isotopic_count);
+            if (r.Empty()) continue;
+
+            // process spectrum by normalization
+            engine::spectrum::Normalizer::Transform(spec);
+
+            // msms
+            spectrum_runner.set_spectrum(spec);
+            spectrum_runner.set_candidate(r);
+            std::vector<engine::search::SearchResult> res = spectrum_runner.Search();
+            if (res.empty()) continue;
+
+            temp_result.insert(temp_result.end(), res.begin(), res.end());
+        }
+        
+        mutex_.lock();
+            results.insert(results.end(), temp_result.begin(), temp_result.end());
+        mutex_.unlock();
+    }
+
+    void DecoySearchingWorker(
+        std::vector<engine::search::SearchResult>& results)
+    {
+        engine::search::PrecursorMatcher precursor_runner
+            (parameter_.ms1_tol, parameter_.ms1_by, builder_->Isomer());
+        engine::search::DecoySearcher spectrum_runner
             (parameter_.ms2_tol, parameter_.ms2_by, parameter_.isotopic_count, builder_);
         std::vector<std::string> glycans_str = builder_->Isomer().Collection();
         precursor_runner.Init(peptides_, glycans_str);
