@@ -321,7 +321,7 @@ int main(int argc, char *argv[])
     SearchDispatcher target_searcher(spectrum_reader.GetSpectrum(), builder.get(), peptides, parameter);
     std::vector<engine::search::SearchResult> targets = target_searcher.Dispatch();
 
-    // seraching decoys 
+    // seraching decoys
     SearchDispatcher decoy_searcher(spectrum_reader.GetSpectrum(), builder.get(), decoy_peptides, parameter);
     std::vector<engine::search::SearchResult> decoys = decoy_searcher.Dispatch();
 
@@ -334,6 +334,8 @@ int main(int argc, char *argv[])
     // remove the lower score
     targets = ScoreFilter(targets);
     decoys = ScoreFilter(decoys);
+
+    std::cout << "target:" << targets.size() <<" " << decoys.size() << std::endl;
 
     // fdr filtering
     engine::search::FDRFilter fdr_runner(parameter.fdr_rate);
