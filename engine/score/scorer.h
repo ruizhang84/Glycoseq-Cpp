@@ -9,21 +9,11 @@ namespace score {
 class SimpleScorer
 {
 public:
-    SimpleScorer(const std::map<engine::search::SearchType, double>& weight):
-        weight_(weight){}
-
-    const std::map<engine::search::SearchType, double> Weight() const 
-        { return weight_; }
-    void set_weight(const std::map<engine::search::SearchType, double>& weight)
-        { weight_ = weight; }
-
+    SimpleScorer(){}
     virtual double ComputeScore(const engine::search::SearchResult& result)
     {
         return result.Score();
     }
-
-protected:
-    std::map<engine::search::SearchType, double> weight_;
 };
 
 

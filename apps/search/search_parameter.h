@@ -36,18 +36,6 @@ struct SearchParameter
         engine::protein::Proteases::GluC
     };
     int miss_cleavage = 2;
-    // scoring weight
-    std::map<engine::search::SearchType, double> weights 
-    {
-        {engine::search::SearchType::Core, 1.0}, 
-        {engine::search::SearchType::Branch, 1.0}, 
-        {engine::search::SearchType::Terminal, 1.0},
-        {engine::search::SearchType::Peptide, 1.0}, 
-        {engine::search::SearchType::Oxonium, 1.0},
-        {engine::search::SearchType::Precursor, 1.0},
-    };
-    void set_search_weight(double w, engine::search::SearchType type)
-        { weights[type] = w; }
 };
 
 

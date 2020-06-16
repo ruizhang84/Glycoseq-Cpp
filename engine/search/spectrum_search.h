@@ -88,7 +88,7 @@ public:
                         isomer, SearchType::Terminal);
                 }
 
-                collector.Update(spectrum_.Scan(), peptide, composite);
+                collector.BestUpdate(spectrum_.Scan(), peptide, composite);
             }
         }
         if (collector.Empty())

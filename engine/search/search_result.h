@@ -76,7 +76,7 @@ protected:
 
 class ResultCollector{
 public:
-    ResultCollector():  oxonium_(-1){}
+    ResultCollector(): best_(0.0), oxonium_(-1){}
 
     std::vector<SearchResult> Result()
     {
@@ -92,11 +92,18 @@ public:
     }
     std::vector<SearchResult> BestResult()
     {
+        // update extra precursor score
+        for(auto& it : results_)
+        {
+            it.set_extra(SearchResult::PrecursorValue(it.Sequence(), it.Glycan(), 
+                precursor_mass_, isotopic_), ScoreType::Precursor);
+        }
+        // max score
         std::vector<SearchResult> res;
         double max_score = 0;
         for (const auto& it : results_)
         {
-            double score = it.Score();
+            double score = it.Score() + it.ExtraScore(ScoreType::Precursor);
             if (score >= max_score){
                 if (score > max_score){
                     res.clear();
@@ -105,12 +112,6 @@ public:
                 max_score = score;
             }
         }
-        for(auto& it : res)
-        {
-            it.set_extra(SearchResult::PrecursorValue(it.Sequence(), it.Glycan(), 
-                precursor_mass_, isotopic_), ScoreType::Precursor);
-        }
-
         return res;
     }
 
@@ -169,24 +170,58 @@ public:
     {
         for(const auto& pos_it : peptide_)
         {
-            for(const auto& isomer_it : glycan_core_)
+            // compute score
+            double score = ComputeScore(pos_it.second);
+            // emplace results
+            Emplace(scan, peptide, composite, pos_it.first, score);
+        }
+    }
+
+    void BestUpdate(int scan, const std::string& peptide, const std::string& composite)
+    {
+        for(const auto& pos_it : peptide_)
+        {
+            // compute score
+            double score = ComputeScore(pos_it.second);
+            if (score >= best_)
             {
-                SearchResult res;
-                std::string isomer = isomer_it.first;
-                double score = glycan_core_[isomer] + glycan_branch_[isomer] + glycan_terminal_[isomer] 
-                    + pos_it.second + oxonium_; 
-                res.set_scan(scan);
-                res.set_glycan(composite);
-                res.set_sequence(peptide);
-                res.set_site(pos_it.first);
-                res.set_score(score);
-                results_.push_back(res);
+                if (score > best_)
+                    results_.clear();
+                best_ = score;
+                // emplace results
+                Emplace(scan, peptide, composite, pos_it.first, score);
             }
         }
     }
 
 protected:
+    double ComputeScore(double peptide_score)
+    {
+        double score = 0;
+        for(const auto& isomer_it : glycan_core_)
+        {
+            std::string isomer = isomer_it.first;
+            double glycan_score = glycan_core_[isomer] + glycan_branch_[isomer] + glycan_terminal_[isomer]; 
+            score = std::max(score, glycan_score);  
+        }
+        score += peptide_score + oxonium_;
+        return score;
+    }
+
+    void Emplace(int scan, const std::string& peptide, 
+        const std::string composite, int site, double score)
+    {
+        SearchResult res;
+        res.set_scan(scan);
+        res.set_sequence(peptide);
+        res.set_glycan(composite);
+        res.set_site(site);
+        res.set_score(score);
+        results_.push_back(res);
+    }
+
     const int max_hits = 20;
+    double best_ = 0;
     double oxonium_;
     std::unordered_map<int, double> peptide_;
     std::unordered_map<std::string, double> glycan_core_, glycan_branch_, glycan_terminal_;

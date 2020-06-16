@@ -33,8 +33,8 @@ static char doc[] =
   "Glycoseq -- a program to search glycopeptide from high thoughput LS-MS/MS";
 
 static struct argp_option options[] = {
-    {"path", 'i',    "spectrum.mgf",  0,  "mgf, Spectrum MS/MS Input Path" },
-    {"spath", 'f',    "protein.fasta",  0,  "fasta, Protein Sequence Input Path" },
+    {"spath", 'i',    "spectrum.mgf",  0,  "mgf, Spectrum MS/MS Input Path" },
+    {"fpath", 'f',    "protein.fasta",  0,  "fasta, Protein Sequence Input Path" },
     {"output",    'o',    "result.csv",   0,  "csv, Results Output Path" },
     {"pthread",   'p',  "6",  0,  "Number of Searching Threads" },
     {"digestion",   'd',  "TG",  0,  "The Digestion, Trypsin (T), Pepsin (P), Chymotrypsin (C), GluC (G)" }, 
@@ -49,13 +49,6 @@ static struct argp_option options[] = {
     {"ms1_by",   'k',  "0",  0, "MS Tolereance By Int: PPM (0) or Dalton (1)" },
     {"ms2_by",   'l',  "1",  0, "MS2 Tolereance By Int: PPM (0) or Dalton (1)" },
     {"fdr_rate",   'r',  "0.01",  0, "FDR rate" },
-    {"Core",    'C',  "1.0",  0, "Score Weight for Core Glycan Matches" },
-    {"Branch",  'B',  "1.0",  0, "Score Weight for Branch Glycan Matches" },
-    {"Terminal",    'T',  "1.0",  0, "Score Weight for Terminal Glycan Matches" },
-    {"Sequence", 'S',  "1.0",  0, "Score Weight for Peptide Fragment Matches" },
-    {"NPeak",   'N',  "1.0",  0, "Score Weight for Number of Peaks" },
-    {"Mass",  'M',  "1.0",  0, "Score Weight for Precursor Mass Erorr" },
-    {"Coelution",  'E',  "1.0",  0, "Score Weight for Coelution factor" },
     { 0 }
 };
 
@@ -88,15 +81,6 @@ struct arguments
     int ms2_by = 1;
     // fdr
     double fdr_rate = 0.01;
-    // weights
-    double core_w = 1.0;
-    double branch_w = 1.0;
-    double terminal_w = 1.0;
-    double peptide_w = 1.0;
-    double oxonium_w = 1.0;
-    double match_w = 1.0;
-    double precursor_w = 1.0;
-    double coelution_w = 1.0;
 };
 
 
@@ -108,24 +92,12 @@ parse_opt (int key, char *arg, struct argp_state *state)
 
     switch (key)
     {
-    case 'B':
-        arguments->branch_w = atof(arg);
-        break;
-    
     case 'c':
         arguments->miss_cleavage = atoi(arg);
-        break;
-
-    case 'C':
-        arguments->core_w = atof(arg);
         break;
     
     case 'd':
         arguments->digestion = arg;
-        break;
-
-    case 'E':
-        arguments->coelution_w = atof(arg);
         break;
 
     case 'f':
@@ -147,17 +119,9 @@ parse_opt (int key, char *arg, struct argp_state *state)
     case 'm':
         arguments->ms1_tol = atof(arg);
         break;
-    
-    case 'M':
-        arguments->precursor_w = atof(arg);
-        break;
 
     case 'n':
         arguments->ms2_tol = atof(arg);
-        break;
-
-    case 'N':
-        arguments->match_w = atof(arg);
         break;
 
     case 'o':
@@ -170,14 +134,6 @@ parse_opt (int key, char *arg, struct argp_state *state)
     
     case 'r':
         arguments->fdr_rate = atof(arg);
-        break;
-
-    case 'S':
-        arguments->peptide_w = atof(arg);
-        break;
-
-    case 'T':
-        arguments->terminal_w = atof(arg);
         break;
 
     case 'u':
@@ -227,17 +183,6 @@ SearchParameter GetParameter(const struct arguments& arguments)
         algorithm::search::ToleranceBy::PPM :
         algorithm::search::ToleranceBy::Dalton;
     parameter.fdr_rate = arguments.fdr_rate;
-    parameter.set_search_weight(arguments.core_w,
-        engine::search::SearchType::Core);
-    parameter.set_search_weight(arguments.branch_w,
-        engine::search::SearchType::Branch);
-    parameter.set_search_weight(arguments.terminal_w,
-        engine::search::SearchType::Terminal);
-    parameter.set_search_weight(arguments.oxonium_w,
-        engine::search::SearchType::Oxonium);
-    parameter.set_search_weight(arguments.peptide_w,
-        engine::search::SearchType::Peptide);
-
     std::string protease(arguments.digestion);
     for(const char& c : protease)
     {
@@ -278,8 +223,9 @@ int main(int argc, char *argv[])
     // read spectrum
     std::unique_ptr<util::io::SpectrumParser> parser = 
         std::make_unique<util::io::MGFParser>(spectra_path, util::io::SpectrumType::EThcD);
-    util::io::SpectrumReader spectrum_reader(spectra_path, std::move(parser));
-    spectrum_reader.Init();
+    std::unique_ptr<util::io::SpectrumReader> spectrum_reader
+        = std::make_unique<util::io::SpectrumReader>(spectra_path, std::move(parser));
+    spectrum_reader->Init();
 
     // read fasta and build peptides
     std::vector<std::string> peptides, decoy_peptides;
@@ -302,32 +248,24 @@ int main(int argc, char *argv[])
             parameter.hex_upper_bound, parameter.fuc_upper_bound, 
                 parameter.neuAc_upper_bound, parameter.neuGc_upper_bound);
     builder->Build();
-    
-    // std::unique_ptr<engine::glycan::NGlycanBuilder> decoy_builder =
-    //     std::make_unique<engine::glycan::NGlycanBuilder>(2, 3, 0, 0, 0);
-    // decoy_builder->Build();
 
     // search
     std::cout << "Start to scan\n"; 
     auto start = std::chrono::high_resolution_clock::now();
 
     // seraching targets 
-    SearchDispatcher target_searcher(spectrum_reader.GetSpectrum(), builder.get(), peptides, parameter);
+    SearchDispatcher target_searcher(spectrum_reader->GetSpectrum(), builder.get(), peptides, parameter);
     std::vector<engine::search::SearchResult> targets = target_searcher.Dispatch();
 
     // seraching decoys
-    SearchDispatcher decoy_searcher(spectrum_reader.GetSpectrum(), builder.get(), decoy_peptides, parameter);
+    SearchDispatcher decoy_searcher(spectrum_reader->GetSpectrum(), builder.get(), decoy_peptides, parameter);
     std::vector<engine::search::SearchResult> decoys = decoy_searcher.Dispatch();
 
     // set up scorer
-    std::thread scorer_first(ScoringWorker, std::ref(targets), parameter.weights);
-    std::thread scorer_second(ScoringWorker, std::ref(decoys), parameter.weights);   
+    std::thread scorer_first(ScoringWorker, std::ref(targets));
+    std::thread scorer_second(ScoringWorker, std::ref(decoys));   
     scorer_first.join();
     scorer_second.join();
-
-    // remove the lower score
-    targets = ScoreFilter(targets);
-    decoys = ScoreFilter(decoys);
 
     std::cout << "target:" << targets.size() <<" " << decoys.size() << std::endl;
 
