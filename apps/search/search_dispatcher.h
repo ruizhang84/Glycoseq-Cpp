@@ -113,8 +113,7 @@ protected:
             double target = 
                 util::mass::SpectrumMass::Compute(spec.PrecursorMZ(), spec.PrecursorCharge());
             engine::search::MatchResultStore r = 
-                precursor_runner.Match(target + parameter_.pseudo_mass, 
-                    spec.PrecursorCharge(), parameter_.isotopic_count);
+                precursor_runner.Match(target, spec.PrecursorCharge(), parameter_.isotopic_count);
             if (r.Empty()) continue;
 
             // process spectrum by normalization

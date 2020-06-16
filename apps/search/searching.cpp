@@ -21,7 +21,7 @@
 #include "../../engine/search/precursor_match.h"
 #include "../../engine/search/spectrum_search.h"
 #include "../../engine/search/search_result.h"
-#include "../../engine/search/fdr_filter.h"
+#include "../../engine/score/fdr_filter.h"
 
 
 const char *argp_program_version =
@@ -338,7 +338,7 @@ int main(int argc, char *argv[])
     std::cout << "target:" << targets.size() <<" " << decoys.size() << std::endl;
 
     // fdr filtering
-    engine::search::FDRFilter fdr_runner(parameter.fdr_rate);
+    engine::score::FDRFilter fdr_runner(parameter.fdr_rate);
     fdr_runner.set_data(targets, decoys);
     fdr_runner.Init();
 

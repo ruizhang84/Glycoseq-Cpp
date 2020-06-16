@@ -23,7 +23,7 @@ public:
     Glycan() = default;
     virtual ~Glycan(){}
     
-    virtual std::string Name() const 
+    std::string Name() const 
     { 
         std::string name = "";
         for (const auto& it : composite_)
@@ -54,7 +54,7 @@ public:
         }
         return name;
     } // for print
-    virtual std::string ID() const { return Serialize(); }  // use as key
+    std::string ID() const { return Serialize(); }  // use as key
 
     void set_name(const std::string& name) 
         { name_ = name; }
@@ -70,7 +70,7 @@ public:
             table_[index] = num;
     }
 
-    virtual std::string Serialize() const
+    std::string Serialize() const
     {
         std::stringstream result;
         std::copy(table_.begin(), table_.end(), 
@@ -78,7 +78,7 @@ public:
         return result.str();
     }
 
-    virtual void Deserialize(std::string table_str)
+    void Deserialize(std::string table_str)
     {
         std::istringstream iss(table_str);
         std::string item;
@@ -141,7 +141,7 @@ public:
         }
         return composite;
     }
-    virtual void set_composition(const std::string& name)
+    void set_composition(const std::string& name)
     {
        set_composition(Interpret(name));
     }

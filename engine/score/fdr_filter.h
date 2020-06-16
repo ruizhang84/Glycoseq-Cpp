@@ -1,5 +1,5 @@
-#ifndef ENGINE_SEARCH_FDR_FILTER_H
-#define ENGINE_SEARCH_FDR_FILTER_H
+#ifndef ENGINE_SCORE_FDR_FILTER_H
+#define ENGINE_SCORE_FDR_FILTER_H
 
 #include <vector>
 #include <algorithm>
@@ -7,7 +7,7 @@
 
 
 namespace engine {
-namespace search {
+namespace score {
 
 class FDRFilter
 {
@@ -19,17 +19,17 @@ public:
          CutoffInit();
     }
     
-    std::vector<SearchResult>& Target() { return target_; }
-    std::vector<SearchResult>& Decoy() { return decoy_; }
+    std::vector<engine::search::SearchResult>& Target() { return target_; }
+    std::vector<engine::search::SearchResult>& Decoy() { return decoy_; }
     double Cutoff() const { return cutoff_; }
-    void set_data(std::vector<SearchResult>& targets, 
-        std::vector<SearchResult>& decoys) 
+    void set_data(std::vector<engine::search::SearchResult>& targets, 
+        std::vector<engine::search::SearchResult>& decoys) 
             { target_ = targets; decoy_ = decoys; }
     void set_cutoff(double cutoff) { cutoff_ = cutoff; }
 
-    virtual std::vector<SearchResult> Filter()
+    virtual std::vector<engine::search::SearchResult> Filter()
     {
-        std::vector<SearchResult> res;
+        std::vector<engine::search::SearchResult> res;
         if (cutoff_ < 0) return target_;
 
         for(const auto& it : target_)
@@ -45,13 +45,13 @@ public:
     }
 
 protected:
-    static double ComputeScore(const SearchResult& result)
+    static double ComputeScore(const engine::search::SearchResult& result)
         { return result.Score(); }
 
-    static bool ScoreLess(const SearchResult& r1, const SearchResult& r2) 
+    static bool ScoreLess(const engine::search::SearchResult& r1, const engine::search::SearchResult& r2) 
         { return (ComputeScore(r1) < ComputeScore(r2)); }
 
-    static bool ScanOrder(const SearchResult& r1, const SearchResult& r2)
+    static bool ScanOrder(const engine::search::SearchResult& r1, const engine::search::SearchResult& r2)
         { return r1.Scan() < r2.Scan(); }
 
     virtual void CutoffInit()
@@ -98,12 +98,12 @@ protected:
 
     double fdr_;
     double cutoff_;
-    std::vector<SearchResult> target_;
-    std::vector<SearchResult> decoy_;
+    std::vector<engine::search::SearchResult> target_;
+    std::vector<engine::search::SearchResult> decoy_;
 
 };
 
-} // namespace search
+} // namespace score
 } // namespace engine 
 
 #endif

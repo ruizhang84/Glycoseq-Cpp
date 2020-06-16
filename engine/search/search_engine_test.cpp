@@ -121,17 +121,17 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
         {SearchType::Peptide, 1.0}, {SearchType::Oxonium, 1.0},
     };
 
-    SimpleScorer scorer(parameter);
-    for(auto it : special_res)
-    {
-        std::cout << it.Glycan() << std::endl;
-        std::cout << it.Sequence() << std::endl;
-        for(auto i : it.Match())
-        {
-            std::cout << i.second << std::endl;
-        }
-        std::cout << scorer.ComputeScore(it) << std::endl;
-    }
+    // SimpleScorer scorer(parameter);
+    // for(auto it : special_res)
+    // {
+    //     std::cout << it.Glycan() << std::endl;
+    //     std::cout << it.Sequence() << std::endl;
+    //     for(auto i : it.Match())
+    //     {
+    //         std::cout << i.second << std::endl;
+    //     }
+    //     std::cout << scorer.ComputeScore(it) << std::endl;
+    // }
     BOOST_CHECK(!special_res.empty());
     auto stop = std::chrono::high_resolution_clock::now(); 
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start); 

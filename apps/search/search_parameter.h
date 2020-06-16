@@ -28,7 +28,6 @@ struct SearchParameter
     // isotopic effects on precursor
     int isotopic_count = 2;
     // fdr
-    double pseudo_mass = 0;
     double fdr_rate = 0.01;
     // protease
     std::deque<engine::protein::Proteases> proteases

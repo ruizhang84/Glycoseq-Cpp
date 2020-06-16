@@ -24,7 +24,7 @@ public:
     void set_miss_cleavage(int num) { miss_cleavage_ = num; }
     void SetProtease(Proteases enzyme) { enzyme_ = enzyme; }
 
-    virtual std::unordered_set<std::string> Sequences
+    std::unordered_set<std::string> Sequences
         (const std::string seq, std::function<bool(const std::string&)> filter)
     {
         std::unordered_set<std::string> seq_list;

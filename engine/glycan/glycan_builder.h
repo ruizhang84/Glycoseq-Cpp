@@ -20,6 +20,7 @@ public:
         hexNAc_(hexNAc), hex_(hex), fuc_(fuc), neuAc_(neuAc), neuGc_(neuGc),
             candidates_({Monosaccharide::GlcNAc, Monosaccharide::Man, Monosaccharide::Gal,
                 Monosaccharide::Fuc, Monosaccharide::NeuAc}){}
+    virtual ~GlycanBuilder(){};
 
     GlycanStore Isomer() { return isomer_store_; }
     GlycanMassStore Mass() { return mass_store_; }

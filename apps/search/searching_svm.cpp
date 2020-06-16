@@ -21,7 +21,7 @@
 #include "../../engine/search/spectrum_search.h"
 #include "../../engine/search/search_result.h"
 #include "../../engine/analysis/svm_analyzer.h"
-#include "../../engine/search/fdr_filter.h"
+#include "../../engine/score/fdr_filter.h"
 
 const char *argp_program_version =
   "glycoseq v2.0";
@@ -273,7 +273,7 @@ int main(int argc, char *argv[])
     decoys = ScoreFilter(decoys);
 
     // fdr filtering
-    engine::search::FDRFilter fdr_runner(parameter.fdr_rate);
+    engine::score::FDRFilter fdr_runner(parameter.fdr_rate);
     fdr_runner.set_data(targets, decoys);
     fdr_runner.Init();
 

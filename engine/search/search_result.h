@@ -63,34 +63,6 @@ protected:
     
 };
 
-class SimpleScorer
-{
-public:
-    SimpleScorer(const std::map<SearchType, double>& weight):
-        weight_(weight){}
-
-    const std::map<SearchType, double> Weight() const 
-        { return weight_; }
-    void set_weight(const std::map<SearchType, double>& weight)
-        { weight_ = weight; }
-
-    virtual double ComputeScore(const SearchResult& result)
-    {
-        double score = 0;
-        for(const auto& it : result.Match())
-        {
-            if (weight_.find(it.first) != weight_.end())
-            {
-                score += it.second * weight_[it.first];
-            }
-            
-        }
-        return score;
-    }
-
-protected:
-    std::map<SearchType, double> weight_;
-};
 
 } // namespace engine
 } // namespace search

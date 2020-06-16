@@ -7,6 +7,7 @@
 #include "../../engine/protein/protein_ptm.h"
 #include "../../engine/search/search_result.h"
 #include "../../engine/analysis/svm_analyzer.h"
+#include "../../engine/score/scorer.h"
 
 // generate peptides by digestion
 std::unordered_set<std::string> PeptidesDigestion
@@ -55,7 +56,7 @@ void ScoringWorker(
     std::vector<engine::search::SearchResult>& results,
     std::map<engine::search::SearchType, double> weights)
 {
-    engine::search::SimpleScorer scorer(weights);
+    engine::score::SimpleScorer scorer(weights);
     for(auto& it : results)
     {
         double score = scorer.ComputeScore(it);
