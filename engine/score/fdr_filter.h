@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <algorithm>
-#include "spectrum_search.h"
+#include "../search/spectrum_search.h"
 
 
 namespace engine {

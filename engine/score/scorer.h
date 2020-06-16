@@ -19,16 +19,7 @@ public:
 
     virtual double ComputeScore(const engine::search::SearchResult& result)
     {
-        double score = 0;
-        for(const auto& it : result.Match())
-        {
-            if (weight_.find(it.first) != weight_.end())
-            {
-                score += it.second * weight_[it.first];
-            }
-            
-        }
-        return score;
+        return result.Score();
     }
 
 protected:

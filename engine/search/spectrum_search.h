@@ -28,19 +28,13 @@ namespace search{
 class SpectrumSearcher
 {
 public:
-    SpectrumSearcher(const double tol, const algorithm::search::ToleranceBy by, 
-        engine::glycan::NGlycanBuilder* builder):
-            tolerance_(tol), by_(by), isotopic_(2), builder_(builder), 
-                searcher_(algorithm::search::BucketSearch<model::spectrum::Peak>(tol, by)),
-                binary_(algorithm::search::BinarySearch(tol, by)){}
-
     SpectrumSearcher(const double tol, const algorithm::search::ToleranceBy by, int isotope,
         engine::glycan::NGlycanBuilder* builder):
             tolerance_(tol), by_(by), isotopic_(isotope), builder_(builder),
                 searcher_(algorithm::search::BucketSearch<model::spectrum::Peak>(tol, by)),
                 binary_(algorithm::search::BinarySearch(tol, by)){}
 
-    virtual void Init()
+    void Init()
     {
         glycan_isomer_ = builder_->Isomer();
         glycan_core_ = builder_->Core();
@@ -63,129 +57,50 @@ public:
     void set_isotopic(int isotope)
         { isotopic_ = isotope; }
 
-    virtual std::vector<SearchResult> Search()
+    std::vector<SearchResult> Search()
     {
         SearchInit();
+        ResultCollector collector;
 
-        std::vector<SearchResult> res;
-        std::unordered_map<std::string, SearchResult> res_map;
-        
-        double max_score = 0;
-        int peak_size = (int) spectrum_.Peaks().size();
         for(const auto& peptide : candidate_.Peptides())
         {
-            std::vector<model::spectrum::Peak> result_oxonium = SearchOxonium();
-            if (result_oxonium.empty()) continue;
-            double oxonium = SearchResult::PeakValue(result_oxonium);
-            int oxonium_matched = 0;
-            oxonium_matched += result_oxonium.size();
+            collector.InitCollect();
+            collector.OxoniumCollect(SearchOxonium());
+            if (collector.OxoniumMiss()) continue;
 
             for(const auto& composite: candidate_.Glycans(peptide))
             {
-                std::vector<int> positions = engine::protein::ProteinPTM::FindNGlycanSite(peptide);
-                std::unordered_map<int, double> result_position;
-                std::unordered_map<int, int> matched_position;
-                for (const auto& pos : positions)
+                for (const auto& pos : engine::protein::ProteinPTM::FindNGlycanSite(peptide))
                 {
-                    std::vector<model::spectrum::Peak> result_temp = SearchPeptides(peptide, composite, pos);
-                    if (!result_temp.empty())
-                    {  
-                        result_position[pos] = SearchResult::PeakValue(result_temp);
-                        matched_position[pos] = (int) result_temp.size();
-                    }
+                   collector.PeptideCollect(SearchPeptides(peptide, composite, pos), pos);
                 }
-                if (result_position.empty()) continue;
+                if (collector.PeptideMiss()) continue;
 
-                std::unordered_set<std::string> glycan_ids = glycan_isomer_.Query(composite);
                 std::unordered_map<std::string, double> result_core, result_branch, result_terminal;
-                std::unordered_map<std::string, int> matched_isomer;
-
-                for(const auto & isomer : glycan_ids)
+                for(const auto & isomer : glycan_isomer_.Query(composite))
                 {
-                    std::vector<model::spectrum::Peak> result_temp;
-                    result_temp = SearchGlycans(peptide, isomer, glycan_core_);
-                    if (result_temp.empty()) continue;
-                    
-                    result_core[isomer] = SearchResult::PeakValue(result_temp);
-                    matched_isomer[isomer] = (int) result_temp.size();
-                    result_temp = SearchGlycans(peptide, isomer, glycan_branch_);
-                    result_branch[isomer] = SearchResult::PeakValue(result_temp);
-                    matched_isomer[isomer] += (int) result_temp.size();
-                    result_temp = SearchGlycans(peptide, isomer, glycan_terminal_);
-                    result_terminal[isomer] = SearchResult::PeakValue(result_temp);
-                    matched_isomer[isomer] += (int) result_temp.size(); 
+                    collector.GlycanCollect(SearchGlycans(peptide, isomer, glycan_core_), 
+                        isomer, SearchType::Core);
+                    if (collector.GlycanMiss(isomer)) continue;
+                    collector.GlycanCollect(SearchGlycans(peptide, isomer, glycan_branch_), 
+                        isomer, SearchType::Branch);
+                    collector.GlycanCollect(SearchGlycans(peptide, isomer, glycan_terminal_), 
+                        isomer, SearchType::Terminal);
                 }
 
-
-                for(const auto& pos_it : result_position)
-                {
-                    for(const auto& isomer_it : result_core)
-                    {
-                        std::string isomer = isomer_it.first;
-                        double score = result_core[isomer] + result_branch[isomer] + result_terminal[isomer];
-                        if (score == 0) continue;
-                        score  += pos_it.second + oxonium; 
-
-                        if (score >= max_score)
-                        {
-                            if (score > max_score)
-                                res_map.clear();
-
-                            max_score = score;
-                            std::string glycopeptide = peptide + composite;
-                            if (res_map.find(glycopeptide) == res_map.end())
-                            {
-                                SearchResult best;
-                                best.set_scan(spectrum_.Scan());
-                                best.set_glycan(composite);
-                                best.set_sequence(peptide);
-                                res_map[glycopeptide] = best;
-                            }
-                            
-                            SearchResult& best = res_map[glycopeptide];
-                            best.set_site(pos_it.first);
-                            best.Add(oxonium, SearchType::Oxonium);
-                            best.Add(pos_it.second, SearchType::Peptide);
-                            best.Add(result_core[isomer], SearchType::Core);
-                            best.Add(result_branch[isomer], SearchType::Branch);
-                            best.Add(result_terminal[isomer], SearchType::Terminal);
-                            double matched = (oxonium_matched + matched_position[pos_it.first]
-                                +  matched_isomer[isomer] + 0.0) / peak_size;
-                            best.Add(matched, SearchType::Matches);
-                        }
-                    }
-                }
+                collector.Update(spectrum_.Scan(), peptide, composite);
             }
         }
-        if (res_map.empty())
-            return res;
+        if (collector.Empty())
+            return collector.Result();
             
         // compute precursor differ
         double precursor_mass = 
             util::mass::SpectrumMass::Compute(spectrum_.PrecursorMZ(), spectrum_.PrecursorCharge());
-        for(auto& it : res_map)
-        {
-            SearchResult best = it.second;
-            double mass = util::mass::PeptideMass::Compute(best.Sequence())
-                + util::mass::GlycanMass::Compute(model::glycan::Glycan::Interpret(best.Glycan()));
-            
-            double ppm = kPPM;
-            for (int i = 0; i <= isotopic_; i ++)
-            {
-                double isotopic_mass = util::mass::SpectrumMass::kIon * i + mass;
-                double isotopic_ppm = util::mass::SpectrumMass::ComputePPM(isotopic_mass, precursor_mass);
-                ppm = (ppm <= isotopic_ppm) ? ppm : isotopic_ppm;
-            }
-            double ratio = 1.0 - ppm / kPPM;
-            it.second.Add(ratio, SearchType::Precursor);
-        }
+        collector.PrecursorCollect(precursor_mass, isotopic_);
         
         // save 
-        for(const auto& it : res_map)
-        {
-            res.push_back(it.second);
-        }
-        return res;   
+        return collector.BestResult();   
     }
 
 protected:
@@ -369,7 +284,6 @@ protected:
 
     engine::glycan::GlycanStore glycan_isomer_;
     engine::glycan::GlycanMassStore glycan_core_, glycan_branch_, glycan_terminal_;
-    const double kPPM = 50.0;
 
     const std::vector<double> oxonium_ 
     {

@@ -11,12 +11,7 @@ TEST_CASES_2 := protein_test search_test glycan_builder_test search_engine_test 
 
 search:
 	$(CC) $(CPPFLAGS) -o searching \
-	apps/search/searching.cpp model/glycan/nglycan_complex.cpp lib/svm.cpp $(LIB)
-
-search_svm:
-	$(CC) $(CPPFLAGS) -o svm_searching \
-	apps/search/searching_svm.cpp model/glycan/nglycan_complex.cpp lib/svm.cpp $(LIB)
-
+	apps/search/searching.cpp model/glycan/nglycan_complex.cpp $(LIB)
 
 # app
 clustering:

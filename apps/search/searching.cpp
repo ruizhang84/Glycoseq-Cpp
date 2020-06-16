@@ -237,12 +237,6 @@ SearchParameter GetParameter(const struct arguments& arguments)
         engine::search::SearchType::Oxonium);
     parameter.set_search_weight(arguments.peptide_w,
         engine::search::SearchType::Peptide);
-    parameter.set_search_weight(arguments.match_w,
-        engine::search::SearchType::Matches);
-    parameter.set_search_weight(arguments.precursor_w,
-        engine::search::SearchType::Precursor);
-    parameter.set_search_weight(arguments.coelution_w,
-        engine::search::SearchType::Coelution);
 
     std::string protease(arguments.digestion);
     for(const char& c : protease)

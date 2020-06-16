@@ -6,7 +6,6 @@
 #include "../../engine/protein/protein_digest.h"
 #include "../../engine/protein/protein_ptm.h"
 #include "../../engine/search/search_result.h"
-#include "../../engine/analysis/svm_analyzer.h"
 #include "../../engine/score/scorer.h"
 
 // generate peptides by digestion
@@ -61,76 +60,6 @@ void ScoringWorker(
     {
         double score = scorer.ComputeScore(it);
         it.set_score(score);
-    }
-
-    // compute coelution of peptide sequence
-    std::unordered_map<std::string, int> count;
-    for(auto i : results)
-    {
-        if (count.find(i.Sequence()) == count.end())
-        {
-            count[i.Sequence()] = 0;
-        }
-        count[i.Sequence()] += 1;
-    }
-    std::vector<std::unordered_map<std::string, int>> bucket_count;
-    int bucket =  50;
-    for(int i = 0; i < bucket; i ++)
-    {
-        std::unordered_map<std::string, int> temp;
-        bucket_count.push_back(temp);
-    }
-    for(auto i : results)
-    {
-        int scan = i.Scan();
-        int index = scan / 500;
-        std::unordered_map<std::string, int>& temp = bucket_count[index];
-        
-        if (temp.find(i.Sequence()) == temp.end())
-        {
-            temp[i.Sequence()] = 0;
-        }
-        temp[i.Sequence()] += 1;
-    }
-    for(auto& it : results)
-    {
-        std::string s = it.Sequence();
-        int scan = it.Scan();
-        int index = scan / 500;
-        int counts = bucket_count[index][s];
-        if (index > 0)
-        {
-            std::unordered_map<std::string, int> temp = bucket_count[index-1];
-            if (temp.find(s) != temp.end())
-                counts += temp[s];
-        }
-
-        std::unordered_map<std::string, int> temp = bucket_count[index+1];
-        if (temp.find(s) != temp.end())
-            counts += temp[s];
-          
-        
-        double score = counts * 1.0 / count[s];
-        it.set_score(it.Score() + score);
-    }
-}
-
-void SVMScoringWorker(
-    std::vector<engine::search::SearchResult>& results,
-    engine::analysis::SVMAnalyzer& analyzer)
-{
-    for(auto& it : results)
-    {
-        int match = analyzer.Predicting(it);
-        std::vector<double> prob = analyzer.PredictingProbability(it);
-        if(match > 0)
-        {
-            it.set_score(std::max(prob[0], prob[1]));
-        }
-        else
-        {
-            it.set_score(std::min(prob[0], prob[1]));
-        }        
     }
 }
 

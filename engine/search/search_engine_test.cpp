@@ -18,7 +18,7 @@ namespace search {
 BOOST_AUTO_TEST_CASE( search_engine_test ) 
 {
     // read spectrum
-    std::string path = "/home/yu/Documents/MultiGlycan-Cpp/data/test_EThcD.mgf";
+    std::string path = "/home/yu/Documents/GlycoSeq-Cpp/data/test_EThcD.mgf";
     std::unique_ptr<util::io::SpectrumParser> parser = 
         std::make_unique<util::io::MGFParser>(path, util::io::SpectrumType::EThcD);
     util::io::SpectrumReader spectrum_reader(path, std::move(parser));
@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
     BOOST_CHECK(spec.Peaks().front().Intensity() < 1);
 
     // read fasta and build peptides
-    util::io::FASTAReader fasta_reader("/home/yu/Documents/MultiGlycan-Cpp/data/haptoglobin.fasta");
+    util::io::FASTAReader fasta_reader("/home/yu/Documents/GlycoSeq-Cpp/data/haptoglobin.fasta");
     std::vector<model::protein::Protein> proteins = fasta_reader.Read();
  
     engine::protein::Digestion digest;
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
     std::vector<std::string> glycans_str = builder->Isomer().Collection();
     precursor_runner.Init(peptides, glycans_str);
 
-    SpectrumSearcher spectrum_runner(ms2_tol, ms2_by, builder.get());
+    SpectrumSearcher spectrum_runner(ms2_tol, ms2_by, 2, builder.get());
     spectrum_runner.Init();
 
     auto special_spec = spectrum_reader.GetSpectrum(special_scan);
@@ -115,23 +115,6 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
 
 
     // compute score
-    std::unordered_map<SearchType, double> parameter 
-    {
-        {SearchType::Core, 1.0}, {SearchType::Branch, 1.0}, {SearchType::Terminal, 1.0},
-        {SearchType::Peptide, 1.0}, {SearchType::Oxonium, 1.0},
-    };
-
-    // SimpleScorer scorer(parameter);
-    // for(auto it : special_res)
-    // {
-    //     std::cout << it.Glycan() << std::endl;
-    //     std::cout << it.Sequence() << std::endl;
-    //     for(auto i : it.Match())
-    //     {
-    //         std::cout << i.second << std::endl;
-    //     }
-    //     std::cout << scorer.ComputeScore(it) << std::endl;
-    // }
     BOOST_CHECK(!special_res.empty());
     auto stop = std::chrono::high_resolution_clock::now(); 
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start); 
