@@ -62,14 +62,16 @@ public:
         SearchInit();
         ResultCollector collector;
 
+        collector.OxoniumCollect(SearchOxonium());
+        if (collector.OxoniumMiss()) 
+            return collector.Result();
+
+        collector.SpectrumBase(spectrum_.Peaks());
         for(const auto& peptide : candidate_.Peptides())
         {
-            collector.InitCollect();
-            collector.OxoniumCollect(SearchOxonium());
-            if (collector.OxoniumMiss()) continue;
-
             for(const auto& composite: candidate_.Glycans(peptide))
             {
+                collector.InitCollect();
                 for (const auto& pos : engine::protein::ProteinPTM::FindNGlycanSite(peptide))
                 {
                    collector.PeptideCollect(SearchPeptides(peptide, composite, pos), pos);
@@ -87,7 +89,8 @@ public:
                     collector.GlycanCollect(SearchGlycans(peptide, isomer, glycan_terminal_), 
                         isomer, SearchType::Terminal);
                 }
-
+                if (collector.GlycanMiss()) continue;
+                
                 collector.BestUpdate(spectrum_.Scan(), peptide, composite);
             }
         }

@@ -2,6 +2,7 @@
 #define ENGINE_SCORE_SCORER_H
 
 #include "../search/search_result.h"
+#include "../../util/io/spectrum_reader.h"
 
 namespace engine{
 namespace score {
@@ -10,7 +11,7 @@ class SimpleScorer
 {
 public:
     SimpleScorer(){}
-    virtual double ComputeScore(const engine::search::SearchResult& result)
+    double ComputeScore(const engine::search::SearchResult& result)
     {
         return result.Score();
     }
