@@ -22,6 +22,7 @@
 #include "../../engine/search/spectrum_search.h"
 #include "../../engine/search/search_result.h"
 #include "../../engine/score/fdr_filter.h"
+#include "../../engine/analysis/multi_comparison.h"
 
 
 const char *argp_program_version =
@@ -231,15 +232,10 @@ int main(int argc, char *argv[])
     std::vector<std::string> peptides, decoy_peptides;
     std::unordered_set<std::string> seqs = PeptidesDigestion(fasta_path, parameter);
     peptides.insert(peptides.end(), seqs.begin(), seqs.end());
-    for(const auto& s : seqs)
-    {
-        std::string decoy_s(s);
-        std::reverse(decoy_s.begin(), decoy_s.end());
-        decoy_peptides.push_back(decoy_s);
-    }
-    // std::unordered_set<std::string> decoy_seqs =
-    //     PeptidesDigestion("/home/yu/Documents/GlycoSeq-Cpp/data/titin.fasta", parameter);
-    // decoy_peptides.insert(decoy_peptides.end(), decoy_seqs.begin(), decoy_seqs.end());
+   
+    std::unordered_set<std::string> decoy_seqs =
+        PeptidesDigestion("/home/yu/Documents/GlycoSeq-Cpp/data/titin.fasta", parameter);
+    decoy_peptides.insert(decoy_peptides.end(), decoy_seqs.begin(), decoy_seqs.end());
     
    
     // // build glycans
@@ -269,12 +265,10 @@ int main(int argc, char *argv[])
 
     std::cout << "target:" << targets.size() <<" " << decoys.size() << std::endl;
 
-    // fdr filtering
-    engine::score::FDRFilter fdr_runner(parameter.fdr_rate);
-    fdr_runner.set_data(targets, decoys);
-    fdr_runner.Init();
 
-    std::vector<engine::search::SearchResult> results = fdr_runner.Filter();
+    // compute p value
+    engine::analysis::MultiComparison tester(parameter.fdr_rate);
+    std::vector<engine::search::SearchResult> results = tester.Tests(targets, decoys);
 
     // output analysis results
     ReportResults(out_path, results);

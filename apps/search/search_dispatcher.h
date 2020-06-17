@@ -80,7 +80,23 @@ public:
         std::vector< std::thread> thread_pool;
         for (int i = 0; i < parameter_.n_thread; i ++)
         {
-            std::thread worker(&SearchDispatcher::SearchingWorker, this, std::ref(results));
+            std::thread worker(&SearchDispatcher::SearchingWorker, this, std::ref(results), false);
+            thread_pool.push_back(std::move(worker));
+        }
+        for (auto& worker : thread_pool)
+        {
+            worker.join();
+        }
+        return results;
+    }
+
+    std::vector<engine::search::SearchResult> DecoyDispatch()
+    {
+        std::vector<engine::search::SearchResult> results;
+        std::vector< std::thread> thread_pool;
+        for (int i = 0; i < parameter_.n_thread; i ++)
+        {
+            std::thread worker(&SearchDispatcher::SearchingWorker, this, std::ref(results), true);
             thread_pool.push_back(std::move(worker));
         }
         for (auto& worker : thread_pool)
@@ -92,12 +108,12 @@ public:
 
 protected:
     void SearchingWorker(
-        std::vector<engine::search::SearchResult>& results)
+        std::vector<engine::search::SearchResult>& results, bool decoy_search)
     {
         engine::search::PrecursorMatcher precursor_runner
             (parameter_.ms1_tol, parameter_.ms1_by, builder_->Isomer());
         engine::search::SpectrumSearcher spectrum_runner
-            (parameter_.ms2_tol, parameter_.ms2_by, parameter_.isotopic_count, builder_);
+            (parameter_.ms2_tol, parameter_.ms2_by, parameter_.isotopic_count, builder_, decoy_search);
         std::vector<std::string> glycans_str = builder_->Isomer().Collection();
         precursor_runner.Init(peptides_, glycans_str);
         spectrum_runner.Init();

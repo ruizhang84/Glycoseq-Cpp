@@ -6,7 +6,7 @@
 #include "../../engine/protein/protein_digest.h"
 #include "../../engine/protein/protein_ptm.h"
 #include "../../engine/search/search_result.h"
-#include "../../engine/score/scorer.h"
+#include "../../engine/score/extra_scorer.h"
 
 // generate peptides by digestion
 std::unordered_set<std::string> PeptidesDigestion
@@ -53,12 +53,8 @@ std::unordered_set<std::string> PeptidesDigestion
 // assign score to searching results
 void ScoringWorker(std::vector<engine::search::SearchResult>& results)
 {
-    engine::score::SimpleScorer scorer;
-    for(auto& it : results)
-    {
-        double score = scorer.ComputeScore(it);
-        it.set_score(score);
-    }
+    engine::score::ExtraScorer scorer;
+    scorer.UpdateScore(results);
 }
 
 // report glycopeptide identification of spectrum

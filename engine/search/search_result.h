@@ -14,7 +14,7 @@ namespace engine{
 namespace search{
 
 enum class SearchType { Core, Branch, Terminal, Oxonium, Peptide };
-enum class ScoreType { Precursor };
+enum class ScoreType { Precursor, Elution };
 
 class SearchResult
 {
@@ -108,13 +108,19 @@ public:
                 max_score = score;
             }
         }
+        // update extra
+        for (auto& it : best_rest)
+        {
+            double score = SearchResult::PrecursorValue(
+                it.Sequence(), it.Glycan(), precursor_mass_, isotopic_);
+            it.set_extra(score, ScoreType::Precursor);
+        }
         // pick tie by extra
         std::vector<SearchResult> res;
         max_score = 0;
         for (const auto& it : best_rest)
         {
-            double score = SearchResult::PrecursorValue(
-                it.Sequence(), it.Glycan(), precursor_mass_, isotopic_);
+            double score = it.ExtraScore(ScoreType::Precursor);
             if (score >= max_score){
                 if (score > max_score){
                     res.clear();

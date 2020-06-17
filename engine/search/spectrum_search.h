@@ -29,8 +29,8 @@ class SpectrumSearcher
 {
 public:
     SpectrumSearcher(const double tol, const algorithm::search::ToleranceBy by, int isotope,
-        engine::glycan::NGlycanBuilder* builder):
-            tolerance_(tol), by_(by), isotopic_(isotope), builder_(builder),
+        engine::glycan::NGlycanBuilder* builder, bool decoy_search):
+            tolerance_(tol), by_(by), isotopic_(isotope), builder_(builder), decoy_search_(decoy_search),
                 searcher_(algorithm::search::BucketSearch<model::spectrum::Peak>(tol, by)),
                 binary_(algorithm::search::BinarySearch(tol, by)){}
 
@@ -93,7 +93,10 @@ public:
                 }
                 if (collector.GlycanMiss()) continue;
                           
-                collector.BestUpdate(spectrum_.Scan(), peptide, composite);
+                if (decoy_search_)
+                    collector.Update(spectrum_.Scan(), peptide, composite);
+                else
+                    collector.BestUpdate(spectrum_.Scan(), peptide, composite);
             }
         }
         if (collector.Empty())
@@ -105,6 +108,8 @@ public:
         collector.PrecursorCollect(precursor_mass, isotopic_);
         
         // save 
+        if (decoy_search_)
+            return collector.Result();
         return collector.BestResult();   
     }
 
@@ -280,6 +285,7 @@ protected:
     algorithm::search::ToleranceBy by_;
     int isotopic_; // up to isotopic
     engine::glycan::NGlycanBuilder* builder_;
+    bool decoy_search_;
     algorithm::search::BucketSearch<model::spectrum::Peak> searcher_;
     algorithm::search::BinarySearch binary_;
     MatchResultStore candidate_;
