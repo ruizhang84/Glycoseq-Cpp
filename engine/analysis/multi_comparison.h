@@ -2,8 +2,10 @@
 #define ENGINE_ANALYSIS_MULTI_COMPARISON_H
 
 #include <algorithm>
-#include  "../search/search_result.h"
+#include<numeric>
 #include <boost/math/distributions/normal.hpp>
+#include  "../search/search_result.h"
+
 using boost::math::normal_distribution;
 
 namespace engine{
@@ -20,6 +22,7 @@ public:
     {
         std::vector<engine::search::SearchResult> results;
 
+         // get score lists of each spectrum
         std::map<int, std::vector<double>> v;
         for(const auto& it : decoys)
         {
@@ -31,48 +34,55 @@ public:
             v[i].push_back(it.Score());
         }
 
+        // compute p value
+        std::vector<engine::search::SearchResult> results;
         std::map<int, engine::search::SearchResult> s_results;
-        std::map<int, double> s_v;
+        std::map<int, double> p_v;
         for(const auto& it : targets)
         {
-            if (v.find(it.Scan()) == v.end())
+            if (v.find(it.Scan()) == v.end()) // no decoys find
             {
                 results.push_back(it);
             }
             else
             {
-                std::vector<double> score_list = v[it.Scan()];
+                std::vector<double>& score_list = v[it.Scan()];
                 double avg = mean(score_list);
                 if (avg > it.Score()) continue;
 
                 double p = pValue(score_list, it.Score());
 
-                s_v[it.Scan()] = p;
+                p_v[it.Scan()] = p;
                 s_results[it.Scan()] = it;
             }
         }
+        // sort
         std::vector<double> p_values;
-        for(const auto& it : s_v)
+        for(const auto& it : p_v)
         {
             p_values.push_back(it.second);
         }
-
         std::sort(p_values.begin(), p_values.end());
-        std::map<int, double> r_s_v;
+        // find significant 
         int size = (int) p_values.size();
-        double c = 0;
-        for(int i = 1; i <= size; i ++)
-        {
-            c += 1.0 /i;
-        }
-        for(const auto& it : s_v)
+        double max_p = 0;
+        for(const auto& it : p_v)
         {
             double p = it.second;
             
             auto i = std::find(p_values.begin(), p_values.end(), p);
             int d = std::distance(p_values.begin(), i);
-            double r_p = d * p * 1.0 / size / c;
-            if (r_p < fdr_)
+            double r_p = d / size * fdr_;
+            if (r_p  >= p)
+            {
+                max_p = std::max(max_p, p);
+            }
+        }
+
+        for(const auto& it : p_v)
+        {
+            double p = it.second;
+            if (max_p  >= p)
             {
                 results.push_back(s_results[it.first]);
             }
@@ -84,25 +94,26 @@ protected:
 
     static double mean(std::vector<double> v)
     {
-        int i = 0;
-        double m = 0;
-        for(auto it : v)
+        int size = (int) v.size();
+        double sum = 0;
+        for(const auto& it : v)
         {
-            m += it; ++i;
+            sum += it;
         }
-        return m * 1.0 / i;
+        return sum * 1.0 / size;
     }
 
     static double stdv(std::vector<double> v)
     {
-        int i = 0;
+        
         double m = 0;
         double avg = mean(v);
-        for(auto it : v)
+        int size = (int) v.size();
+        for(const auto& it : v)
         {
-            m += (it - avg) * (it - avg); ++i;
+            m += (it - avg) * (it - avg);
         }
-        return std::sqrt( m * 1.0/ i);
+        return std::sqrt( m * 1.0 / size);
     }
 
     static double pValue(std::vector<double> v, double q)
