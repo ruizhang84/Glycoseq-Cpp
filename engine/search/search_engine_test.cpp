@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
 
 
     // spectrum matching
-    int special_scan = 2742; // 8729, 8778
+    int special_scan = 7423; // 2742; // 8729, 8778
     double ms1_tol = 10, ms2_tol = 0.01;
     int isotopic_count = 2;
     algorithm::search::ToleranceBy ms1_by = algorithm::search::ToleranceBy::PPM;
@@ -113,6 +113,12 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
     spectrum_runner.set_spectrum(special_spec);
     std::vector<SearchResult> special_res = spectrum_runner.Search();
 
+    for (const auto& it : special_res)
+    {
+        std::cout << it.Sequence() << std::endl;
+        std::cout << it.Glycan() << std::endl;
+        std::cout << it.Score() << std::endl;
+    }
 
     // compute score
     BOOST_CHECK(!special_res.empty());

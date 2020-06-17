@@ -77,6 +77,7 @@ public:
                    collector.PeptideCollect(SearchPeptides(peptide, composite, pos), pos);
                 }
                 if (collector.PeptideMiss()) continue;
+                        
 
                 std::unordered_map<std::string, double> result_core, result_branch, result_terminal;
                 for(const auto & isomer : glycan_isomer_.Query(composite))
@@ -84,13 +85,14 @@ public:
                     collector.GlycanCollect(SearchGlycans(peptide, isomer, glycan_core_), 
                         isomer, SearchType::Core);
                     if (collector.GlycanMiss(isomer)) continue;
+
                     collector.GlycanCollect(SearchGlycans(peptide, isomer, glycan_branch_), 
                         isomer, SearchType::Branch);
                     collector.GlycanCollect(SearchGlycans(peptide, isomer, glycan_terminal_), 
                         isomer, SearchType::Terminal);
                 }
                 if (collector.GlycanMiss()) continue;
-                
+                          
                 collector.BestUpdate(spectrum_.Scan(), peptide, composite);
             }
         }

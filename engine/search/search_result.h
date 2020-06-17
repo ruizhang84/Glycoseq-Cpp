@@ -94,28 +94,65 @@ public:
     }
     std::vector<SearchResult> BestResult()
     {
-        // update extra precursor score
-        for(auto& it : results_)
-        {
-            it.set_extra(SearchResult::PrecursorValue(it.Sequence(), it.Glycan(), 
-                precursor_mass_, isotopic_), ScoreType::Precursor);
-        }
         // max score
-        std::vector<SearchResult> res;
+        std::vector<SearchResult> best_rest;
         double max_score = 0;
         for (const auto& it : results_)
         {
-            double score = it.Score() + it.ExtraScore(ScoreType::Precursor);
+            double score = it.Score();
+            if (score >= max_score){
+                if (score > max_score){
+                    best_rest.clear();
+                }
+                best_rest.push_back(it);
+                max_score = score;
+            }
+        }
+        // pick tie by extra
+        std::vector<SearchResult> res;
+        max_score = 0;
+        for (const auto& it : best_rest)
+        {
+            double score = SearchResult::PrecursorValue(
+                it.Sequence(), it.Glycan(), precursor_mass_, isotopic_);
             if (score >= max_score){
                 if (score > max_score){
                     res.clear();
-                }
+                } 
                 res.push_back(it);
                 max_score = score;
             }
         }
         return res;
     }
+    void Update(int scan, const std::string& sequence, const std::string& composite)
+    {
+        for(const auto& pos_it : peptide_)
+        {
+            // compute score
+            double score = ComputeScore(pos_it.second);
+            // emplace results
+            Emplace(scan, sequence, composite, pos_it.first, score);
+        }
+    }
+
+    void BestUpdate(int scan, const std::string& sequence, const std::string& composite)
+    {
+        for(const auto& pos_it : peptide_)
+        {
+            // compute score
+            double score = ComputeScore(pos_it.second);
+            if (score >= best_)
+            {
+                if (score > best_)
+                    results_.clear();
+                best_ = score;
+                // emplace results
+                Emplace(scan, sequence, composite, pos_it.first, score);
+            }
+        }
+    }
+    
     void SpectrumBase(const std::vector<model::spectrum::Peak>& spectrum_peaks)
     {
         spectrum_ = SearchResult::PeakValue(spectrum_peaks);
@@ -178,33 +215,6 @@ public:
         return glycan_core_.empty();
     }
     bool Empty() { return results_.empty(); }
-    void Update(int scan, const std::string& sequence, const std::string& composite)
-    {
-        for(const auto& pos_it : peptide_)
-        {
-            // compute score
-            double score = ComputeScore(pos_it.second);
-            // emplace results
-            Emplace(scan, sequence, composite, pos_it.first, score);
-        }
-    }
-
-    void BestUpdate(int scan, const std::string& sequence, const std::string& composite)
-    {
-        for(const auto& pos_it : peptide_)
-        {
-            // compute score
-            double score = ComputeScore(pos_it.second);
-            if (score >= best_)
-            {
-                if (score > best_)
-                    results_.clear();
-                best_ = score;
-                // emplace results
-                Emplace(scan, sequence, composite, pos_it.first, score);
-            }
-        }
-    }
 
 protected:
     double ComputeScore(double peptide_score)
@@ -234,7 +244,7 @@ protected:
     }
 
     const int max_hits = 20;
-    double best_ = 0;
+    double best_;
     double spectrum_;
     double oxonium_;
     std::unordered_map<int, double> peptide_;
