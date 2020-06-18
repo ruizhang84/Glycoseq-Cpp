@@ -35,7 +35,6 @@ public:
         }
 
         // compute p value
-        std::vector<engine::search::SearchResult> results;
         std::map<int, engine::search::SearchResult> s_results;
         std::map<int, double> p_v;
         for(const auto& it : targets)
@@ -56,6 +55,7 @@ public:
                 s_results[it.Scan()] = it;
             }
         }
+
         // sort
         std::vector<double> p_values;
         for(const auto& it : p_v)
@@ -87,6 +87,7 @@ public:
                 results.push_back(s_results[it.first]);
             }
         }
+        return results;
     }
 
 protected:
@@ -127,6 +128,5 @@ protected:
 
 }
 }
-
 
 #endif
