@@ -36,6 +36,7 @@ static char doc[] =
 static struct argp_option options[] = {
     {"spath", 'i',    "spectrum.mgf",  0,  "mgf, Spectrum MS/MS Input Path" },
     {"fpath", 'f',    "protein.fasta",  0,  "fasta, Protein Sequence Input Path" },
+    {"gpath", 'g',    "decoy.fasta",  0,  "fasta, Protein Sequence for Decoy" },
     {"output",    'o',    "result.csv",   0,  "csv, Results Output Path" },
     {"pthread",   'p',  "6",  0,  "Number of Searching Threads" },
     {"digestion",   'd',  "TG",  0,  "The Digestion, Trypsin (T), Pepsin (P), Chymotrypsin (C), GluC (G)" }, 
@@ -57,6 +58,8 @@ static std::string default_spectra_path =
         "/home/yu/Documents/GlycoSeq-Cpp/data/ZC_20171218_H95_R1.mgf";
 static std::string default_fasta_path = 
         "/home/yu/Documents/GlycoSeq-Cpp/data/haptoglobin.fasta";
+static std::string default_decoy_path = 
+        "/home/yu/Documents/GlycoSeq-Cpp/data/tintin.fasta";
 static std::string default_out_path = "result.csv";
 static std::string default_digestion = "TG";
 
@@ -64,6 +67,7 @@ struct arguments
 {
     char * spectra_path = const_cast<char*> (default_spectra_path.c_str());
     char * fasta_path = const_cast<char*> (default_fasta_path.c_str());
+    char * decoy_path = const_cast<char*> (default_decoy_path.c_str());
     char * out_path = const_cast<char*> (default_out_path.c_str());
     //digestion
     int miss_cleavage = 2;
@@ -103,6 +107,10 @@ parse_opt (int key, char *arg, struct argp_state *state)
 
     case 'f':
         arguments->fasta_path = arg;
+        break;
+
+    case 'g':
+        arguments->decoy_path = arg;
         break;
 
     case 'i':
@@ -218,7 +226,8 @@ int main(int argc, char *argv[])
     argp_parse (&argp, argc, argv, 0, 0, &arguments);
     std::string spectra_path(arguments.spectra_path) ;
     std::string fasta_path(arguments.fasta_path);
-    std::string out_path(arguments.out_path) ;
+    std::string decoy_path(arguments.decoy_path); 
+    std::string out_path(arguments.out_path);
     SearchParameter parameter = GetParameter(arguments);
 
     // read spectrum
@@ -232,9 +241,7 @@ int main(int argc, char *argv[])
     std::vector<std::string> peptides, decoy_peptides;
     std::unordered_set<std::string> seqs = PeptidesDigestion(fasta_path, parameter);
     peptides.insert(peptides.end(), seqs.begin(), seqs.end());
-   
-    std::unordered_set<std::string> decoy_seqs =
-        PeptidesDigestion("/home/yu/Documents/GlycoSeq-Cpp/data/titin.fasta", parameter);
+    std::unordered_set<std::string> decoy_seqs = PeptidesDigestion(decoy_path, parameter);
     decoy_peptides.insert(decoy_peptides.end(), decoy_seqs.begin(), decoy_seqs.end());
     
    
