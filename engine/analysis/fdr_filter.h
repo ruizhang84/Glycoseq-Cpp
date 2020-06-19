@@ -1,5 +1,5 @@
-#ifndef ENGINE_SCORE_FDR_FILTER_H
-#define ENGINE_SCORE_FDR_FILTER_H
+#ifndef ENGINE_ANALYSIS_FDR_FILTER_H
+#define ENGINE_ANALYSIS_FDR_FILTER_H
 
 #include <vector>
 #include <algorithm>
@@ -7,7 +7,7 @@
 
 
 namespace engine {
-namespace score {
+namespace analysis {
 
 class FDRFilter
 {
@@ -103,7 +103,7 @@ protected:
 
 };
 
-} // namespace score
+} // namespace analysis
 } // namespace engine 
 
 #endif

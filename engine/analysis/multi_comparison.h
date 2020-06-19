@@ -2,7 +2,7 @@
 #define ENGINE_ANALYSIS_MULTI_COMPARISON_H
 
 #include <algorithm>
-#include<numeric>
+#include <numeric>
 #include <boost/math/distributions/normal.hpp>
 #include  "../search/search_result.h"
 
@@ -87,6 +87,8 @@ public:
                 results.push_back(s_results[it.first]);
             }
         }
+        if (!results.empty())
+            std::sort(results.begin(), results.end(), OrderByScan);
         return results;
     }
 
@@ -124,6 +126,8 @@ protected:
         return 0.5 * erfc( (q-m) * 1.0 / (s * std::sqrt(2)) );
     }
 
+    static bool OrderByScan(const engine::search::SearchResult& r1, const engine::search::SearchResult& r2)
+        { return r1.Scan() < r2.Scan(); }
 };
 
 }
