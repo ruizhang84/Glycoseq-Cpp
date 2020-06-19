@@ -30,7 +30,7 @@ int main(int argc, char *argv[]){
     int cluster_num = 100;
     int thread = 5;
     double cosine = 0.8;
-    path = "/home/yu/Documents/MultiGlycan-Cpp/data/test_EThcD.mgf";
+    path = "/home/yu/Documents/GlycoSeq-Cpp/data/ZC_20171218_H68_R1.mgf";
     out_path = "cluster.txt";
 
     // pharser parameter
