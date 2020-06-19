@@ -78,15 +78,16 @@ int main(int argc, char *argv[]){
                     << "-t [tolerance] -l [lower_bound] -u [upper_bound] \n"
                     << "-K [hash_function_num] -L [iterations] -s [cosine] \n" 
                     << "-p [thread_num] " << std::endl; 
-                break;
+                return 1;
             case ':':  
-                std::cout << "option needs a value" << std::endl; 
-                break;  
+                std::cout << "option needs a value" << std::endl;  
+                return 1;
             case '?':  
                 std::cout << "unknown option " << std::endl; 
-                break;  
+                return 1;
             default: 
                 std::cout <<"-h for help" << std::endl;
+                return 1;
         }
 
     // read spectrum
