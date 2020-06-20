@@ -240,9 +240,14 @@ int main(int argc, char *argv[])
     std::vector<std::string> peptides, decoy_peptides;
     std::unordered_set<std::string> seqs = PeptidesDigestion(fasta_path, parameter);
     peptides.insert(peptides.end(), seqs.begin(), seqs.end());
-    std::unordered_set<std::string> decoy_seqs = PeptidesDigestion(decoy_path, parameter);
-    decoy_peptides.insert(decoy_peptides.end(), decoy_seqs.begin(), decoy_seqs.end());
-    
+    // std::unordered_set<std::string> decoy_seqs = PeptidesDigestion(decoy_path, parameter);
+    // decoy_peptides.insert(decoy_peptides.end(), decoy_seqs.begin(), decoy_seqs.end());
+    for(const auto& s : seqs)
+    {
+        std::string decoy_s(s);
+        std::reverse(decoy_s.begin(), decoy_s.end());
+        decoy_peptides.push_back(decoy_s);
+    }
    
     // // build glycans
     std::unique_ptr<engine::glycan::NGlycanBuilder> builder =
