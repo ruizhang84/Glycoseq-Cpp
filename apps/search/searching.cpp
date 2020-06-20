@@ -58,7 +58,7 @@ static std::string default_spectra_path =
 static std::string default_fasta_path = 
         "/home/yu/Documents/GlycoSeq-Cpp/data/haptoglobin.fasta";
 static std::string default_decoy_path = 
-        "/home/yu/Documents/GlycoSeq-Cpp/data/tintin.fasta";
+        "/home/yu/Documents/GlycoSeq-Cpp/data/titin.fasta";
 static std::string default_out_path = "result.csv";
 static std::string default_digestion = "TG";
 
@@ -270,7 +270,6 @@ int main(int argc, char *argv[])
     scorer_second.join();
 
     std::cout << "target:" << targets.size() <<" " << decoys.size() << std::endl;
-
 
     // compute p value
     engine::analysis::MultiComparison tester(parameter.fdr_rate);

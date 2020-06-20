@@ -17,8 +17,8 @@ public:
         UpdateElutionScore(results);
         for(auto& it : results)
         {
-            double score = it.Score() *
-                it.ExtraScore(engine::search::ScoreType::Elution);
+            double score = it.Score(); //+
+                // it.ExtraScore(engine::search::ScoreType::Elution);
             it.set_score(score);
         }
     }
