@@ -35,7 +35,7 @@ static char doc[] =
 static struct argp_option options[] = {
     {"spath", 'i',    "spectrum.mgf",  0,  "mgf, Spectrum MS/MS Input Path" },
     {"fpath", 'f',    "protein.fasta",  0,  "fasta, Protein Sequence Input Path" },
-    {"gpath", 'g',    "decoy.fasta",  0,  "fasta, Protein Sequence for Decoy" },
+    {"gpath", 'g',    "",  0,  "fasta, Protein Sequence for Decoy" },
     {"output",    'o',    "result.csv",   0,  "csv, Results Output Path" },
     {"pthread",   'p',  "6",  0,  "Number of Searching Threads" },
     {"digestion",   'd',  "TG",  0,  "The Digestion, Trypsin (T), Pepsin (P), Chymotrypsin (C), GluC (G)" }, 
@@ -66,8 +66,10 @@ struct arguments
 {
     char * spectra_path = const_cast<char*> (default_spectra_path.c_str());
     char * fasta_path = const_cast<char*> (default_fasta_path.c_str());
-    char * decoy_path = const_cast<char*> (default_decoy_path.c_str());
     char * out_path = const_cast<char*> (default_out_path.c_str());
+    // decoy
+    bool decoy_set = false;
+    char * decoy_path = const_cast<char*> (default_decoy_path.c_str());
     //digestion
     int miss_cleavage = 2;
     char * digestion = const_cast<char*> (default_digestion.c_str());
@@ -109,6 +111,7 @@ parse_opt (int key, char *arg, struct argp_state *state)
         break;
 
     case 'g':
+        arguments->decoy_set = true;
         arguments->decoy_path = arg;
         break;
 
@@ -240,13 +243,19 @@ int main(int argc, char *argv[])
     std::vector<std::string> peptides, decoy_peptides;
     std::unordered_set<std::string> seqs = PeptidesDigestion(fasta_path, parameter);
     peptides.insert(peptides.end(), seqs.begin(), seqs.end());
-    // std::unordered_set<std::string> decoy_seqs = PeptidesDigestion(decoy_path, parameter);
-    // decoy_peptides.insert(decoy_peptides.end(), decoy_seqs.begin(), decoy_seqs.end());
-    for(const auto& s : seqs)
+    if (arguments.decoy_set)
     {
-        std::string decoy_s(s);
-        std::reverse(decoy_s.begin(), decoy_s.end());
-        decoy_peptides.push_back(decoy_s);
+        std::unordered_set<std::string> decoy_seqs = PeptidesDigestion(decoy_path, parameter);
+        decoy_peptides.insert(decoy_peptides.end(), decoy_seqs.begin(), decoy_seqs.end());
+    }
+    else
+    {
+        for(const auto& s : seqs)
+        {
+            std::string decoy_s(s);
+            std::reverse(decoy_s.begin(), decoy_s.end());
+            decoy_peptides.push_back(decoy_s);
+        }
     }
    
     // // build glycans
