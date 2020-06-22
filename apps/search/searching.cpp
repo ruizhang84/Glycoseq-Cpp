@@ -35,7 +35,7 @@ static char doc[] =
 static struct argp_option options[] = {
     {"spath", 'i',    "spectrum.mgf",  0,  "mgf, Spectrum MS/MS Input Path" },
     {"fpath", 'f',    "protein.fasta",  0,  "fasta, Protein Sequence Input Path" },
-    {"gpath", 'g',    "",  0,  "fasta, Protein Sequence for Decoy" },
+    {"gpath", 'g',    "reversed",  0,  "fasta, Protein Sequence for Decoy" },
     {"output",    'o',    "result.csv",   0,  "csv, Results Output Path" },
     {"pthread",   'p',  "6",  0,  "Number of Searching Threads" },
     {"digestion",   'd',  "TG",  0,  "The Digestion, Trypsin (T), Pepsin (P), Chymotrypsin (C), GluC (G)" }, 

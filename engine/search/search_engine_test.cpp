@@ -18,7 +18,7 @@ namespace search {
 BOOST_AUTO_TEST_CASE( search_engine_test ) 
 {
     // read spectrum
-    std::string path = "/home/yu/Documents/GlycoSeq-Cpp/data/test_EThcD.mgf";
+    std::string path = "/home/yu/Documents/GlycoSeq-Cpp/data/ZC_20171218_C22_R1.mgf";
     std::unique_ptr<util::io::SpectrumParser> parser = 
         std::make_unique<util::io::MGFParser>(path, util::io::SpectrumType::EThcD);
     util::io::SpectrumReader spectrum_reader(path, std::move(parser));
@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
 
 
     // spectrum matching
-    int special_scan = 7423; // 2742; // 8729, 8778
+    int special_scan = 7678; // 2742; // 8729, 8778
     double ms1_tol = 10, ms2_tol = 0.01;
     int isotopic_count = 2;
     algorithm::search::ToleranceBy ms1_by = algorithm::search::ToleranceBy::PPM;
@@ -85,25 +85,28 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
     std::vector<std::string> glycans_str = builder->Isomer().Collection();
     precursor_runner.Init(peptides, glycans_str);
 
-    SpectrumSearcher spectrum_runner(ms2_tol, ms2_by, 2, builder.get());
+    SpectrumSearcher spectrum_runner(ms2_tol, ms2_by, 2, builder.get(), true);
     spectrum_runner.Init();
 
     auto special_spec = spectrum_reader.GetSpectrum(special_scan);
     double special_target = util::mass::SpectrumMass::Compute(special_spec.PrecursorMZ(), special_spec.PrecursorCharge());
     MatchResultStore special_r = precursor_runner.Match(special_target, special_spec.PrecursorCharge(), isotopic_count);    
     std::cout << special_spec.Scan() << " : " << std::endl;
-    // for(auto it : special_r.Map())
-    // {
-    //     std::cout << it.first << std::endl;
-    //     for(auto g: it.second)
-    //     {
-    //         std::cout << g << std::endl;
-    //     }
-    // }
+    special_r.Add("NLFLNHSE", "GlcNAc-4-Man-3-Gal-2-NeuAc-2-");
+    for(auto it : special_r.Map())
+    {
+        std::cout << it.first << std::endl;
+        for(auto g: it.second)
+        {
+            std::cout << g << std::endl;
+        }
+    }
     BOOST_CHECK(!special_r.Empty());
     // GlcNAc-5-Man-3-Gal-3-Fuc-2-NeuAc-2-
     // MVSHHNLTTGATLINE
     // 202896
+
+    
 
     std::cout << "scan start:\n"; 
     auto start = std::chrono::high_resolution_clock::now(); 
