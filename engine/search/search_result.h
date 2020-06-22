@@ -13,7 +13,7 @@
 namespace engine{
 namespace search{
 
-enum class SearchType { Core, Branch, Terminal, Oxonium, Peptide };
+enum class SearchType { Core, Branch, Terminal, Oxonium, Peptide, Base };
 enum class ScoreType { Precursor, Elution };
 
 class SearchResult
@@ -169,6 +169,7 @@ public:
         glycan_core_.clear();
         glycan_branch_.clear();
         glycan_terminal_.clear();
+        denominator_.clear();
     }
 
     void OxoniumCollect(const std::vector<model::spectrum::Peak>& oxonium_peaks)
@@ -202,6 +203,10 @@ public:
             }
         }
     }
+    void BaseCollect(std::string isomer, double val)
+    {
+        denominator_[isomer] = val;
+    }
     void PrecursorCollect(double precursor_mass, int isotopic)
     {
         precursor_mass_ = precursor_mass;
@@ -229,11 +234,13 @@ protected:
         for(const auto& isomer_it : glycan_core_)
         {
             std::string isomer = isomer_it.first;
-            double glycan_score = glycan_core_[isomer] + glycan_branch_[isomer] + glycan_terminal_[isomer]; 
+            double glycan_score = glycan_core_[isomer] + glycan_branch_[isomer] + glycan_terminal_[isomer] 
+                + peptide_score + oxonium_; 
+            glycan_score = glycan_score / std::sqrt(denominator_[isomer]);
             score = std::max(score, glycan_score);  
         }
-        score += peptide_score + oxonium_;
-        score = std::sqrt(score) * 1.0 / std::sqrt(spectrum_);
+        // score += peptide_score + oxonium_;
+        score = score * 1.0 / std::sqrt(spectrum_);
         return score;
     }
 
@@ -254,7 +261,7 @@ protected:
     double spectrum_;
     double oxonium_;
     std::unordered_map<int, double> peptide_;
-    std::unordered_map<std::string, double> glycan_core_, glycan_branch_, glycan_terminal_;
+    std::unordered_map<std::string, double> glycan_core_, glycan_branch_, glycan_terminal_, denominator_;
     double precursor_mass_; 
     int isotopic_;
     std::vector<SearchResult> results_;
