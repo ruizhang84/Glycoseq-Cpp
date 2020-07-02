@@ -54,7 +54,7 @@ static struct argp_option options[] = {
 };
 
 static std::string default_spectra_path = 
-        "/home/yu/Documents/GlycoSeq-Cpp/data/ZC_20171218_H96_R1.mgf";
+        "/home/yu/Documents/GlycoSeq-Cpp/data/ZC_20171218_C16_R1.mgf";
 static std::string default_fasta_path = 
         "/home/yu/Documents/GlycoSeq-Cpp/data/haptoglobin.fasta";
 static std::string default_decoy_path = 

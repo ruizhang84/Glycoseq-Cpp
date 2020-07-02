@@ -68,7 +68,9 @@ public:
             if (count.find(s) != count.end())
                 counts += count[s];
  
+ 
             double score = counts * 1.0 / total[s];
+            score = score > kLimit ? 1.0 : score;
             it.set_extra(score, engine::search::ScoreType::Elution);
         }
     }
@@ -76,6 +78,7 @@ public:
 
 protected:
     const int kRange = 30;
+    const int kLimit = 0.8;
     int Index(int scan, int start, int end)
     {
         return (scan - start) * kRange / (end + 1- start);

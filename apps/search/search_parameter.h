@@ -26,7 +26,7 @@ struct SearchParameter
     algorithm::search::ToleranceBy ms2_by = 
         algorithm::search::ToleranceBy::Dalton;
     // isotopic effects on precursor
-    int isotopic_count = 2;
+    int isotopic_count = 0;
     // fdr
     double fdr_rate = 0.01;
     // protease

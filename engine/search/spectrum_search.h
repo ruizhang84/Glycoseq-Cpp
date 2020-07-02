@@ -90,14 +90,6 @@ public:
                         isomer, SearchType::Branch);
                     collector.GlycanCollect(SearchGlycans(peptide, isomer, glycan_terminal_), 
                         isomer, SearchType::Terminal);
-                    
-                    double denominator = 4;
-                    denominator += (int) peptide.length() * 2.0;
-                    denominator += (int) glycan_core_.Query(isomer).size();
-                    denominator += (int) glycan_branch_.Query(isomer).size();
-                    denominator += (int) glycan_terminal_.Query(isomer).size();
-                    collector.BaseCollect(isomer, denominator);
-
                 }
                 if (collector.GlycanMiss()) continue;
                           
