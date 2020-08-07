@@ -233,7 +233,7 @@ protected:
             score = std::max(score, glycan_score);  
         }
         score += peptide_score + oxonium_;
-        score = score * 1.0 / std::sqrt(spectrum_);
+        score = std::sqrt(score) * 1.0 / std::sqrt(spectrum_);
         return score;
     }
 
