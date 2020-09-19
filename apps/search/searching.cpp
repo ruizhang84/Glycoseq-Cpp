@@ -283,7 +283,7 @@ int main(int argc, char *argv[])
     scorer_first.join();
     scorer_second.join();
 
-    std::cout << "target:" << targets.size() <<" " << decoys.size() << std::endl;
+    std::cout << "Total target:" << targets.size() <<" decoy:" << decoys.size() << std::endl;
 
     // compute p value
     engine::analysis::MultiComparison tester(parameter.fdr_rate);
