@@ -18,7 +18,7 @@ namespace search {
 BOOST_AUTO_TEST_CASE( search_engine_test ) 
 {
     // read spectrum
-    std::string path = "/home/yu/Documents/GlycoSeq-Cpp/data/ZC_20171218_C22_R1.mgf";
+    std::string path = "/home/ruiz/Documents/Glycoseq-Cpp/data/ZC_20171218_C22_R1.mgf";
     std::unique_ptr<util::io::SpectrumParser> parser = 
         std::make_unique<util::io::MGFParser>(path, util::io::SpectrumType::EThcD);
     util::io::SpectrumReader spectrum_reader(path, std::move(parser));
@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
     BOOST_CHECK(spec.Peaks().front().Intensity() < 1);
 
     // read fasta and build peptides
-    util::io::FASTAReader fasta_reader("/home/yu/Documents/GlycoSeq-Cpp/data/haptoglobin.fasta");
+    util::io::FASTAReader fasta_reader("/home/ruiz/Documents/Glycoseq-Cpp/data/haptoglobin.fasta");
     std::vector<model::protein::Protein> proteins = fasta_reader.Read();
  
     engine::protein::Digestion digest;
@@ -85,7 +85,13 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
     std::vector<std::string> glycans_str = builder->Isomer().Collection();
     precursor_runner.Init(peptides, glycans_str);
 
-    SpectrumSearcher spectrum_runner(ms2_tol, ms2_by, 2, builder.get(), true);
+    SearchWeight weights;
+    weights.set_weight(engine::search::SearchType::Core, 1.0);
+    weights.set_weight(engine::search::SearchType::Branch, 1.0);
+    weights.set_weight(engine::search::SearchType::Terminal, 1.0);
+    weights.set_weight(engine::search::SearchType::Peptide, 1.0);
+    weights.set_weight(engine::search::SearchType::Oxonium, 1.0);
+    SpectrumSearcher spectrum_runner(ms2_tol, ms2_by, 2, builder.get(), true, weights);
     spectrum_runner.Init();
 
     auto special_spec = spectrum_reader.GetSpectrum(special_scan);
