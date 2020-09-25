@@ -29,8 +29,8 @@ class SpectrumSearcher
 {
 public:
     SpectrumSearcher(const double tol, const algorithm::search::ToleranceBy by, int isotope,
-        engine::glycan::NGlycanBuilder* builder, bool decoy_search, SearchWeight weight):
-            tolerance_(tol), by_(by), isotopic_(isotope), builder_(builder), decoy_search_(decoy_search), weight_(weight),
+        engine::glycan::NGlycanBuilder* builder, bool decoy_search):
+            tolerance_(tol), by_(by), isotopic_(isotope), builder_(builder), decoy_search_(decoy_search),
                 searcher_(algorithm::search::BucketSearch<model::spectrum::Peak>(tol, by)),
                 binary_(algorithm::search::BinarySearch(tol, by)){}
 
@@ -60,7 +60,7 @@ public:
     std::vector<SearchResult> Search()
     {
         SearchInit();
-        ResultCollector collector(weight_);
+        ResultCollector collector;
 
         collector.OxoniumCollect(SearchOxonium());
         if (collector.OxoniumMiss()) 
@@ -286,8 +286,6 @@ protected:
     int isotopic_; // up to isotopic
     engine::glycan::NGlycanBuilder* builder_;
     bool decoy_search_;
-
-    SearchWeight weight_;
     algorithm::search::BucketSearch<model::spectrum::Peak> searcher_;
     algorithm::search::BinarySearch binary_;
     MatchResultStore candidate_;

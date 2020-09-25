@@ -85,13 +85,7 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
     std::vector<std::string> glycans_str = builder->Isomer().Collection();
     precursor_runner.Init(peptides, glycans_str);
 
-    SearchWeight weights;
-    weights.set_weight(engine::search::SearchType::Core, 1.0);
-    weights.set_weight(engine::search::SearchType::Branch, 1.0);
-    weights.set_weight(engine::search::SearchType::Terminal, 1.0);
-    weights.set_weight(engine::search::SearchType::Peptide, 1.0);
-    weights.set_weight(engine::search::SearchType::Oxonium, 1.0);
-    SpectrumSearcher spectrum_runner(ms2_tol, ms2_by, 2, builder.get(), true, weights);
+    SpectrumSearcher spectrum_runner(ms2_tol, ms2_by, 2, builder.get(), true);
     spectrum_runner.Init();
 
     auto special_spec = spectrum_reader.GetSpectrum(special_scan);
@@ -126,7 +120,7 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
     {
         std::cout << it.Sequence() << std::endl;
         std::cout << it.Glycan() << std::endl;
-        std::cout << it.Score() << std::endl;
+        std::cout << it.RawScore() << std::endl;
     }
 
     // compute score
