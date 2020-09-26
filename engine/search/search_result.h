@@ -30,8 +30,10 @@ public:
     std::string Glycan() const { return glycan_; }
     const double RawScore() const 
     { 
+        if (score_.size() == 0) return 0.0;
         return std::accumulate(score_.begin(), score_.end(), 0.0);
     }
+    const double Value() const { return value_; }
     const std::vector<double> Score() const { return score_; }
 
     double ExtraScore(ScoreType type) const 
@@ -46,6 +48,7 @@ public:
     void set_peptide(std::string seq) { peptide_ = seq; }
     void set_glycan(std::string glycan) { glycan_ = glycan; }
     void set_score(std::vector<double> score) { score_ = score; }
+    void set_value(double value) { value_ = value; }
     void set_extra(double score, ScoreType type) { extra_[type] = score; }
 
     static double PeakValue(const std::vector<model::spectrum::Peak>& peaks)
@@ -81,6 +84,7 @@ protected:
     std::string glycan_;
     int pos_;
     std::vector<double> score_;
+    double value_;
     std::map<ScoreType, double> extra_;
     
 };
@@ -260,21 +264,21 @@ protected:
     }
 
     void Emplace(int scan, const std::string& sequence, 
-        const std::string composite, int site, std::vector<double> score)
+        const std::string& composite, int site, const std::vector<double>& score_vec)
     {
         SearchResult res;
         res.set_scan(scan);
         res.set_peptide(sequence);
         res.set_glycan(composite);
         res.set_site(site);
-        res.set_score(score);
+        res.set_score(score_vec);
         results_.push_back(res);
     }
     
     const int max_hits = 20;
-    double best_;
-    double spectrum_;
-    double oxonium_;
+    double best_ = 0.0;
+    double spectrum_ = 0.0;
+    double oxonium_ = 0.0;
     std::unordered_map<int, double> peptide_;
     std::unordered_map<std::string, double> glycan_core_, glycan_branch_, glycan_terminal_;
     double precursor_mass_; 

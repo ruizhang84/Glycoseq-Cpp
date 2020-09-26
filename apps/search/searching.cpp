@@ -22,6 +22,7 @@
 #include "../../engine/search/spectrum_search.h"
 #include "../../engine/search/search_result.h"
 #include "../../engine/analysis/multi_comparison.h"
+#include "../../engine/learn/neural_network.h"
 
 
 const char *argp_program_version =
@@ -93,6 +94,7 @@ struct arguments
     double terminal_w = 1.0;
     double peptide_w = 1.0;
     double oxonium_w = 1.0;
+    double bias = 0.0;
 };
 
 
@@ -184,13 +186,17 @@ parse_opt (int key, char *arg, struct argp_state *state)
     case 'T':
         arguments->terminal_w = atof(arg);
         break;
-
+        
     case 'P':
         arguments->peptide_w = atof(arg);
         break;
 
     case 'O':
         arguments->oxonium_w = atof(arg);
+        break;
+
+    case 'S':
+        arguments->bias = atof(arg);
         break;
 
     default:
@@ -244,6 +250,13 @@ SearchParameter GetParameter(const struct arguments& arguments)
             break;
         }
     }
+    parameter.weights.assign(5, 0.0);
+    parameter.weights[0] = arguments.core_w;
+    parameter.weights[1] = arguments.branch_w;
+    parameter.weights[2] = arguments.terminal_w;
+    parameter.weights[3] = arguments.oxonium_w;
+    parameter.weights[4] = arguments.peptide_w;
+    parameter.bias = arguments.bias;
     return parameter;
 }
 
@@ -310,6 +323,19 @@ int main(int argc, char *argv[])
     scorer_second.join();
 
     std::cout << "Total target:" << targets.size() <<" decoy:" << decoys.size() << std::endl;
+
+    // neural network
+    engine::learn::Classifier classifier;
+    classifier.set_weight(parameter.weights);
+    classifier.set_bias(parameter.bias);
+    for (auto& it : targets)
+    {
+        it.set_value(classifier.Logit(it.Score()));
+    }
+    for (auto& it : decoys)
+    {
+        it.set_value(classifier.Logit(it.Score()));
+    }
 
     // compute p value
     engine::analysis::MultiComparison tester(parameter.fdr_rate);

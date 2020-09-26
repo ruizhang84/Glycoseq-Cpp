@@ -20,6 +20,14 @@ clustering:
 	util/calc/lsh.cpp util/calc/calc.cpp algorithm/clustering/lsh_clustering.cpp $(LIB)
 
 #  test
+neural_network_test:
+	$(CC) $(CPPFLAGS) -o test/neural_network_test \
+	engine/learn/neural_network_test.cpp $(INCLUDES)
+
+multi_comparison_test:
+	$(CC) $(CPPFLAGS) -o test/multi_comparison_test \
+	engine/analysis/multi_comparison_test.cpp $(INCLUDES)
+	
 glycan_test:
 	$(CC) $(CPPFLAGS) -o test/glycan_test \
 	 model/glycan/glycan_test.cpp model/glycan/nglycan_complex.cpp $(INCLUDES)
