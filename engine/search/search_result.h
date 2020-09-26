@@ -31,7 +31,7 @@ public:
     const double RawScore() const 
     { 
         if (score_.size() == 0) return 0.0;
-        return std::accumulate(score_.begin(), score_.end(), 0.0);
+        return std::sqrt(std::accumulate(score_.begin(), score_.end(), 0.0));
     }
     const double Value() const { return value_; }
     const std::vector<double> Score() const { return score_; }
@@ -258,7 +258,7 @@ protected:
         score_vec[4] = peptide_score; 
         for(int i = 0; i < (int) score_vec.size(); i++)
         {
-            score_vec[i] = std::sqrt(score_vec[i]) * 1.0 / std::sqrt(spectrum_);
+            score_vec[i] = score_vec[i] * 1.0 / spectrum_;
         }
         return score_vec;
     }
