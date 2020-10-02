@@ -13,6 +13,10 @@ search:
 	$(CC) $(CPPFLAGS) -o searching \
 	apps/search/searching.cpp model/glycan/nglycan_complex.cpp $(LIB)
 
+search_train:
+	$(CC) $(CPPFLAGS) -o searching_train \
+	apps/search/searching_train.cpp model/glycan/nglycan_complex.cpp $(LIB)
+	
 # app
 clustering:
 	$(CC) $(CPPFLAGS)  -o clustering \
@@ -20,6 +24,10 @@ clustering:
 	util/calc/lsh.cpp util/calc/calc.cpp algorithm/clustering/lsh_clustering.cpp $(LIB)
 
 #  test
+train_data_test:
+	$(CC) $(CPPFLAGS) -o test/train_data_test \
+	util/io/train_reader_test.cpp $(INCLUDES)
+	
 neural_network_test:
 	$(CC) $(CPPFLAGS) -o test/neural_network_test \
 	engine/learn/neural_network_test.cpp $(INCLUDES)
