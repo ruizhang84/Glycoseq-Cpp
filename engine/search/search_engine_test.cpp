@@ -74,9 +74,9 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
 
 
     // spectrum matching
-    int special_scan = 8906; // 2742; // 8729, 8778
+    int special_scan = 8775; // 2742; // 8729, 8778
     double ms1_tol = 10, ms2_tol = 0.01;
-    int isotopic_count = 2;
+    int isotopic_count = 20;
     algorithm::search::ToleranceBy ms1_by = algorithm::search::ToleranceBy::PPM;
     algorithm::search::ToleranceBy ms2_by = algorithm::search::ToleranceBy::Dalton;
 
