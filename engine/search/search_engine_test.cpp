@@ -18,7 +18,7 @@ namespace search {
 BOOST_AUTO_TEST_CASE( search_engine_test ) 
 {
     // read spectrum
-    std::string path = "/home/ruiz/Documents/Glycoseq-Cpp/data/ZC_20171218_C22_R1.mgf";
+    std::string path = "/home/ruiz/Documents/Research/Glycoseq/ZC_20171218_C16_R1.mgf";
     std::unique_ptr<util::io::SpectrumParser> parser = 
         std::make_unique<util::io::MGFParser>(path, util::io::SpectrumType::EThcD);
     util::io::SpectrumReader spectrum_reader(path, std::move(parser));
@@ -51,7 +51,6 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
     BOOST_CHECK(std::find(peptides.begin(), peptides.end(), "MVSHHNLTTGATLINE") != peptides.end());
 
 
-
     // // build glycans
     int hexNAc = 12, hex = 12, Fuc = 5, NeuAc = 4, NeuGc = 0;
     std::unique_ptr<engine::glycan::NGlycanBuilder> builder =
@@ -63,8 +62,8 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
     composite[model::glycan::Monosaccharide::GlcNAc] = 5;
     composite[model::glycan::Monosaccharide::Man] = 3;
     composite[model::glycan::Monosaccharide::Gal] = 3;
-    composite[model::glycan::Monosaccharide::Fuc] = 1;
-    composite[model::glycan::Monosaccharide::NeuAc] = 1;  
+    composite[model::glycan::Monosaccharide::Fuc] = 2;
+    composite[model::glycan::Monosaccharide::NeuAc] = 2;  
     glycan.set_composition(composite);
     std::string glycan_name = glycan.Name();
     BOOST_CHECK(builder->Isomer().QueryMass(glycan_name) == util::mass::GlycanMass::Compute(composite));
@@ -75,7 +74,7 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
 
 
     // spectrum matching
-    int special_scan = 7678; // 2742; // 8729, 8778
+    int special_scan = 8906; // 2742; // 8729, 8778
     double ms1_tol = 10, ms2_tol = 0.01;
     int isotopic_count = 2;
     algorithm::search::ToleranceBy ms1_by = algorithm::search::ToleranceBy::PPM;
@@ -90,9 +89,11 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
 
     auto special_spec = spectrum_reader.GetSpectrum(special_scan);
     double special_target = util::mass::SpectrumMass::Compute(special_spec.PrecursorMZ(), special_spec.PrecursorCharge());
-    MatchResultStore special_r = precursor_runner.Match(special_target, special_spec.PrecursorCharge(), isotopic_count);    
+    MatchResultStore special_r = precursor_runner.Match(special_target, special_spec.PrecursorCharge(), isotopic_count);   
+    std::cout << special_target << std::endl;
+
     std::cout << special_spec.Scan() << " : " << std::endl;
-    special_r.Add("NLFLNHSE", "GlcNAc-4-Man-3-Gal-2-NeuAc-2-");
+    // special_r.Add("NLFLNHSE", "GlcNAc-4-Man-3-Gal-2-NeuAc-2-");
     for(auto it : special_r.Map())
     {
         std::cout << it.first << std::endl;
@@ -101,7 +102,7 @@ BOOST_AUTO_TEST_CASE( search_engine_test )
             std::cout << g << std::endl;
         }
     }
-    BOOST_CHECK(!special_r.Empty());
+    // BOOST_CHECK(!special_r.Empty());
     // GlcNAc-5-Man-3-Gal-3-Fuc-2-NeuAc-2-
     // MVSHHNLTTGATLINE
     // 202896
